@@ -1,0 +1,225 @@
+#ifndef ALIEN_LEXER_STUBS_H
+#define ALIEN_LEXER_STUBS_H
+
+namespace alien::lexer {
+
+    static const char* required_code =
+            "#include <iostream>\n"
+            "#include <map>\n"
+            "#include <string>\n"
+            "#include <vector>\n\n"
+            "#define BEGIN(context) const auto& ncontext = context_mapping.find(#context); \\\n"
+            "if (ncontext == context_mapping.end()) {                                      \\\n"
+            "    throw context_exception(#context);                                        \\\n"
+            "}                                                                             \\\n"
+            "current_context = ncontext->second;                                           \\\n"
+            "current_state = start_states[current_context]\n\n"
+            "//generate line:column string\n"
+            "std::string gen_lc(unsigned int line, unsigned int column) {\n"
+            "    return std::to_string(line) + ':' + std::to_string(column);\n"
+            "}\n\n"
+            "struct lexeme_too_long_exception : public std::exception {\n"
+            "    unsigned int line, column;\n"
+            "    std::string description;\n\n"
+            "    lexeme_too_long_exception(unsigned int line, unsigned int column) : line(line), column(column) {\n"
+            "        description = \"Lexeme too long. \" + gen_lc(line, column);\n"
+            "    }\n\n"
+            "    const char* what() const noexcept override {\n"
+            "        return description.c_str();\n"
+            "    }\n"
+            "};\n\n"
+            "struct context_exception : public std::exception {\n"
+            "    std::string description;\n\n"
+            "    context_exception(std::string&& context) {\n"
+            "        description = \"No such context: \" + context;\n"
+            "    }\n\n"
+            "    const char* what() const noexcept override {\n"
+            "        return description.c_str();\n"
+            "    }\n"
+            "};\n\n"
+            "struct lexing_exception : public std::exception {\n"
+            "    unsigned int line, column;\n"
+            "    std::string description;\n\n"
+            "    lexing_exception(unsigned int line, unsigned int column) : line(line), column(column) {\n"
+            "        description = \"Unable to tokenize input. \" + gen_lc(line, column);\n"
+            "    }\n\n"
+            "    const char* what() const noexcept override {\n"
+            "        return description.c_str();\n"
+            "    }\n"
+            "};\n\n";
+
+    static const char* default_token =
+            "template<typename T>\n"
+            "struct generalized_token {\n"
+            "    static_assert(std::is_enum<T>(), \"Template type must be an enum\");\n"
+            "\n"
+            "    T type;\n"
+            "\n"
+            "    explicit generalized_token(T type) : type(type) {}\n"
+            "\n"
+            "    virtual ~generalized_token() = default;\n"
+            "};\n\n";
+
+    static const char* default_error_function =
+            "void error(unsigned int line, unsigned int column) {\n"
+            "    throw lexing_exception(line, column);\n"
+            "}\n\n";
+
+    static const char* default_eof_action =
+            "                    return nullptr;\n";
+
+    static const char* lexer_start =
+            "class lexer {\n"
+            "    char buffer[16386];\n"
+            "    std::istream& stream;\n"
+            "    std::string text;\n\n"
+            "    unsigned int begin = 0, pos = 0, chars_since_las = 0, line = 1, column = 1;\n"
+            "    int las_rule_number = -1;\n"
+            "\n"
+            "    bool stream_end = false;\n"
+            "    struct state {\n"
+            "        std::map<char, unsigned int> transitions;\n"
+            "\n"
+            "        bool accepting;\n"
+            "        int rule_number;\n"
+            "    };\n"
+            "\n"
+            "    unsigned int current_state, current_context = 0;\n\n";
+
+    static const char* lexer_constructor_start =
+            "public:\n"
+            "    explicit lexer(std::istream &stream) : stream(stream), current_state(";
+
+    static const char* lexer_constructor_end =
+            ") {\n"
+            "        fill<0, 8191>();\n"
+            "\n"
+            "        if (dfa[current_context][current_state].accepting) {\n"
+            "            las_rule_number = dfa[current_context][current_state].rule_number;\n"
+            "        }\n"
+            "    }";
+
+    static const char* lex_method_start =
+            "        text = \"\";\n\n"
+            "        while (true) {\n"
+            "            char c = buffer[pos++];\n"
+            "\n"
+            "            auto transition = dfa[current_context][current_state].transitions.find(c);\n"
+            "\n"
+            "            if (transition != dfa[current_context][current_state].transitions.end()) {\n"
+            "                if (c != -2) {\n"
+            "                    ++column;\n"
+            "                }\n\n"
+            "                if (c == '\\n') {\n"
+            "                    ++line;\n"
+            "                    column = 1;\n"
+            "                }\n\n"
+            "                ++chars_since_las;\n"
+            "                current_state = transition->second;\n"
+            "\n"
+            "                if (dfa[current_context][current_state].accepting) {\n"
+            "                    las_rule_number = dfa[current_context][current_state].rule_number;\n"
+            "                    chars_since_las = 0;\n"
+            "                }\n"
+            "\n"
+            "                continue;\n"
+            "            }\n"
+            "\n"
+            "            if (c == -2) {\n"
+            "                if (!stream_end) {\n"
+            "                    if (pos == 8193) {\n"
+            "                        fill_second();\n"
+            "\n"
+            "                        continue;\n"
+            "                    }\n"
+            "\n"
+            "                    fill_first();\n"
+            "                    pos = 0;\n"
+            "                    continue;\n"
+            "                } else if (pos - begin == 1) {\n"
+            "                    // eof action\n";
+
+    static const char* lex_method_after_eof =
+            "                }\n"
+            "            }\n"
+            "\n"
+            "            if (las_rule_number == -1) {\n";
+
+    static const char* lex_method_mid =
+            "            }\n\n"
+            "            unsigned int rule_number = las_rule_number;\n"
+            "\n"
+            "            pos = pos - chars_since_las - 1;\n"
+            "            begin = pos;\n"
+            "            las_rule_number = -1;\n"
+            "            current_state = start_states[current_context];\n\n"
+            "            switch (rule_number) {\n";
+
+    static const char* lex_method_end =
+            "            }\n"
+            "        }\n"
+            "    }\n";
+
+    static const char* lexer_end =
+            "\n"
+            "private:\n"
+            "    template<unsigned int start, unsigned int end>\n"
+            "    void fill() {\n"
+            "        static_assert(end > start);\n"
+            "        static_assert(end <= 16384);\n"
+            "        static_assert(start >= 0);\n"
+            "\n"
+            "        int diff = end - start + 1;\n"
+            "\n"
+            "        stream.read(buffer + start, diff);\n"
+            "\n"
+            "        if (stream.eof()) {\n"
+            "            stream_end = true;\n"
+            "\n"
+            "            buffer[start + stream.gcount()] = -2;\n"
+            "        }\n"
+            "\n"
+            "        buffer[start + diff] = -2;\n"
+            "    }\n"
+            "\n"
+            "    void fill_first() {\n"
+            "        if (begin >= 0 && begin <= 8191) {\n"
+            "            throw lexeme_too_long_exception(line, column);\n"
+            "        }\n"
+            "\n"
+            "        fill<0, 8191>();\n"
+            "    }\n"
+            "\n"
+            "    void fill_second() {\n"
+            "        if (begin >= 8193 && begin <= 16384) {\n"
+            "            throw lexeme_too_long_exception(line, column);\n"
+            "        }\n"
+            "\n"
+            "        fill<8193, 16384>();\n"
+            "    }\n\n"
+            "    std::string gettext() {\n"
+            "        if (begin >= 0 && begin <= 8191) {\n"
+            "            if (pos - 1 >= 0 && pos - 1 <= 8191) {\n"
+            "                return {std::begin(buffer) + begin, std::begin(buffer) + pos};\n"
+            "            }\n"
+            "\n"
+            "            std::string text_begin{std::begin(buffer) + begin, std::begin(buffer) + 8192};\n"
+            "            std::string text_end{std::begin(buffer) + 8193, std::begin(buffer) + pos};\n"
+            "\n"
+            "            return text_begin + text_end;\n"
+            "        }\n"
+            "\n"
+            "        if (pos - 1 >= 8193 && pos - 1 <= 16384) {\n"
+            "            return {std::begin(buffer) + begin, std::begin(buffer) + pos};\n"
+            "        }\n"
+            "        \n"
+            "        std::string text_begin{std::begin(buffer) + begin, std::begin(buffer) + 16385};\n"
+            "        std::string text_end{std::begin(buffer), std::begin(buffer) + pos};\n"
+            "        \n"
+            "        return text_begin + text_end;\n"
+            "    }"
+            "};";
+
+}
+
+#endif //ALIEN_LEXER_STUBS_H
