@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     std::string parser = result["pinput"].as<std::string>();
 
     if (!lexer.empty()) {
-        alien::lexer::generator gen(lexer, result["loutput"].as<std::string>(),result["h"].as<bool>());
+        alien::lexer::generator gen(lexer, result["loutput"].as<std::string>(),result["headers"].as<bool>());
 
         gen.generate();
     }
