@@ -13,11 +13,11 @@ int main(int argc, char** argv) {
 
     auto result = options.parse(argc, argv);
 
-    std::string lexer = result["l"].as<std::string>();
-    std::string parser = result["p"].as<std::string>();
+    std::string lexer = result["linput"].as<std::string>();
+    std::string parser = result["pinput"].as<std::string>();
 
     if (!lexer.empty()) {
-        alien::lexer::generator gen(lexer, result["lexer_output"].as<std::string>(),result["h"].as<bool>());
+        alien::lexer::generator gen(lexer, result["loutput"].as<std::string>(),result["h"].as<bool>());
 
         gen.generate();
     }
