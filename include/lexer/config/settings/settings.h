@@ -5,43 +5,12 @@
 #include <memory>
 #include <string>
 #include <set>
+#include "config/settings/settings.h"
 
 namespace alien::lexer::config::settings {
 
-    struct value {
-        enum class value_type {
-            NUMBER,
-            STRING,
-            BOOL
-        } type;
-
-        explicit value(value_type type) : type(type) {}
-
-        virtual ~value() = default;
-    };
-
-    struct string_value : public value {
-        std::string str;
-
-        explicit string_value(const std::string& str) : str(str), value(value_type::STRING) {}
-
-        explicit string_value(std::string& str) : str(std::move(str)), value(value_type::STRING) {}
-    };
-
-    struct number_value : public value {
-        int number;
-
-        explicit number_value(int number) : number(number), value(value_type::NUMBER) {}
-    };
-
-    struct bool_value : public value {
-        bool val;
-
-        explicit bool_value(bool val) : val(val), value(value_type::BOOL) {}
-    };
-
     struct settings {
-        std::map<std::string, std::shared_ptr<value>> config;
+        std::map<std::string, std::shared_ptr<alien::config::settings::value>> config;
 
         std::set<std::string> tokens;
     };

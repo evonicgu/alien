@@ -1,5 +1,5 @@
-#ifndef ALIEN_LEXER_CONFIG_SETTINGS_LEXER_H
-#define ALIEN_LEXER_CONFIG_SETTINGS_LEXER_H
+#ifndef ALIEN_CONFIG_SETTINGS_LEXER_H
+#define ALIEN_CONFIG_SETTINGS_LEXER_H
 
 #include <string>
 #include "generalized/generalized_lexer.h"
@@ -136,4 +136,4 @@ namespace alien::lexer::config::settings::lexer {
 
 }
 
-#endif //ALIEN_LEXER_CONFIG_SETTINGS_LEXER_H
+#endif //ALIEN_CONFIG_SETTINGS_LEXER_H

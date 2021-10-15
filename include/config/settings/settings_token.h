@@ -1,5 +1,5 @@
-#ifndef ALIEN_LEXER_CONFIG_SETTINGS_TOKEN_H
-#define ALIEN_LEXER_CONFIG_SETTINGS_TOKEN_H
+#ifndef ALIEN_CONFIG_SETTINGS_TOKEN_H
+#define ALIEN_CONFIG_SETTINGS_TOKEN_H
 
 #include <string>
 #include "generalized/generalized_token.h"
@@ -51,4 +51,4 @@ namespace alien::lexer::config::settings::lexer {
 
 }
 
-#endif //ALIEN_LEXER_CONFIG_SETTINGS_TOKEN_H
+#endif //ALIEN_CONFIG_SETTINGS_TOKEN_H

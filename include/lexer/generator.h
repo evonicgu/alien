@@ -13,6 +13,7 @@
 
 namespace alien::lexer {
 
+    using namespace alien::config::settings;
     using namespace config::settings;
     using namespace config::rules;
 

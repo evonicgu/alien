@@ -5,10 +5,12 @@
 #include <string>
 #include "generalized/generalized_parser.h"
 #include "settings.h"
-#include "settings_lexer.h"
-#include "settings_token.h"
+#include "config/settings/settings_lexer.h"
+#include "config/settings/settings_token.h"
 
 namespace alien::lexer::config::settings::parser {
+
+    using namespace alien::config::settings;
 
     static constexpr const char value_type_exception_str[] = "Wrong value type. ";
     static constexpr const char unknown_setting_exception_str[] = "Unknown setting specified. ";
