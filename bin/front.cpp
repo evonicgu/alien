@@ -5,11 +5,11 @@ int main(int argc, char** argv) {
     cxxopts::Options options("Alien", "Alien - front-end compiler library");
 
     options.add_options()
-            ("l,lexer", "Lexer input file", cxxopts::value<std::string>())
-            ("p,parser", "Parser input file", cxxopts::value<std::string>()->default_value(""))
-            ("lexer_output", "Lexer output file", cxxopts::value<std::string>())
-            ("parser_output", "Parser output file", cxxopts::value<std::string>()->default_value(""))
-            ("h,headers", "Generate header file", cxxopts::value<bool>()->default_value("true"));
+            ("linput", "Lexer input file", cxxopts::value<std::string>())
+            ("pinput", "Parser input file", cxxopts::value<std::string>()->default_value(""))
+            ("loutput", "Lexer output file", cxxopts::value<std::string>())
+            ("poutput", "Parser output file", cxxopts::value<std::string>()->default_value(""))
+            ("headers", "Generate header file", cxxopts::value<bool>()->default_value("true"));
 
     auto result = options.parse(argc, argv);
 
