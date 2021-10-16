@@ -71,7 +71,8 @@ namespace alien::lexer {
     static const char* lexer_start =
             "class lexer {\n"
             "    char buffer[16386];\n"
-            "    std::istream& stream;\n\n"
+            "    std::istream& stream;\n"
+            "    std::string text;\n\n"
             "    unsigned int begin = 0, pos = 0, chars_since_las = 0, line = 1, column = 1;\n"
             "    int las_rule_number = -1;\n"
             "\n"
