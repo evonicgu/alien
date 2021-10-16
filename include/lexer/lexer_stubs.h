@@ -71,12 +71,11 @@ namespace alien::lexer {
     static const char* lexer_start =
             "class lexer {\n"
             "    char buffer[16386];\n"
-            "    std::istream& stream;\n"
-            "    std::string text;\n\n"
+            "    std::istream& stream;\n\n"
             "    unsigned int begin = 0, pos = 0, chars_since_las = 0, line = 1, column = 1;\n"
             "    int las_rule_number = -1;\n"
             "\n"
-            "    bool stream_end = false;\n"
+            "    bool stream_end = false, accepted = false;\n"
             "    struct state {\n"
             "        std::map<char, unsigned int> transitions;\n"
             "\n"
@@ -100,8 +99,11 @@ namespace alien::lexer {
             "    }";
 
     static const char* lex_method_start =
-            "        text = \"\";\n\n"
             "        while (true) {\n"
+            "            if (accepted) {\n"
+            "                begin = pos;\n"
+            "                accepted = false;\n"
+            "            }\n\n"
             "            char c = buffer[pos++];\n"
             "\n"
             "            auto transition = dfa[current_context][current_state].transitions.find(c);\n"
@@ -150,9 +152,9 @@ namespace alien::lexer {
             "            unsigned int rule_number = las_rule_number;\n"
             "\n"
             "            pos = pos - chars_since_las - 1;\n"
-            "            begin = pos;\n"
             "            las_rule_number = -1;\n"
-            "            current_state = start_states[current_context];\n\n"
+            "            current_state = start_states[current_context];\n"
+            "            accepted = true;\n\n"
             "            switch (rule_number) {\n";
 
     static const char* lex_method_end =
@@ -217,7 +219,7 @@ namespace alien::lexer {
             "        std::string text_end{std::begin(buffer), std::begin(buffer) + pos};\n"
             "        \n"
             "        return text_begin + text_end;\n"
-            "    }"
+            "    }\n"
             "};";
 
 }
