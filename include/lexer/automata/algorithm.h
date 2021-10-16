@@ -1,8 +1,10 @@
 #ifndef ALIEN_AUTOMATA_ALGORITHM_H
 #define ALIEN_AUTOMATA_ALGORITHM_H
 
+#include <algorithm>
 #include <queue>
 #include <memory>
+#include <stack>
 #include "automata.h"
 #include "generalized/generalized exception.h"
 #include "lexer/regex/ast.h"
@@ -123,7 +125,7 @@ namespace alien::automata::algorithm {
 
             using is_transparent = std::true_type;
 
-            explicit access_less(const std::vector<T>& arr) : arr(arr) {}
+            access_less(const std::vector<T>& arr) : arr(arr) {}
 
             bool operator()(const T& lhs, const unsigned int rhs) const {
                 return lhs < arr[rhs];
