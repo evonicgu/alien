@@ -8,18 +8,19 @@
 #include "automata.h"
 #include "generalized/generalized exception.h"
 #include "lexer/regex/ast.h"
+#include "util/util.h"
 
 namespace alien::automata::algorithm {
 
     namespace {
-        
+
         namespace exception {
 
             static constexpr const char node_type_exception_str[] = "Wrong node type";
-            
+
             using node_type_exception = alien::generalized::generalized_exception<node_type_exception_str>;
         }
-        
+
         using namespace lexer::regex::parser::ast;
 
         struct simple_nfa {
@@ -29,11 +30,11 @@ namespace alien::automata::algorithm {
         template<typename T>
         T* check(const std::shared_ptr<node>& n) {
             auto* casted = dynamic_cast<T*>(n.get());
-            
+
             if (casted == nullptr) {
                 throw exception::node_type_exception();
             }
-            
+
             return casted;
         }
 
@@ -118,27 +119,6 @@ namespace alien::automata::algorithm {
     }
 
     namespace {
-
-        template<typename T>
-        struct access_less {
-            const std::vector<T>& arr;
-
-            using is_transparent = std::true_type;
-
-            access_less(const std::vector<T>& arr) : arr(arr) {}
-
-            bool operator()(const T& lhs, const unsigned int rhs) const {
-                return lhs < arr[rhs];
-            }
-
-            bool operator()(const unsigned int lhs, const T& rhs) const {
-                return arr[lhs] < rhs;
-            }
-
-            bool operator()(const unsigned int lhs, unsigned int rhs) const {
-                return arr[lhs] < arr[rhs];
-            }
-        };
 
         using simple_set = std::stack<unsigned int>;
 
@@ -306,7 +286,7 @@ namespace alien::automata::algorithm {
             automata.states.push_back(make_state(closure(state)));
             unsigned int state_counter = 0;
 
-            std::set<unsigned int, access_less<dfa::state>> states{{0}, access_less<dfa::state>(automata.states)};
+            std::set<unsigned int, util::access_less<dfa::state>> states{{0}, {automata.states}};
             std::queue<unsigned int> q;
             q.push(0);
 
