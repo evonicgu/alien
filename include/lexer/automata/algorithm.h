@@ -173,12 +173,12 @@ namespace alien::automata::algorithm {
                 return elements[first[index]];
             }
 
-            unsigned int get_next(unsigned int element) {
+            int get_next(unsigned int element) {
                 if (loc[element] + 1 >= last[sidx[element]]) {
-                    return 0;
+                    return -1;
                 }
 
-                return elements[loc[element] + 1];
+                return (int) elements[loc[element] + 1];
             }
 
             bool no_marks(unsigned int index) {
@@ -414,7 +414,7 @@ namespace alien::automata::algorithm {
 
                 unsigned int q = blocks.get_first(b);
 
-                while (q != 0) {
+                while (q != -1) {
                     for (unsigned int transition : automata.states[q].in_transitions) {
                         unsigned int splitter = splitters.set(transition);
 
@@ -464,7 +464,7 @@ namespace alien::automata::algorithm {
                 unsigned int splitter = unready_splitters.top(), transition = splitters.get_first(splitter);
                 unready_splitters.pop();
 
-                while (transition != 0) {
+                while (transition != -1) {
                     unsigned int state = automata.tails[transition], block = blocks.set(state);
 
                     if (blocks.no_marks(block)) {
