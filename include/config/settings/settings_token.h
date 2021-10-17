@@ -9,6 +9,7 @@ namespace alien::lexer::config::settings::lexer {
     enum class token_type {
         T_HASHTAG,
         T_IDENTIFIER,
+        T_COMMA,
         T_EQUALS,
         T_DOT,
         T_OPEN_BRACE,

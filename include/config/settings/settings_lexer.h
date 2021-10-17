@@ -32,6 +32,8 @@ namespace alien::lexer::config::settings::lexer {
                     return new token(token_type::T_CLOSE_BRACE);
                 case '=':
                     return new token(token_type::T_EQUALS);
+                case ',':
+                    return new token(token_type::T_COMMA);
                 case '%':
                     if (i.peek() == '%') {
                         i.get();
