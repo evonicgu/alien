@@ -15,7 +15,7 @@ namespace alien::lexer::config::settings::parser {
     static constexpr const char value_type_exception_str[] = "Wrong value type. ";
     static constexpr const char unknown_setting_exception_str[] = "Unknown setting specified. ";
 
-    using base_parser = generalized::generalized_parser<lexer::token_type, lexer::lexer>;
+    using base_parser = generalized::generalized_parser<token_type, alien::config::settings::lexer>;
 
     class parser : base_parser {
         settings& values;
@@ -69,7 +69,7 @@ namespace alien::lexer::config::settings::parser {
         }
 
         std::string dot_identifiers() {
-            auto* token = check<lexer::identifier_token>("Expected token to be an identifier token instance");
+            auto* token = check<identifier_token>("Expected token to be an identifier token instance");
 
             std::string str = std::move(token->name);
             match(type::T_IDENTIFIER);
@@ -87,7 +87,7 @@ namespace alien::lexer::config::settings::parser {
 
             switch (lookahead->type) {
                 case type::T_STR: {
-                    auto* str = check<lexer::str_token>("Expected token to be a string token instance");
+                    auto* str = check<str_token>("Expected token to be a string token instance");
                     auto* val = check<string_value, value_type_exception>(uncasted_val, "Wrong value type");
 
                     val->str = std::move(str->str);
@@ -96,7 +96,7 @@ namespace alien::lexer::config::settings::parser {
                     break;
                 }
                 case type::T_IDENTIFIER: {
-                    auto* id = check<lexer::identifier_token>("Expected token to be an identifier token instance");
+                    auto* id = check<identifier_token>("Expected token to be an identifier token instance");
                     auto* val = check<string_value, value_type_exception>(uncasted_val, "Wrong value type");
 
                     val->str = std::move(id->name);
@@ -105,7 +105,7 @@ namespace alien::lexer::config::settings::parser {
                     break;
                 }
                 case type::T_NUMBER: {
-                    auto* number = check<lexer::number_token>("Expected token to be a number token instance");
+                    auto* number = check<number_token>("Expected token to be a number token instance");
                     auto* val = check<number_value, value_type_exception>(uncasted_val, "Wrong value type");
 
                     val->number = number->number;
@@ -114,7 +114,7 @@ namespace alien::lexer::config::settings::parser {
                     break;
                 }
                 case type::T_BOOL: {
-                    auto* bool_val = check<lexer::bool_token>("Expected token to be a bool token instance");
+                    auto* bool_val = check<bool_token>("Expected token to be a bool token instance");
                     auto* val = check<bool_value, value_type_exception>(uncasted_val, "Wrong value type");
 
                     val->val = bool_val->value;
@@ -138,7 +138,7 @@ namespace alien::lexer::config::settings::parser {
         }
 
         void identifiers() {
-            auto* id = check<lexer::identifier_token>("Expected token to be an identifier token instance");
+            auto* id = check<identifier_token>("Expected token to be an identifier token instance");
 
             auto it = values.tokens.insert({id->name, ""});
             match(type::T_IDENTIFIER);
@@ -150,7 +150,7 @@ namespace alien::lexer::config::settings::parser {
                     break;
                 case type::T_EQUALS: {
                     match(type::T_EQUALS);
-                    auto *type = check<lexer::identifier_token>("Expected type to be an identifier token instance");
+                    auto *type = check<identifier_token>("Expected type to be an identifier token instance");
 
                     it.first->second = std::move(type->name);
                     match(type::T_IDENTIFIER);

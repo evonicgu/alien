@@ -4,7 +4,7 @@
 #include <string>
 #include "generalized/generalized_token.h"
 
-namespace alien::lexer::config::settings::lexer {
+namespace alien::config::settings {
 
     enum class token_type {
         T_HASHTAG,

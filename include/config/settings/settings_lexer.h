@@ -6,7 +6,7 @@
 #include "input/input.h"
 #include "settings_token.h"
 
-namespace alien::lexer::config::settings::lexer {
+namespace alien::config::settings {
 
     using base_lexer = generalized::generalized_lexer<token_type>;
 
