@@ -156,7 +156,9 @@ namespace alien::lexer {
 
             if (val->val) {
                 for (const auto& token : configuration.tokens) {
-                    output << "#define _" + token << " return new " + token_type->str + "<token_type>(" + token + ")\n";
+                    const std::string& name = token.first;
+
+                    output << "#define _" + name << " return new " + token_type->str + "<token_type>(" + name + ")\n";
                 }
 
                 output << '\n';
@@ -173,7 +175,9 @@ namespace alien::lexer {
             output << "enum" << (val->val ? " class " : " ") << "token_type {\n";
 
             for (const auto& token : configuration.tokens) {
-                output << "    " << token << ",\n";
+                const std::string& name = token.first;
+
+                output << "    " << name << ",\n";
             }
 
             output << "};\n\n";

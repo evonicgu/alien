@@ -140,11 +140,25 @@ namespace alien::lexer::config::settings::parser {
         void identifiers() {
             auto* id = check<lexer::identifier_token>("Expected token to be an identifier token instance");
 
-            values.tokens.insert(id->name);
+            auto it = values.tokens.insert({id->name, ""});
             match(type::T_IDENTIFIER);
 
-            if (lookahead->type == type::T_IDENTIFIER) {
-                identifiers();
+            switch (lookahead->type) {
+                case type::T_COMMA:
+                    match(type::T_COMMA);
+                    identifiers();
+                    break;
+                case type::T_EQUALS: {
+                    match(type::T_EQUALS);
+                    auto *type = check<lexer::identifier_token>("Expected type to be an identifier token instance");
+
+                    it.first->second = std::move(type->name);
+                    match(type::T_IDENTIFIER);
+                    match(type::T_COMMA);
+
+                    identifiers();
+                    break;
+                }
             }
         }
     };

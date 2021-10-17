@@ -12,7 +12,7 @@ namespace alien::lexer::config::settings {
     struct settings {
         std::map<std::string, std::shared_ptr<alien::config::settings::value>> config;
 
-        std::set<std::string> tokens;
+        std::map<std::string, std::string> tokens;
     };
 
 }
