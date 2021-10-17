@@ -283,59 +283,43 @@ namespace alien::automata::algorithm {
         dfa::dfa convert_nfa2dfa(const nfa::state_ptr& state, const std::set<char>& alphabet) {
             dfa::dfa automata;
             automata.start_state = 0;
-            automata.states.push_back(make_state(closure(state)));
-            unsigned int state_counter = 0;
 
-            std::set<unsigned int, util::access_less<dfa::state>> states{{0}, {automata.states}};
-            std::queue<unsigned int> q;
-            q.push(0);
+            util::vecset<dfa::state> states{{make_state(closure(state))}};
 
-            while (!q.empty()) {
-                dfa::state current = automata.states[q.front()];
-                if (current.accepting) {
-                    automata.fstates.push_back(q.front());
-                    automata.rulemap[current.rule_number].push_back(q.front());
+            for (unsigned int i = 0; i < states.size(); ++i) {
+                if (states[i].accepting) {
+                    automata.fstates.push_back(i);
+                    automata.rulemap[states[i].rule_number].push_back(i);
                 }
 
                 for (char c : alphabet) {
-                    dfa::state new_state = make_state(closure(move(current.nfa_states, c)));
+                    dfa::state new_state = make_state(closure(move(states[i].nfa_states, c)));
 
                     if (new_state.nfa_states.empty()) {
                         continue;
                     }
 
-                    auto found_state = states.find<dfa::state>(new_state);
-                    unsigned int to_state, tr_index = automata.tails.size();
-                    current.out_transitions.push_back(tr_index);
+                    auto it = states.find(new_state);
+                    unsigned int to, transition = automata.transitions++;
+                    states[i].out_transitions.push_back(transition);
 
-                    if (found_state != states.end()) {
-                        to_state = *found_state;
-
-                        if (to_state == q.front()) {
-                            current.in_transitions.push_back(tr_index);
-                        } else {
-                            automata.states[to_state].in_transitions.push_back(tr_index);
-                        }
+                    if (it != states.vend()) {
+                        to = it - states.vbegin();
                     } else {
-                        to_state = ++state_counter;
+                        to = states.size();
 
-                        automata.states.push_back(std::move(new_state));
-                        states.insert(state_counter);
-                        q.push(state_counter);
-                        automata.states[state_counter].in_transitions.push_back(tr_index);
+                        states.push_back(std::move(new_state));
                     }
 
-                    automata.tails.push_back(q.front());
+                    states[to].in_transitions.push_back(transition);
+
+                    automata.tails.push_back(i);
                     automata.labels.push_back(c);
-                    automata.heads.push_back(to_state);
+                    automata.heads.push_back(to);
                 }
-
-                automata.states[q.front()] = std::move(current);
-                automata.transitions += automata.states[q.front()].out_transitions.size();
-
-                q.pop();
             }
 
+            automata.states = states;
             return automata;
         }
 
