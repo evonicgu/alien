@@ -37,18 +37,29 @@ namespace alien::lexer::config::rules::lexer {
                     return new token(token_type::T_END);
                 case '{': {
                     unsigned int fold_level = 0;
+                    bool in_string = false;
 
                     std::string code;
 
                     c = i.get();
 
-                    while (c != '}' || fold_level > 0) {
-                        if (c == '{') {
-                            ++fold_level;
+                    while (c != '}' || in_string || fold_level > 0) {
+                        if (c == '\"') {
+                            in_string = !in_string;
                         }
 
-                        if (c == '}') {
-                            --fold_level;
+                        if (!in_string) {
+                            if (c == '{') {
+                                ++fold_level;
+                            }
+
+                            if (c == '}') {
+                                --fold_level;
+                            }
+                        } else if (c == '\\') {
+                            c = i.get();
+
+                            code += '\\';
                         }
 
                         code += c;
