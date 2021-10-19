@@ -1,6 +1,10 @@
 #ifndef ALIEN_CONFIG_SETTINGS_H
 #define ALIEN_CONFIG_SETTINGS_H
 
+#include <map>
+#include <memory>
+#include <string>
+
 namespace alien::config::settings {
 
     struct value {
@@ -34,6 +38,13 @@ namespace alien::config::settings {
 
         explicit bool_value(bool val) : val(val), value(value_type::BOOL) {}
     };
+
+    struct settings {
+        std::map<std::string, std::shared_ptr<alien::config::settings::value>> config;
+
+        std::map<std::string, std::string> symbols;
+    };
+
 }
 
 #endif //ALIEN_CONFIG_SETTINGS_H

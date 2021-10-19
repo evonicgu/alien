@@ -8,9 +8,7 @@
 #include "config/settings/settings_lexer.h"
 #include "config/settings/settings_token.h"
 
-namespace alien::lexer::config::settings::parser {
-
-    using namespace alien::config::settings;
+namespace alien::config::settings {
 
     static constexpr const char value_type_exception_str[] = "Wrong value type. ";
     static constexpr const char unknown_setting_exception_str[] = "Unknown setting specified. ";
@@ -140,7 +138,7 @@ namespace alien::lexer::config::settings::parser {
         void identifiers() {
             auto* id = check<identifier_token>("Expected token to be an identifier token instance");
 
-            auto it = values.tokens.insert({id->name, ""});
+            auto it = values.symbols.insert({id->name, ""});
             match(type::T_IDENTIFIER);
 
             switch (lookahead->type) {
@@ -150,9 +148,9 @@ namespace alien::lexer::config::settings::parser {
                     break;
                 case type::T_EQUALS: {
                     match(type::T_EQUALS);
-                    auto *type = check<identifier_token>("Expected type to be an identifier token instance");
+                    auto *stype = check<identifier_token>("Expected stype to be an identifier token instance");
 
-                    it.first->second = std::move(type->name);
+                    it.first->second = std::move(stype->name);
                     match(type::T_IDENTIFIER);
                     match(type::T_COMMA);
 

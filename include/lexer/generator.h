@@ -14,7 +14,6 @@
 namespace alien::lexer {
 
     using namespace alien::config::settings;
-    using namespace config::settings;
     using namespace config::rules;
 
     class generator {
@@ -93,8 +92,8 @@ namespace alien::lexer {
         }
 
         void parse_settings(input::stream_input& input) {
-            config::settings::lexer::lexer l(input);
-            config::settings::parser::parser p(configuration, l);
+            alien::config::settings::lexer l(input);
+            alien::config::settings::parser p(configuration, l);
 
             p.parse();
         }
@@ -155,7 +154,7 @@ namespace alien::lexer {
             auto* token_type = check<string_value>("generation.token_type");
 
             if (val->val) {
-                for (const auto& token : configuration.tokens) {
+                for (const auto& token : configuration.symbols) {
                     const std::string& name = token.first;
 
                     output << "#define _" + name << " return new " + token_type->str + "<token_type>(" + name + ")\n";
@@ -174,7 +173,7 @@ namespace alien::lexer {
 
             output << "enum" << (val->val ? " class " : " ") << "token_type {\n";
 
-            for (const auto& token : configuration.tokens) {
+            for (const auto& token : configuration.symbols) {
                 const std::string& name = token.first;
 
                 output << "    " << name << ",\n";
