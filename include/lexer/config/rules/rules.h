@@ -1,5 +1,5 @@
-#ifndef ALIEN_RULES_H
-#define ALIEN_RULES_H
+#ifndef ALIEN_LEXER_CONFIG_RULES_H
+#define ALIEN_LEXER_CONFIG_RULES_H
 
 #include <string>
 #include <utility>
@@ -28,4 +28,4 @@ namespace alien::lexer::config::rules {
 
 }
 
-#endif //ALIEN_RULES_H
+#endif //ALIEN_LEXER_CONFIG_RULES_H
