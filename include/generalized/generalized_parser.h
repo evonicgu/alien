@@ -1,7 +1,7 @@
 #ifndef ALIEN_GENERALIZED_PARSER_H
 #define ALIEN_GENERALIZED_PARSER_H
 
-#include "generalized exception.h"
+#include "generalized_exception.h"
 #include "generalized_lexer.h"
 #include "generalized_token.h"
 

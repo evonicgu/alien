@@ -2,7 +2,7 @@
 #define ALIEN_LEXER_CONFIG_RULES_LEXER_H
 
 #include "generalized/generalized_lexer.h"
-#include "generalized/generalized exception.h"
+#include "generalized/generalized_exception.h"
 #include "input/input.h"
 #include "rules_token.h"
 #include "util/u8string.h"

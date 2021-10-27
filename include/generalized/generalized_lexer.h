@@ -1,7 +1,7 @@
 #ifndef ALIEN_GENERALIZED_LEXER_H
 #define ALIEN_GENERALIZED_LEXER_H
 
-#include "generalized exception.h"
+#include "generalized_exception.h"
 #include "generalized_token.h"
 #include "input/input.h"
 

@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 #include "automata.h"
-#include "generalized/generalized exception.h"
+#include "generalized/generalized_exception.h"
 #include "lexer/regex/ast.h"
 #include "lexer/regex/ranges_classes.h"
 #include "util/util.h"

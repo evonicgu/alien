@@ -2,7 +2,6 @@
 #define ALIEN_LEXER_CONFIG_RULES_H
 
 #include <map>
-#include <string>
 #include <vector>
 #include "util/u8string.h"
 

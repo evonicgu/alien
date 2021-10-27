@@ -38,8 +38,9 @@ namespace alien::lexer::config::rules::lexer {
         }
 
         explicit action_token(util::u8string&& code, tr_data&& tr) : code(std::move(code)), tr(std::move(tr)),
-                                                                base_token(token_type::T_CODE_BLOCK) {}
+                                                                            base_token(token_type::T_CODE_BLOCK) {}
     };
+
 }
 
 #endif //ALIEN_LEXER_CONFIG_RULES_TOKEN_H
