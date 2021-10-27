@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include "util/util.h"
 
 namespace alien::automata {
 
@@ -14,7 +15,7 @@ namespace alien::automata {
         using state_ptr = std::shared_ptr<state>;
 
         struct state {
-            std::map<char, std::set<state_ptr>> transitions;
+            std::map<util::u8char, std::set<state_ptr>> transitions;
 
             bool accepting;
 
@@ -32,7 +33,11 @@ namespace alien::automata {
                     return false;
                 }
 
-                return this < &other;
+                if (this->rule_number == other.rule_number) {
+                    return this < &other;
+                }
+
+                return this->rule_number < other.rule_number;
             }
         };
 
@@ -43,6 +48,14 @@ namespace alien::automata {
         template<typename T>
         struct ptr_less {
             bool operator()(const std::shared_ptr<T>& lhs, const std::shared_ptr<T>& rhs) const {
+                if (rhs == nullptr) {
+                    return false;
+                }
+
+                if (lhs == nullptr) {
+                    return true;
+                }
+
                 return *lhs < *rhs;
             }
         };
@@ -62,14 +75,32 @@ namespace alien::automata {
             }
         };
 
+        struct transition {
+            unsigned int tail, head;
+
+            util::u8char label;
+
+            bool operator<(const transition& other) const {
+                if (label == other.label) {
+                    if (tail == other.tail) {
+                        return head < other.head;
+                    }
+
+                    return tail < other.tail;
+                }
+
+                return label < other.label;
+            }
+        };
+
         struct dfa {
             std::vector<state> states;
 
             std::map<unsigned int, std::vector<unsigned int>> rulemap;
-            std::vector<unsigned int> tails, heads, fstates;
-            std::vector<char> labels;
+            std::vector<unsigned int> fstates;
+            util::vecset<transition> transitions;
 
-            unsigned int transitions = 0, start_state;
+            unsigned int start_state;
         };
 
     }

@@ -1,27 +1,28 @@
 #ifndef ALIEN_LEXER_CONFIG_RULES_H
 #define ALIEN_LEXER_CONFIG_RULES_H
 
+#include <map>
 #include <string>
-#include <utility>
 #include <vector>
+#include "util/u8string.h"
 
 namespace alien::lexer::config::rules {
 
     struct action {
-        std::string code;
+        util::u8string code;
 
-        std::string trailing_return;
+        util::u8string trailing_return;
     };
 
     struct rule {
-        std::string regex;
+        util::u8string regex;
         action act;
         int rule_number;
     };
 
     struct rules {
         std::vector<std::vector<rule>> ruleset;
-        std::map<std::string, unsigned int> context_mapping;
+        std::map<util::u8string, unsigned int> context_mapping;
 
         action eof_action;
     };

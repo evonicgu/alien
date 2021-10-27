@@ -10,12 +10,14 @@ namespace alien::config::settings {
 
     using base_lexer = generalized::generalized_lexer<token_type>;
 
+    using namespace util::literals;
+
     class lexer : base_lexer {
     public:
         explicit lexer(input::stream_input& i) : base_lexer(i) {}
 
         token* lex() override {
-            char c = i.get();
+            util::u8char c = i.get();
 
             while (isspace(c)) {
                 c = i.get();
@@ -40,11 +42,11 @@ namespace alien::config::settings {
                         return new token(token_type::T_END);
                     }
 
-                    throw lexer_exception("Unexpected character");
+                    throw lexer_exception("Unexpected character"_u8);
                 case '\"': {
-                    std::string str;
+                    util::u8string str;
 
-                    char follow = i.peek();
+                    util::u8char follow = i.peek();
 
                     while (follow != '\"') {
                         follow = i.get();
@@ -64,9 +66,9 @@ namespace alien::config::settings {
                     return new token(token_type::T_END);
                 default: {
                     if (isalpha(c) || c == '_' || c == '$') {
-                        std::string name({c});
+                        util::u8string name{c};
 
-                        char follow = i.peek();
+                        util::u8char follow = i.peek();
 
                         while (isalnum(follow) || follow == '_' || follow == '$') {
                             name += i.get();
@@ -74,11 +76,11 @@ namespace alien::config::settings {
                             follow = i.peek();
                         }
 
-                        if (name == "true") {
+                        if (name == "true"_u8) {
                             return new bool_token(true);
                         }
 
-                        if (name == "false") {
+                        if (name == "false"_u8) {
                             return new bool_token(false);
                         }
 
@@ -88,7 +90,7 @@ namespace alien::config::settings {
                     if (isdigit(c)) {
                         int number;
 
-                        char follow = i.peek();
+                        util::u8char follow = i.peek();
 
                         while (isdigit(follow)) {
                             number = number * 10 + (i.get() - '0');
@@ -105,9 +107,9 @@ namespace alien::config::settings {
         }
 
     private:
-        void parse_escape(std::string& str) {
-            char follow = i.peek();
-            std::string number_str;
+        void parse_escape(util::u8string& str) {
+            util::u8char follow = i.peek();
+            util::u8string number_str;
             unsigned int digits_got = 0;
 
             while (follow != '\"' && digits_got != 3) {
@@ -125,7 +127,7 @@ namespace alien::config::settings {
                 follow = i.peek();
             }
 
-            int number = std::stoi(number_str);
+            int number = util::u8_stoi(number_str);
 
             if (digits_got == 3 && number < 128) {
                 str += (char) number;

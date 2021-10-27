@@ -3,7 +3,7 @@
 
 #include <map>
 #include <memory>
-#include <string>
+#include "util/u8string.h"
 
 namespace alien::config::settings {
 
@@ -20,11 +20,11 @@ namespace alien::config::settings {
     };
 
     struct string_value : public value {
-        std::string str;
+        util::u8string str;
 
-        explicit string_value(const std::string& str) : str(str), value(value_type::STRING) {}
+        explicit string_value(const util::u8string& str) : str(str), value(value_type::STRING) {}
 
-        explicit string_value(std::string& str) : str(std::move(str)), value(value_type::STRING) {}
+        explicit string_value(util::u8string&& str) : str(std::move(str)), value(value_type::STRING) {}
     };
 
     struct number_value : public value {
@@ -40,9 +40,9 @@ namespace alien::config::settings {
     };
 
     struct settings {
-        std::map<std::string, std::shared_ptr<alien::config::settings::value>> config;
+        std::map<util::u8string, std::shared_ptr<alien::config::settings::value>> config;
 
-        std::map<std::string, std::string> symbols;
+        std::map<util::u8string, util::u8string> symbols;
     };
 
 }

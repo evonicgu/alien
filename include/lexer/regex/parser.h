@@ -7,15 +7,16 @@
 #include "ast.h"
 #include "generalized/generalized_parser.h"
 #include "lexer.h"
-#include "ranges.h"
 #include "quantifier.h"
-
+#include "ranges_classes.h"
+#include "util/u8string.h"
 
 namespace alien::lexer::regex::parser {
 
     using node_ptr = std::shared_ptr<ast::node>;
-
     using base_parser = generalized::generalized_parser<lexer::token_type, lexer::lexer>;
+
+    using namespace util::literals;
 
     static constexpr const char range_exception_str[] = "Incorrect character range. ";
 
@@ -59,12 +60,14 @@ namespace alien::lexer::regex::parser {
                 case type::T_BRACE_OPEN:
                 case type::T_BRACE_CLOSE:
                 case type::T_QUESTION_MARK:
+                    throw syntax_exception("The preceding token is not quantifiable"_u8);
                 case type::T_SQUARE_BRACKET_CLOSE:
+                case type::T_PARENTHESIS_CLOSE:
+                    throw syntax_exception("Unmatched parenthesis"_u8);
                 case type::T_NEGATIVE_CLASS:
+                    throw syntax_exception("Unexpected class negation character"_u8);
                 case type::T_END:
-                case type::T_PARENTHESIS_CLOSE: {
-                    throw syntax_exception("The preceding token is not quantifiable");
-                }
+                    throw syntax_exception("Unexpected end of file"_u8);
                 default:
                     node_ptr first = factor();
 
@@ -74,7 +77,7 @@ namespace alien::lexer::regex::parser {
 
                     if (lookahead->type == type::T_PARENTHESIS_CLOSE) {
                         if (fold_level == 0) {
-                            throw syntax_exception("Unmatched parenthesis");
+                            throw syntax_exception("Unmatched parenthesis"_u8);
                         }
 
                         --fold_level;
@@ -107,7 +110,7 @@ namespace alien::lexer::regex::parser {
                     match(type::T_PARENTHESIS_OPEN);
 
                     if (lookahead->type == type::T_PARENTHESIS_CLOSE) {
-                        throw syntax_exception("Empty group");
+                        throw syntax_exception("Empty group"_u8);
                     }
 
                     tree = regex();
@@ -139,7 +142,7 @@ namespace alien::lexer::regex::parser {
                     match(type::T_SYMBOL);
                     break;
                 case type::T_NUMBER:
-                    tree = std::make_shared<ast::leaf>((char) (get_digit() + '0'));
+                    tree = std::make_shared<ast::leaf>(get_digit() + '0');
                     match(type::T_NUMBER);
                     break;
                 case type::T_COMMA:
@@ -169,24 +172,19 @@ namespace alien::lexer::regex::parser {
             match(type::T_SQUARE_BRACKET_CLOSE);
 
             if (negative) {
-                std::set<char> negative_chars;
-
-                std::set_difference(chars.begin(),  chars.end(), ranges::full.begin(),  ranges::full.end(),
-                                    std::inserter(negative_chars, negative_chars.begin()));
-
-                return make_ast_from_set(negative_chars);
+                return std::make_shared<ast::negative_class>(std::move(chars));
             }
 
             return make_ast_from_set(chars);
         }
 
-        std::set<char> chars_or_ranges() {
-            std::set<char> chars;
+        std::set<util::u8char> chars_or_ranges() {
+            std::set<util::u8char> chars;
 
             return chars_or_ranges(chars);
         }
 
-        std::set<char> chars_or_ranges(std::set<char>& chars) {
+        std::set<util::u8char> chars_or_ranges(std::set<util::u8char>& chars) {
             switch (lookahead->type) {
                 case type::T_SYMBOL:
                 case type::T_NUMBER:
@@ -196,22 +194,22 @@ namespace alien::lexer::regex::parser {
                 case type::T_SQUARE_BRACKET_CLOSE:
                     return chars;
                 default:
-                    throw syntax_exception("Unexpected token inside a class");
+                    throw syntax_exception("Unexpected token inside a class"_u8);
             }
         }
 
-        void char_or_range(std::set<char>& chars) {
-            char start = char_in_class();
+        void char_or_range(std::set<util::u8char>& chars) {
+            util::u8char start = char_in_class();
 
             if (lookahead->type == type::T_HYPHEN) {
                 match(type::T_HYPHEN);
-                char end = char_in_class();
+                util::u8char end = char_in_class();
 
                 if (end < start) {
-                    throw range_exception("End of the range is lower than the start");
+                    throw range_exception("End of the range is lower than the start"_u8);
                 }
 
-                for (char i = start; i <= end; ++i) {
+                for (util::u8char i = start; i <= end; ++i) {
                     chars.insert(i);
                 }
 
@@ -221,8 +219,8 @@ namespace alien::lexer::regex::parser {
             chars.insert(start);
         }
 
-        char char_in_class() {
-            char c;
+        util::u8char char_in_class() {
+            util::u8char c;
 
             switch (lookahead->type) {
                 case type::T_SYMBOL:
@@ -230,7 +228,7 @@ namespace alien::lexer::regex::parser {
                     match(type::T_SYMBOL);
                     break;
                 case type::T_NUMBER:
-                    c = (char) (get_digit() + '0');
+                    c = get_digit() + '0';
                     match(type::T_NUMBER);
                     break;
                 case type::T_COMMA:
@@ -238,48 +236,72 @@ namespace alien::lexer::regex::parser {
                     c = ',';
                     break;
                 default:
-                    throw syntax_exception("Unexpected character inside a class");
+                    throw syntax_exception("Unexpected character inside a class"_u8);
             }
 
             return c;
         }
 
         node_ptr shortcut() {
-            std::set<char>* range;
+            node_ptr tree;
 
             switch (lookahead->type) {
+                case type::T_CLASS: {
+                    auto* class_token = check<lexer::symbol_class_token>(
+                            "Expected token to be a symbol class token instance"_u8);
+
+                    tree = make_ast_from_set(ranges::get_classes_by_name(class_token->class_name));
+                    break;
+                }
                 case type::T_DOT:
-                    range = &ranges::full;
+                    tree = make_ast_from_set(ranges::full);
+                    break;
+                case type::T_VALID_SEQUENCE:
+                    tree = make_ast_from_set(ranges::valid_sequence);
+                    break;
+                case type::T_UNICODE_NEWLINE:
+                    tree = make_ast_from_set(ranges::unicode_newline);
                     break;
                 case type::T_SPACE:
-                    range = &ranges::space;
+                    tree = make_ast_from_set(ranges::space);
                     break;
                 case type::T_NON_SPACE:
-                    range = &ranges::non_space;
+                    tree = make_ast_from_set(ranges::non_space);
+                    break;
+                case type::T_HORIZONTAL_SPACE:
+                    tree = make_ast_from_set(ranges::h_space);
+                    break;
+                case type::T_NON_HORIZONTAL_SPACE:
+                    tree = make_ast_from_set(ranges::non_h_space);
                     break;
                 case type::T_DIGIT:
-                    range = &ranges::digit;
+                    tree = std::make_shared<ast::leaf>(-16);
                     break;
                 case type::T_NON_DIGIT:
-                    range = &ranges::non_digit;
+                    tree = make_ast_from_set(ranges::non_digit);
                     break;
                 case type::T_NON_NEWLINE:
-                    range = &ranges::non_newline;
+                    tree = make_ast_from_set(ranges::non_newline);
                     break;
-                case type::T_NON_VERTICAL_TABULATION:
-                    range = &ranges::non_vertical_tabulation;
+                case type::T_VERTICAL_SPACE:
+                    tree = make_ast_from_set(ranges::v_space);
+                    break;
+                case type::T_NON_VERTICAL_SPACE:
+                    tree = make_ast_from_set(ranges::non_v_space);
                     break;
                 case type::T_WORD_CHAR:
-                    range = &ranges::word_chars;
+                    tree = make_ast_from_set(ranges::word_char);
                     break;
                 case type::T_NON_WORD_CHAR:
-                    range = &ranges::non_word_chars;
+                    tree = make_ast_from_set(ranges::non_word_char);
                     break;
+                default:
+                    throw syntax_exception("Expected token to be shortcut token"_u8);
             }
 
             match(lookahead->type);
 
-            return make_ast_from_set(*range);
+            return tree;
         }
 
         quantifier::quantifier* quantifier() {
@@ -317,7 +339,7 @@ namespace alien::lexer::regex::parser {
                 return numbers(prev);
             }
 
-            throw syntax_exception("Expected token to be a number");
+            throw syntax_exception("Expected token to be a number"_u8);
         }
 
         unsigned int numbers(unsigned int prev) {
@@ -331,19 +353,19 @@ namespace alien::lexer::regex::parser {
             return prev;
         }
 
-        char get_char() {
-            auto* symbol = check<lexer::symbol_token>("Expected token to be a symbol token instance");
+        util::u8char get_char() {
+            auto* symbol = check<lexer::symbol_token>("Expected token to be a symbol token instance"_u8);
 
             return symbol->symbol;
         }
 
         uint8_t get_digit() {
-            auto* digit = check<lexer::number_token>("Expected token to be a number token instance");
+            auto* digit = check<lexer::number_token>("Expected token to be a number token instance"_u8);
 
             return digit->number;
         }
 
-        static node_ptr make_ast_from_set(const std::set<char>& set) {
+        static node_ptr make_ast_from_set(const std::set<util::u8char>& set) {
             if (set.empty()) {
                 return std::make_shared<ast::leaf>(-1);
             }

@@ -2,16 +2,17 @@
 #define ALIEN_REGEX_AST_H
 
 #include <memory>
+#include "util/u8string.h"
 
 namespace alien::lexer::regex::parser::ast {
-
 
     struct node {
         enum class node_type {
             CONCAT,
             STAR,
             OR,
-            LEAF
+            LEAF,
+            NEGATIVE_CLASS
         } type;
 
         virtual ~node() = default;
@@ -46,10 +47,18 @@ namespace alien::lexer::regex::parser::ast {
     };
 
     struct leaf : public node {
-        char symbol;
+         util::u8char symbol;
 
-        explicit leaf(char symbol) : symbol(symbol) {
+        explicit leaf(util::u8char symbol) : symbol(symbol) {
             type = node_type::LEAF;
+        }
+    };
+
+    struct negative_class : public node {
+        std::set<util::u8char> negative_chars;
+
+        explicit negative_class(std::set<util::u8char>&& negative_chars) : negative_chars(std::move(negative_chars)) {
+            type = node_type::NEGATIVE_CLASS;
         }
     };
 }

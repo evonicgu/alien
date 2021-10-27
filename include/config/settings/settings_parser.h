@@ -3,10 +3,11 @@
 
 #include <memory>
 #include <string>
-#include "generalized/generalized_parser.h"
-#include "settings.h"
 #include "config/settings/settings_lexer.h"
 #include "config/settings/settings_token.h"
+#include "generalized/generalized_parser.h"
+#include "settings.h"
+#include "util/u8string.h"
 
 namespace alien::config::settings {
 
@@ -35,7 +36,7 @@ namespace alien::config::settings {
 
                     break;
                 default:
-                    throw syntax_exception("Expected token to be a setting or a definition");
+                    throw syntax_exception("Expected token to be a setting or a definition"_u8);
             }
         }
 
@@ -55,10 +56,10 @@ namespace alien::config::settings {
         void setting() {
             match(type::T_HASHTAG);
 
-            std::string setting_name = dot_identifiers();
+            util::u8string setting_name = dot_identifiers();
 
             if (values.config.find(setting_name) == values.config.end()) {
-                throw unknown_setting_exception("Cannot find setting: " + setting_name);
+                throw unknown_setting_exception("Cannot find setting: "_u8 + setting_name);
             }
 
             match(type::T_EQUALS);
@@ -66,27 +67,28 @@ namespace alien::config::settings {
             set_setting(std::move(setting_name));
         }
 
-        std::string dot_identifiers() {
-            auto* token = check<identifier_token>("Expected token to be an identifier token instance");
+        util::u8string dot_identifiers() {
+            auto* token = check<identifier_token>("Expected token to be an identifier token instance"_u8);
 
-            std::string str = std::move(token->name);
+            util::u8string str = std::move(token->name);
             match(type::T_IDENTIFIER);
 
             if (lookahead->type == type::T_DOT) {
                 match(type::T_DOT);
-                str += '.' + dot_identifiers();
+                str += '.';
+                str += dot_identifiers();
             }
 
             return str;
         }
 
-        void set_setting(std::string&& name) {
+        void set_setting(util::u8string&& name) {
             auto* uncasted_val = values.config[name].get();
 
             switch (lookahead->type) {
                 case type::T_STR: {
-                    auto* str = check<str_token>("Expected token to be a string token instance");
-                    auto* val = check<string_value, value_type_exception>(uncasted_val, "Wrong value type");
+                    auto* str = check<str_token>("Expected token to be a string token instance"_u8);
+                    auto* val = check<string_value, value_type_exception>(uncasted_val, "Wrong value type"_u8);
 
                     val->str = std::move(str->str);
                     match(type::T_STR);
@@ -94,8 +96,8 @@ namespace alien::config::settings {
                     break;
                 }
                 case type::T_IDENTIFIER: {
-                    auto* id = check<identifier_token>("Expected token to be an identifier token instance");
-                    auto* val = check<string_value, value_type_exception>(uncasted_val, "Wrong value type");
+                    auto* id = check<identifier_token>("Expected token to be an identifier token instance"_u8);
+                    auto* val = check<string_value, value_type_exception>(uncasted_val, "Wrong value type"_u8);
 
                     val->str = std::move(id->name);
                     match(type::T_IDENTIFIER);
@@ -103,8 +105,8 @@ namespace alien::config::settings {
                     break;
                 }
                 case type::T_NUMBER: {
-                    auto* number = check<number_token>("Expected token to be a number token instance");
-                    auto* val = check<number_value, value_type_exception>(uncasted_val, "Wrong value type");
+                    auto* number = check<number_token>("Expected token to be a number token instance"_u8);
+                    auto* val = check<number_value, value_type_exception>(uncasted_val, "Wrong value type"_u8);
 
                     val->number = number->number;
                     match(type::T_NUMBER);
@@ -112,8 +114,8 @@ namespace alien::config::settings {
                     break;
                 }
                 case type::T_BOOL: {
-                    auto* bool_val = check<bool_token>("Expected token to be a bool token instance");
-                    auto* val = check<bool_value, value_type_exception>(uncasted_val, "Wrong value type");
+                    auto* bool_val = check<bool_token>("Expected token to be a bool token instance"_u8);
+                    auto* val = check<bool_value, value_type_exception>(uncasted_val, "Wrong value type"_u8);
 
                     val->val = bool_val->value;
                     match(type::T_BOOL);
@@ -121,7 +123,7 @@ namespace alien::config::settings {
                     break;
                 }
                 default:
-                    throw syntax_exception("Unknown value type");
+                    throw syntax_exception("Unknown value type"_u8);
             }
         }
 
@@ -136,9 +138,9 @@ namespace alien::config::settings {
         }
 
         void identifiers() {
-            auto* id = check<identifier_token>("Expected token to be an identifier token instance");
+            auto* id = check<identifier_token>("Expected token to be an identifier token instance"_u8);
 
-            auto it = values.symbols.insert({id->name, ""});
+            auto it = values.symbols.insert({id->name, {}});
             match(type::T_IDENTIFIER);
 
             switch (lookahead->type) {
@@ -148,7 +150,7 @@ namespace alien::config::settings {
                     break;
                 case type::T_EQUALS: {
                     match(type::T_EQUALS);
-                    auto *stype = check<identifier_token>("Expected stype to be an identifier token instance");
+                    auto *stype = check<identifier_token>("Expected symbol type to be an identifier token instance"_u8);
 
                     it.first->second = std::move(stype->name);
                     match(type::T_IDENTIFIER);

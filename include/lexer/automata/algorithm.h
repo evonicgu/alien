@@ -4,10 +4,14 @@
 #include <algorithm>
 #include <queue>
 #include <memory>
+#include <set>
 #include <stack>
+#include <utility>
+#include <vector>
 #include "automata.h"
 #include "generalized/generalized exception.h"
 #include "lexer/regex/ast.h"
+#include "lexer/regex/ranges_classes.h"
 #include "util/util.h"
 
 namespace alien::automata::algorithm {
@@ -19,6 +23,7 @@ namespace alien::automata::algorithm {
             static constexpr const char node_type_exception_str[] = "Wrong node type";
 
             using node_type_exception = alien::generalized::generalized_exception<node_type_exception_str>;
+
         }
 
         using namespace lexer::regex::parser::ast;
@@ -38,7 +43,7 @@ namespace alien::automata::algorithm {
             return casted;
         }
 
-        std::pair<simple_nfa, std::set<char>> traverse(const std::shared_ptr<node>& tree, int rule_number) {
+        std::pair<simple_nfa, std::set<util::u8char>> traverse(const std::shared_ptr<node>& tree, int rule_number) {
             switch (tree->type) {
                 case node::node_type::CONCAT: {
                     auto* n = check<concat_node>(tree);
@@ -49,7 +54,7 @@ namespace alien::automata::algorithm {
                     nfa1.last->accepting = false;
                     nfa1.last->transitions = nfa2.first->transitions;
 
-                    std::set<char> new_alphabet;
+                    std::set<util::u8char> new_alphabet;
                     std::merge(lhs.second.begin(), lhs.second.end(),
                                rhs.second.begin(), rhs.second.end(),
                                std::inserter(new_alphabet, new_alphabet.begin()));
@@ -89,7 +94,7 @@ namespace alien::automata::algorithm {
                     nfa1.last->transitions[-1] = {last};
                     nfa2.last->transitions[-1] = {last};
 
-                    std::set<char> new_alphabet;
+                    std::set<util::u8char> new_alphabet;
                     std::merge(lhs.second.begin(), lhs.second.end(),
                                rhs.second.begin(), rhs.second.end(),
                                std::inserter(new_alphabet, new_alphabet.begin()));
@@ -107,10 +112,33 @@ namespace alien::automata::algorithm {
 
                     return {{first, last}, {n->symbol}};
                 }
+                case node::node_type::NEGATIVE_CLASS: {
+                    auto *n = check<negative_class>(tree);
+                    std::set<util::u8char> alphabet;
+
+                    nfa::state_ptr first = std::make_shared<nfa::state>(), last = std::make_shared<nfa::state>();
+
+                    for (util::u8char i = -33; i <= -3; ++i) {
+                        alphabet.insert(alphabet.end(), i);
+                        first->transitions[i] = {last};
+                    }
+
+                    for (util::u8char c : n->negative_chars) {
+                        alphabet.insert(alphabet.end(), c);
+                        first->transitions[c] = {nullptr};
+                    }
+
+                    first->rule_number = rule_number;
+                    last->accepting = true;
+                    last->rule_number = rule_number;
+
+                    return {{first, last},{alphabet}};
+                }
             }
         }
 
-        std::pair<nfa::state_ptr, std::set<char>> nfa_from_tree(const std::shared_ptr<node>& tree, int rule_number) {
+        std::pair<nfa::state_ptr, std::set<util::u8char>> nfa_from_tree(const std::shared_ptr<node>& tree,
+                                                                        int rule_number) {
             auto result = traverse(tree, rule_number);
 
             return {result.first.first, result.second};
@@ -208,6 +236,11 @@ namespace alien::automata::algorithm {
             while (!q.empty()) {
                 auto& qf = q.front();
 
+                if (qf == nullptr) {
+                    q.pop();
+                    continue;
+                }
+
                 if (qf->transitions.find(-1) != qf->transitions.end()) {
                     for (const auto& closure_state : qf->transitions[-1]) {
                         if (closure_states.find(closure_state) == closure_states.end()) {
@@ -245,10 +278,14 @@ namespace alien::automata::algorithm {
             return closure_states;
         }
 
-        dfa::nfa_set move(const dfa::nfa_set& states, char c) {
+        dfa::nfa_set move(const dfa::nfa_set& states, util::u8char c) {
             dfa::nfa_set reached_states;
 
             for (const auto& state : states) {
+                if (state == nullptr) {
+                    continue;
+                }
+
                 if (state->transitions.find(c) != state->transitions.end()) {
                     for (const auto& reached_state : state->transitions[c]) {
                         reached_states.insert(reached_state);
@@ -259,8 +296,30 @@ namespace alien::automata::algorithm {
             return reached_states;
         }
 
+        dfa::nfa_set cmove(const dfa::nfa_set& states, util::u8char req_char, util::u8char avoid_char) {
+            dfa::nfa_set reached_states;
+
+            for (const auto& state : states) {
+                if (state == nullptr || state->transitions.find(avoid_char) != state->transitions.end()) {
+                    continue;
+                }
+
+                if (state->transitions.find(req_char) != state->transitions.end()) {
+                    for (const auto& reached_state : state->transitions[req_char]) {
+                        reached_states.insert(reached_state);
+                    }
+                }
+            }
+
+            return reached_states;
+        }
+
         void set_accepting(dfa::state& state) {
             for (const auto& nfa_state : state.nfa_states) {
+                if (nfa_state == nullptr) {
+                    continue;
+                }
+
                 if (nfa_state->accepting) {
                     state.accepting = true;
                     state.rule_number = nfa_state->rule_number;
@@ -280,27 +339,53 @@ namespace alien::automata::algorithm {
             return state;
         }
 
-        dfa::dfa convert_nfa2dfa(const nfa::state_ptr& state, const std::set<char>& alphabet) {
+        dfa::dfa convert_nfa2dfa(const nfa::state_ptr& state, const std::set<util::u8char>& alphabet) {
             dfa::dfa automata;
-            automata.start_state = 0;
+            automata.start_state = 1;
+            util::vecset<dfa::state> states({{}, make_state(closure(state))});
 
-            util::vecset<dfa::state> states{{make_state(closure(state))}};
+            static const dfa::nfa_set null_state = {nullptr};
 
-            for (unsigned int i = 0; i < states.size(); ++i) {
+            for (unsigned int i = 1; i < states.size(); ++i) {
                 if (states[i].accepting) {
                     automata.fstates.push_back(i);
                     automata.rulemap[states[i].rule_number].push_back(i);
                 }
 
-                for (char c : alphabet) {
+                std::array<bool, 31> classes{};
+                classes.fill(false);
+
+                for (util::u8char c : alphabet) {
                     dfa::state new_state = make_state(closure(move(states[i].nfa_states, c)));
 
                     if (new_state.nfa_states.empty()) {
                         continue;
                     }
 
+                    if (c < 0) {
+                        classes[c + sizeof classes + 2] = true;
+                    } else {
+                        int c_class = lexer::regex::ranges::get_class(c);
+                        if (classes[c_class + sizeof classes + 2]) {
+                            dfa::nfa_set class_states = closure(cmove(states[i].nfa_states, c_class, c)), all_states;
+                            std::merge(class_states.begin(), class_states.end(),
+                                       new_state.nfa_states.begin(), new_state.nfa_states.end(),
+                                       std::inserter(all_states, all_states.begin()));
+
+                            new_state.nfa_states = std::move(all_states);
+                            set_accepting(new_state);
+                        }
+                    }
+
+                    if (new_state.nfa_states == null_state) {
+                        states[i].out_transitions.push_back(automata.transitions.size());
+                        states[0].in_transitions.push_back(automata.transitions.size());
+                        automata.transitions.push_back({i, 0, c});
+                        continue;
+                    }
+
                     auto it = states.find(new_state);
-                    unsigned int to, transition = automata.transitions++;
+                    unsigned int to, transition = automata.transitions.size();
                     states[i].out_transitions.push_back(transition);
 
                     if (it != states.vend()) {
@@ -312,60 +397,57 @@ namespace alien::automata::algorithm {
                     }
 
                     states[to].in_transitions.push_back(transition);
-
-                    automata.tails.push_back(i);
-                    automata.labels.push_back(c);
-                    automata.heads.push_back(to);
+                    automata.transitions.push_back({i, to, c});
                 }
             }
 
-            automata.states = states;
+            automata.states = (std::vector<dfa::state>) states;
             return automata;
         }
 
-        void sort_transitions(dfa::dfa& automata) {
-            std::array<std::pair<unsigned int, std::vector<unsigned int>>, 128> buffer = {};
-            buffer.fill({0, {}});
-
-            std::vector<char> labels(automata.transitions);
-            std::vector<unsigned int> tails(automata.transitions), heads(automata.transitions);
-
-            for (auto& state : automata.states) {
-                state.in_transitions.clear();
-                state.out_transitions.clear();
-            }
-
-            for (unsigned int i = 0; i < automata.transitions; ++i) {
-                ++buffer[automata.labels[i]].first;
-                buffer[automata.labels[i]].second.push_back(i);
-            }
-
-            for (unsigned int i = 1; i < 128; ++i) {
-                buffer[i].first += buffer[i - 1].first;
-            }
-
-            for (unsigned int i = 0; i < automata.transitions; ++i) {
-                char value = automata.labels[i];
-                unsigned int& index = buffer[value].first;
-
-                labels[index - 1] = value;
-                tails[index - 1] = automata.tails[i];
-                automata.states[automata.tails[i]].out_transitions.push_back(index - 1);
-                heads[index - 1] = automata.heads[i];
-                automata.states[automata.heads[i]].in_transitions.push_back(--index);
-            }
-
-            automata.labels = labels;
-            automata.tails = tails;
-            automata.heads = heads;
-        }
-
-        dfa::dfa minimize(dfa::dfa&& automata, const std::set<char>& alphabet) {
+//        void sort_transitions(dfa::dfa& automata) {
+//            std::array<std::pair<unsigned int, std::vector<unsigned int>>, 128> buffer = {};
+//            buffer.fill({0, {}});
+//
+//            std::vector<char> labels(automata.transitions);
+//            std::vector<unsigned int> tails(automata.transitions), heads(automata.transitions);
+//
+//            for (auto& state : automata.states) {
+//                state.in_transitions.clear();
+//                state.out_transitions.clear();
+//            }
+//
+//            for (unsigned int i = 0; i < automata.transitions; ++i) {
+//                ++buffer[automata.labels[i]].first;
+//                buffer[automata.labels[i]].second.push_back(i);
+//            }
+//
+//            for (unsigned int i = 1; i < 128; ++i) {
+//                buffer[i].first += buffer[i - 1].first;
+//            }
+//
+//            for (unsigned int i = 0; i < automata.transitions; ++i) {
+//                char value = automata.labels[i];
+//                unsigned int& index = buffer[value].first;
+//
+//                labels[index - 1] = value;
+//                tails[index - 1] = automata.tails[i];
+//                automata.states[automata.tails[i]].out_transitions.push_back(index - 1);
+//                heads[index - 1] = automata.heads[i];
+//                automata.states[automata.heads[i]].in_transitions.push_back(--index);
+//            }
+//
+//            automata.labels = labels;
+//            automata.tails = tails;
+//            automata.heads = heads;
+//        }
+//
+        dfa::dfa minimize(dfa::dfa&& automata, const std::set<util::u8char>& alphabet) {
             dfa::dfa min_automata;
-            partition blocks(automata.states.size()), splitters(automata.transitions);
+            partition blocks(automata.states.size()), splitters(automata.transitions.size());
             simple_set unready_splitters, touched_blocks, touched_splitters;
             unready_splitters.push(0);
-            sort_transitions(automata);
+//            sort_transitions(automata);
 
             auto split = [&](unsigned int block) {
                 unsigned int b = blocks.split(block);
@@ -404,17 +486,31 @@ namespace alien::automata::algorithm {
                 }
             };
 
-            char lchar = automata.labels[0];
+            {
+                auto it = automata.transitions.sbegin();
+                util::u8char lchar = automata.transitions[*it].label;
 
-            for (unsigned int i = 0; i < automata.transitions; ++i) {
-                if (lchar != automata.labels[i]) {
-                    splitters.split(0);
-                    unready_splitters.push(unready_splitters.top() + 1);
-                    lchar = automata.labels[i];
+                while (it != automata.transitions.send()) {
+                    if (automata.transitions[*it].label != lchar) {
+                        splitters.split(0);
+                        unready_splitters.push(unready_splitters.top() + 1);
+                        lchar = automata.transitions[*it].label;
+                    }
+
+                    splitters.mark(*it);
+                    ++it;
                 }
-
-                splitters.mark(i);
             }
+//
+//            for (unsigned int i = 0; i < automata.transitions; ++i) {
+//                if (lchar != automata.labels[i]) {
+//                    splitters.split(0);
+//                    unready_splitters.push(unready_splitters.top() + 1);
+//                    lchar = automata.labels[i];
+//                }
+//
+//                splitters.mark(i);
+//            }
 
             splitters.split(0);
 
@@ -431,7 +527,7 @@ namespace alien::automata::algorithm {
                 unready_splitters.pop();
 
                 while (transition != -1) {
-                    unsigned int state = automata.tails[transition], block = blocks.set(state);
+                    unsigned int state = automata.transitions[transition].tail, block = blocks.set(state);
 
                     if (blocks.no_marks(block)) {
                         touched_blocks.push(block);
@@ -450,8 +546,31 @@ namespace alien::automata::algorithm {
             }
 
             min_automata.states.resize(blocks.sets, {{}, {}, {}, false, -1});
-            min_automata.start_state = blocks.set(0);
-            std::set<std::pair<unsigned int, char>> transitions;
+            min_automata.start_state = blocks.set(1);
+//            std::set<std::pair<unsigned int, util::u8char>> transitions;
+//
+//            for (unsigned int fstate : automata.fstates) {
+//                unsigned int m_fstate = blocks.set(fstate);
+//
+//                min_automata.states[m_fstate].accepting = true;
+//                min_automata.states[m_fstate].rule_number = automata.states[fstate].rule_number;
+//            }
+//
+//            for (unsigned int i = 0; i < automata.transitions.size(); ++i) {
+//                unsigned int s_tail = automata.transitions[i].tail, s_head = automata.transitions[i].head;
+//                unsigned int m_tail = blocks.set(s_tail), m_head = blocks.set(s_head);
+//                util::u8char label = automata.transitions[i].label;
+//
+//                if (transitions.find({m_tail, label}) != transitions.end()) {
+//                    continue;
+//                }
+//
+//                transitions.insert({m_tail, label});
+//                min_automata.states[m_tail].out_transitions.push_back(min_automata.transitions++);
+//                min_automata.tails.push_back(m_tail);
+//                min_automata.heads.push_back(m_head);
+//                min_automata.labels.push_back(label);
+//            }
 
             for (unsigned int fstate : automata.fstates) {
                 unsigned int m_fstate = blocks.set(fstate);
@@ -460,20 +579,18 @@ namespace alien::automata::algorithm {
                 min_automata.states[m_fstate].rule_number = automata.states[fstate].rule_number;
             }
 
-            for (unsigned int i = 0; i < automata.transitions; ++i) {
-                unsigned int s_tail = automata.tails[i], s_head = automata.heads[i];
+            for (unsigned int i = 0; i < automata.transitions.size(); ++i) {
+                unsigned int s_tail = automata.transitions[i].tail, s_head = automata.transitions[i].head;
                 unsigned int m_tail = blocks.set(s_tail), m_head = blocks.set(s_head);
-                char label = automata.labels[i];
+                util::u8char label = automata.transitions[i].label;
 
-                if (transitions.find({m_tail, label}) != transitions.end()) {
+                if (min_automata.transitions.find({m_tail, m_head, label}) != min_automata.transitions.vend()) {
                     continue;
                 }
 
-                transitions.insert({m_tail, label});
-                min_automata.states[m_tail].out_transitions.push_back(min_automata.transitions++);
-                min_automata.tails.push_back(m_tail);
-                min_automata.heads.push_back(m_head);
-                min_automata.labels.push_back(label);
+                auto it = min_automata.transitions.push_back({m_tail, m_head, label});
+                min_automata.states[m_tail].out_transitions.push_back(it);
+                min_automata.states[m_head].in_transitions.push_back(it);
             }
 
             return min_automata;

@@ -1,17 +1,19 @@
 #ifndef ALIEN_LEXER_CONFIG_RULES_LEXER_H
 #define ALIEN_LEXER_CONFIG_RULES_LEXER_H
 
-#include <string>
 #include "generalized/generalized_lexer.h"
 #include "generalized/generalized exception.h"
 #include "input/input.h"
 #include "rules_token.h"
+#include "util/u8string.h"
 
 namespace alien::lexer::config::rules::lexer {
 
     static constexpr const char trailing_return_exception_str[] = "Trailing returns are turned off. ";
 
     using base_lexer = generalized::generalized_lexer<token_type>;
+
+    using namespace util::literals;
 
     class lexer : base_lexer {
         bool ret;
@@ -22,7 +24,7 @@ namespace alien::lexer::config::rules::lexer {
         using trailing_return_exception = generalized::generalized_exception<trailing_return_exception_str>;
 
         token* lex() override {
-            char c = i.get();
+            util::u8char c = i.get();
 
             while (isspace(c)) {
                 c = i.get();
@@ -37,18 +39,22 @@ namespace alien::lexer::config::rules::lexer {
                     return new token(token_type::T_END);
                 case '{': {
                     unsigned int fold_level = 0;
-                    bool in_string = false;
+                    bool in_string = false, in_character = false;
 
-                    std::string code;
+                    util::u8string code;
 
                     c = i.get();
 
                     while (c != '}' || in_string || fold_level > 0) {
-                        if (c == '\"') {
+                        if (!in_character && c == '"') {
                             in_string = !in_string;
                         }
 
-                        if (!in_string) {
+                        if (!in_string && c == '\'') {
+                            in_character = !in_character;
+                        }
+
+                        if (!in_string && !in_character) {
                             if (c == '{') {
                                 ++fold_level;
                             }
@@ -74,17 +80,17 @@ namespace alien::lexer::config::rules::lexer {
                     i.get();
 
                     c = i.get();
-                    std::string name = {c};
+                    util::u8string name{c};
 
                     if (!isalpha(c) && c != '_' && c != '$') {
-                        throw lexer_exception("Invalid identifier name");
+                        throw lexer_exception("Invalid identifier name"_u8);
                     }
 
                     c = i.peek();
 
                     while (c != ']') {
                         if (!isalnum(c) && c != '_' && c != '$') {
-                            throw lexer_exception("Invalid identifier name");
+                            throw lexer_exception("Invalid identifier name"_u8);
                         }
 
                         name += i.get();
@@ -95,7 +101,7 @@ namespace alien::lexer::config::rules::lexer {
                     i.get();
 
                     if (!ret) {
-                        throw trailing_return_exception("Change the settings to be able to use them");
+                        throw trailing_return_exception("Change the settings to enable them"_u8);
                     }
 
                     tr_data tr{true, std::move(name)};
@@ -103,7 +109,7 @@ namespace alien::lexer::config::rules::lexer {
                     return new action_token(std::move(code), std::move(tr));
                 }
                 default: {
-                    std::string regex{c};
+                    util::u8string regex{c};
 
                     if (c == '\\') {
                         regex += i.get();
@@ -116,7 +122,7 @@ namespace alien::lexer::config::rules::lexer {
 
                         regex += c;
 
-                        if (regex.size() == 2 && regex == "%%") {
+                        if (regex.size() == 2 && regex == "%%"_u8) {
                             return new token(token_type::T_END);
                         }
 

@@ -1,21 +1,26 @@
 #ifndef ALIEN_REGEX_LEXER_H
 #define ALIEN_REGEX_LEXER_H
 
-#include <string>
 #include "generalized/generalized_lexer.h"
-#include "token.h"
 #include "input/input.h"
+#include "token.h"
+#include "util/u8string.h"
 
 namespace alien::lexer::regex::lexer {
 
     using base_lexer = generalized::generalized_lexer<token_type>;
+    static constexpr char class_name_exception_str[] = "Invalid class string, expected \\pX or \\p{X} or \\p{XX}";
+
+    using namespace util::literals;
 
     class lexer : public base_lexer {
     public:
         explicit lexer(input::input& i) : base_lexer(i) {}
 
+        using class_name_exception = generalized::generalized_exception<class_name_exception_str>;
+
         token* lex() override {
-            char c = i.get();
+            util::u8char c = i.get();
 
             switch (c) {
                 case '*':
@@ -41,9 +46,45 @@ namespace alien::lexer::regex::lexer {
                 case '?':
                     return new token(token_type::T_QUESTION_MARK);
                 case '\\': {
-                    char symbol = i.get();
+                    util::u8char symbol = i.get();
 
                     switch (symbol) {
+                        case 'p': {
+                            util::u8string name;
+                            util::u8char class_c = i.peek();
+
+                            if (class_c == '{') {
+                                i.get();
+
+                                class_c = get_class_char();
+                                name += class_c;
+
+                                if (i.peek() != '}') {
+                                    class_c = get_class_char();
+                                    name += class_c;
+                                }
+
+                                if (i.get() != '}') {
+                                    throw class_name_exception();
+                                }
+                            } else if (isalpha(class_c)) {
+                                class_c = get_class_char();
+
+                                name += class_c;
+                            }else {
+                                throw class_name_exception();
+                            }
+
+                            return new symbol_class_token(std::move(name));
+                        }
+                        case 'h':
+                            return new token(token_type::T_HORIZONTAL_SPACE);
+                        case 'H':
+                            return new token(token_type::T_NON_HORIZONTAL_SPACE);
+                        case 'X':
+                            return new token(token_type::T_VALID_SEQUENCE);
+                        case 'R':
+                            return new token(token_type::T_UNICODE_NEWLINE);
                         case 's':
                             return new token(token_type::T_SPACE);
                         case 'S':
@@ -59,9 +100,9 @@ namespace alien::lexer::regex::lexer {
                         case 't':
                             return new symbol_token('\t');
                         case 'v':
-                            return new symbol_token('\v');
+                            return new token(token_type::T_VERTICAL_SPACE);
                         case 'V':
-                            return new token(token_type::T_NON_VERTICAL_TABULATION);
+                            return new token(token_type::T_NON_VERTICAL_SPACE);
                         case 'w':
                             return new token(token_type::T_WORD_CHAR);
                         case 'W':
@@ -93,6 +134,17 @@ namespace alien::lexer::regex::lexer {
 
                     return new symbol_token(c);
             }
+        }
+
+    private:
+        util::u8char get_class_char() {
+            util::u8char c = i.peek();
+
+            if (!isalpha(c)) {
+                throw class_name_exception();
+            }
+
+            return tolower(i.get());
         }
     };
 

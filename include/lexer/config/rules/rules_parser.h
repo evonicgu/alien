@@ -4,10 +4,13 @@
 #include "generalized/generalized_parser.h"
 #include "rules.h"
 #include "rules_lexer.h"
+#include "util/u8string.h"
 
 namespace alien::lexer::config::rules::parser {
 
     using base_parser = generalized::generalized_parser<lexer::token_type, lexer::lexer>;
+
+    using namespace util::literals;
 
     class parser : base_parser {
         rules& ruleset;
@@ -16,7 +19,7 @@ namespace alien::lexer::config::rules::parser {
         int rule_number = 0;
 
         void init() {
-            ruleset.context_mapping.insert({"initial", 0});
+            ruleset.context_mapping.insert({"initial"_u8, 0});
             ruleset.ruleset.resize(1);
         }
     public:
@@ -39,20 +42,20 @@ namespace alien::lexer::config::rules::parser {
 
                     break;
                 default:
-                    throw syntax_exception("Rule must start with a regular expression");
+                    throw syntax_exception("Rule must start with a regular expression"_u8);
             }
         }
 
     private:
         void rule() {
-            auto* token = check<lexer::regex_token>("Expected token to be a regex token instance");
+            auto* token = check<lexer::regex_token>("Expected token to be a regex token instance"_u8);
             action* action_ptr;
             bool changed_context = false;
 
-            if (token->regex == "<<<EOF>>>") {
+            if (token->regex == "<<<EOF>>>"_u8) {
                 action_ptr = &ruleset.eof_action;
             } else if (is_valid_context(token->regex)) {
-                std::string context = token->regex.substr(1, token->regex.size() - 2);
+                util::u8string context = token->regex.substr(1, token->regex.size() - 2);
 
                 if (ruleset.context_mapping.find(context) != ruleset.context_mapping.end()) {
                     current_context = 0;
@@ -76,7 +79,7 @@ namespace alien::lexer::config::rules::parser {
                 return;
             }
 
-            auto* action = check<lexer::action_token>("Expected token to be action token instance");
+            auto* action = check<lexer::action_token>("Expected token to be action token instance"_u8);
 
             action_ptr->code = std::move(action->code);
 
@@ -89,7 +92,7 @@ namespace alien::lexer::config::rules::parser {
             match(type::T_SEMICOLON);
         }
 
-        static bool is_valid_context(const std::string& context) {
+        static bool is_valid_context(const util::u8string& context) {
             if (context[0] != '<' || context.back() != '>') {
                 return false;
             }

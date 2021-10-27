@@ -10,6 +10,8 @@ namespace alien::generalized {
     static constexpr const char syntax_exception_str[] = "Syntax error. ";
     static constexpr const char token_type_exception_str[] = "Wrong token type. ";
 
+    using namespace util::literals;
+
     template<typename T1, typename T2>
     class generalized_parser {
     protected:
@@ -47,12 +49,12 @@ namespace alien::generalized {
                 return;
             }
 
-            throw syntax_exception("Unexpected token");
+            throw syntax_exception("Unexpected token"_u8);
         }
 
         template<typename To, typename... Args>
         To* check(Args&&... args) {
-            return check<To, token_type_exception, tok, Args...>(lookahead, args...);
+            return check<To, token_type_exception, tok, Args...>(lookahead, std::forward<Args>(args)...);
         }
 
         template<typename To, typename Ex, typename From, typename... Args>
