@@ -1,109 +1,44 @@
 #ifndef ALIEN_LEXER_GENERATOR_H
 #define ALIEN_LEXER_GENERATOR_H
 
-#include <fstream>
 #include <memory>
-#include <string>
 #include "automata/algorithm.h"
 #include "config/rules/rules_parser.h"
-#include "config/settings/settings_parser.h"
-#include "input/input.h"
+#include "generalized/generalized_generator.h"
 #include "regex/parser.h"
 #include "lexer_stubs.h"
-#include "util/u8string.h"
 
 namespace alien::lexer {
+
+    using base_generator = generalized::generalized_generator<config::rules::rules>;
 
     using namespace alien::config::settings;
     using namespace util::literals;
 
-    class generator {
-        std::ifstream stream;
-        std::ofstream output;
-
-        settings configuration = {
-                {
-                        {"generation.token_type"_u8, std::make_shared<string_value>("generalized_token"_u8)},
-                        {"generation.use_macros"_u8, std::make_shared<bool_value>(false)},
-                        {"generation.use_enum_class"_u8, std::make_shared<bool_value>(true)},
-                        {"generation.error_function"_u8, std::make_shared<string_value>("error"_u8)},
-                        {"general.enable_trailing_return"_u8, std::make_shared<bool_value>(true)},
-                },
-        };
-
-        config::rules::rules ruleset;
-
-        util::u8string start_code, end_code;
-
+    class generator : public base_generator {
     public:
-        generator(const std::string& input_file, const std::string& output_file, bool gen_header) {
-            stream = std::ifstream(input_file);
-
-            output = std::ofstream(output_file + (gen_header ? ".h" : ".cpp"));
-        }
-
-        settings generate() {
-            input::stream_input input(stream);
-
-            start_code = scan_start_code(input);
-
-            parse_settings(input);
-
-            parse_rules(input);
-
-            end_code = scan_end_code(input);
-
-            emit();
-
-            return configuration;
-        }
+        generator(const std::string& input_file,
+                  const std::string& output_file,
+                  bool gen_header) : base_generator(input_file, output_file, gen_header) {}
 
     private:
-        static util::u8string scan_start_code(input::stream_input& input) {
-            util::u8char c = input.get();
-
-            util::u8string code;
-
-            while (c != -2) {
-                if (c == '%' && input.peek() == '%') {
-                    input.get();
-                    break;
-                }
-
-                code += c;
-
-                c = input.get();
-            }
-
-            return code;
+        void init_settings() override {
+            configuration = {
+                {
+                    {"generation.token_type"_u8, std::make_shared<string_value>("generalized_token"_u8)},
+                    {"generation.use_macros"_u8, std::make_shared<bool_value>(false)},
+                    {"generation.use_enum_class"_u8, std::make_shared<bool_value>(true)},
+                    {"generation.error_function"_u8, std::make_shared<string_value>("error"_u8)},
+                    {"general.enable_trailing_return"_u8, std::make_shared<bool_value>(true)},
+                },
+            };
         }
 
-        static util::u8string scan_end_code(input::stream_input& input) {
-            util::u8char c = input.get();
-
-            util::u8string code;
-
-            while (c != -2) {
-                code += c;
-
-                c = input.get();
-            }
-
-            return code;
-        }
-
-        void parse_settings(input::stream_input& input) {
-            alien::config::settings::lexer l(input);
-            alien::config::settings::parser p(configuration, l);
-
-            p.parse();
-        }
-
-        void parse_rules(input::stream_input& input) {
+        void parse_rules(input::stream_input& input) override {
             auto* val = check<bool_value>("general.enable_trailing_return"_u8);
 
             config::rules::lexer::lexer l(val->val, input);
-            config::rules::parser::parser p(ruleset, l);
+            config::rules::parser::parser p(ruleset, std::move(l));
 
             p.parse();
 
@@ -112,8 +47,8 @@ namespace alien::lexer {
             }
         }
 
-        void emit() {
-            emit_required_code();
+        void emit_pre_start_code() override {
+            output << required_code;
 
             emit_macros();
 
@@ -121,26 +56,18 @@ namespace alien::lexer {
 
             emit_token_enum();
 
-            emit_possible_error_function();
+            emit_error_function();
+        }
 
-            output << util::u8string_to_bytes(start_code);
-
-            emit_start_lexer();
+        void emit_pre_end_code() override {
+            output << lexer_start;
 
             emit_dfa();
 
             emit_lexer_mid();
 
-            emit_lexer_end();
-
-            output << util::u8string_to_bytes(end_code);
-
-            std::cout << "done";
+            output << lexer_end;
         }
-
-        void emit_required_code() {
-            output << required_code;
-        };
 
         void emit_token_class() {
             auto* val = check<string_value>("generation.token_type"_u8);
@@ -155,7 +82,9 @@ namespace alien::lexer {
             auto* token_type = check<string_value>("generation.token_type"_u8);
 
             if (val->val) {
-                for (const auto& token : configuration.symbols) {
+                for (unsigned int i = 0; i < configuration.symbols.size(); ++i) {
+                    const auto& token = configuration.symbols[i];
+
                     const util::u8string& name = token.first;
 
                     util::u8string macro = "#define _"_u8;
@@ -170,16 +99,14 @@ namespace alien::lexer {
             }
         }
 
-        void emit_start_lexer() {
-            output << lexer_start;
-        }
-
         void emit_token_enum() {
             auto* val = check<bool_value>("generation.use_enum_class"_u8);
 
             output << "enum" << (val->val ? " class " : " ") << "token_type {\n";
 
-            for (const auto& token : configuration.symbols) {
+            for (unsigned int i = 0; i < configuration.symbols.size(); ++i) {
+                const auto& token = configuration.symbols[i];
+
                 const util::u8string& name = token.first;
 
                 output << "    " << util::u8string_to_bytes(name) << ",\n";
@@ -188,7 +115,7 @@ namespace alien::lexer {
             output << "};\n\n";
         }
 
-        void emit_possible_error_function() {
+        void emit_error_function() {
             auto* error_func = check<string_value>("generation.error_function"_u8);
 
             if (error_func->str == "error"_u8) {
@@ -294,21 +221,6 @@ namespace alien::lexer {
             }
 
             output << lex_method_end;
-        }
-
-        void emit_lexer_end() {
-            output << lexer_end;
-        }
-
-        template<typename T>
-        T* check(const util::u8string&& accessor) {
-            auto* casted = dynamic_cast<T*>(configuration.config.at(accessor).get());
-
-            if (casted == nullptr) {
-                throw std::runtime_error("Setting type changed");
-            }
-
-            return casted;
         }
     };
 
