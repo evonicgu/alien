@@ -140,7 +140,7 @@ namespace alien::config::settings {
         void identifiers() {
             auto* id = check<identifier_token>("Expected token to be an identifier token instance"_u8);
 
-            auto it = values.symbols.insert({id->name, {}});
+            unsigned int it = values.symbols.push_back({id->name, {}});
             match(type::T_IDENTIFIER);
 
             switch (lookahead->type) {
@@ -152,7 +152,7 @@ namespace alien::config::settings {
                     match(type::T_EQUALS);
                     auto *stype = check<identifier_token>("Expected symbol type to be an identifier token instance"_u8);
 
-                    it.first->second = std::move(stype->name);
+                    values.symbols[it].second = std::move(stype->name);
                     match(type::T_IDENTIFIER);
                     match(type::T_COMMA);
 

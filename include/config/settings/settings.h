@@ -42,7 +42,7 @@ namespace alien::config::settings {
     struct settings {
         std::map<util::u8string, std::shared_ptr<alien::config::settings::value>> config;
 
-        std::map<util::u8string, util::u8string> symbols;
+        util::vecset<std::pair<util::u8string, util::u8string>> symbols;
     };
 
 }
