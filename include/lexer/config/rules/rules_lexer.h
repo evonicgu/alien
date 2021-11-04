@@ -5,6 +5,7 @@
 #include "generalized/generalized_exception.h"
 #include "input/input.h"
 #include "rules_token.h"
+#include "util/lexing.h"
 #include "util/u8string.h"
 
 namespace alien::lexer::config::rules::lexer {
@@ -38,40 +39,7 @@ namespace alien::lexer::config::rules::lexer {
                 case -2:
                     return new token(token_type::T_END);
                 case '{': {
-                    unsigned int fold_level = 0;
-                    bool in_string = false, in_character = false;
-
-                    util::u8string code;
-
-                    c = i.get();
-
-                    while (c != '}' || in_string || fold_level > 0) {
-                        if (!in_character && c == '"') {
-                            in_string = !in_string;
-                        }
-
-                        if (!in_string && c == '\'') {
-                            in_character = !in_character;
-                        }
-
-                        if (!in_string && !in_character) {
-                            if (c == '{') {
-                                ++fold_level;
-                            }
-
-                            if (c == '}') {
-                                --fold_level;
-                            }
-                        } else if (c == '\\') {
-                            c = i.get();
-
-                            code += '\\';
-                        }
-
-                        code += c;
-
-                        c = i.get();
-                    }
+                    util::u8string code = util::get_code_block(i);
 
                     if (i.peek() != '[') {
                         return new action_token(std::move(code));
@@ -79,23 +47,10 @@ namespace alien::lexer::config::rules::lexer {
 
                     i.get();
 
-                    c = i.get();
-                    util::u8string name{c};
+                    util::u8string name = util::get_identifier<token_type>(i);
 
-                    if (!isalpha(c) && c != '_' && c != '$') {
+                    if (i.peek() != ']') {
                         throw lexer_exception("Invalid identifier name"_u8);
-                    }
-
-                    c = i.peek();
-
-                    while (c != ']') {
-                        if (!isalnum(c) && c != '_' && c != '$') {
-                            throw lexer_exception("Invalid identifier name"_u8);
-                        }
-
-                        name += i.get();
-
-                        c = i.peek();
                     }
 
                     i.get();

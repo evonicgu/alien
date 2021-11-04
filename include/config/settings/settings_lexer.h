@@ -5,6 +5,7 @@
 #include "generalized/generalized_lexer.h"
 #include "input/input.h"
 #include "settings_token.h"
+#include "util/lexing.h"
 
 namespace alien::config::settings {
 
@@ -65,16 +66,8 @@ namespace alien::config::settings {
                 case -2:
                     return new token(token_type::T_END);
                 default: {
-                    if (isalpha(c) || c == '_' || c == '$') {
-                        util::u8string name{c};
-
-                        util::u8char follow = i.peek();
-
-                        while (isalnum(follow) || follow == '_' || follow == '$') {
-                            name += i.get();
-
-                            follow = i.peek();
-                        }
+                    if (util::is_start_identifier_char(c)) {
+                        util::u8string name = util::get_identifier<token_type>(i, c);
 
                         if (name == "true"_u8) {
                             return new bool_token(true);
