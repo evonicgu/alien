@@ -339,8 +339,10 @@ namespace alien::automata::algorithm {
             return state;
         }
 
-        dfa::dfa convert_nfa2dfa(const nfa::state_ptr& state, const std::set<util::u8char>& alphabet) {
+        dfa::dfa convert_nfa2dfa(const nfa::state_ptr& state, const std::set<util::u8char>& alphabet,
+                                 unsigned int rules) {
             dfa::dfa automata;
+            automata.rulemap.resize(rules);
             automata.start_state = 1;
             util::vecset<dfa::state> states(std::set<dfa::state>{{
                 {},

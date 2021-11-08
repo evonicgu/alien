@@ -173,6 +173,7 @@ namespace alien::lexer {
             start_nfa_state->accepting = false;
 
             std::set<util::u8char> A;
+            unsigned int rules = ruleset.ruleset[context].size();
 
             for (auto& rule : ruleset.ruleset[context]) {
                 input::string_input i(std::move(rule.regex));
@@ -194,7 +195,7 @@ namespace alien::lexer {
                 start_nfa_state->transitions[-1].insert(result.first);
             }
 
-            return automata::algorithm::minimize(automata::algorithm::convert_nfa2dfa(start_nfa_state, A), A);
+            return automata::algorithm::minimize(automata::algorithm::convert_nfa2dfa(start_nfa_state, A, rules), A);
         }
 
         void emit_lexer_mid() {
