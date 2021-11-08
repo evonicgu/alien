@@ -1,9 +1,9 @@
 #ifndef ALIEN_AUTOMATA_H
 #define ALIEN_AUTOMATA_H
 
-#include <map>
 #include <memory>
 #include <set>
+#include <unordered_map>
 #include <vector>
 #include "util/util.h"
 
@@ -15,7 +15,7 @@ namespace alien::automata {
         using state_ptr = std::shared_ptr<state>;
 
         struct state {
-            std::map<util::u8char, std::set<state_ptr>> transitions;
+            std::unordered_map<util::u8char, std::set<state_ptr>> transitions;
 
             bool accepting;
 
@@ -96,7 +96,7 @@ namespace alien::automata {
         struct dfa {
             std::vector<state> states;
 
-            std::map<unsigned int, std::vector<unsigned int>> rulemap;
+            std::vector<std::vector<unsigned int>> rulemap;
             std::vector<unsigned int> fstates;
             util::vecset<transition> transitions;
 

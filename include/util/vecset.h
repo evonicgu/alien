@@ -38,12 +38,29 @@ namespace alien::util {
     public:
         vecset() = default;
 
+        explicit vecset(const std::vector<T>& values) {
+            vec.reserve(values.size());
+
+            for (const T& value : values) {
+                vec.push_back(value);
+                set.insert(vec.size() - 1);
+            }
+        }
+
+        explicit vecset(std::vector<T>&& values) {
+            vec.reserve(values.size());
+
+            for (T& value : values) {
+                vec.push_back(std::move(value));
+                set.insert(vec.size() - 1);
+            }
+        }
+
         explicit vecset(const std::set<T>& values) {
             vec.reserve(values.size());
 
             for (const T& value : values) {
                 vec.push_back(value);
-
                 set.insert(set.end(), vec.size() - 1);
             }
         }
@@ -51,8 +68,8 @@ namespace alien::util {
         explicit vecset(std::set<T>&& values) {
             vec.reserve(values.size());
 
-            for (const T& value : values) {
-                vec.push_back(std::move(value));
+            for (auto& value : values) {
+                vec.push_back(std::move(const_cast<T&&>(value)));
                 set.insert(set.end(), vec.size() - 1);
             }
         }

@@ -342,7 +342,10 @@ namespace alien::automata::algorithm {
         dfa::dfa convert_nfa2dfa(const nfa::state_ptr& state, const std::set<util::u8char>& alphabet) {
             dfa::dfa automata;
             automata.start_state = 1;
-            util::vecset<dfa::state> states({{}, make_state(closure(state))});
+            util::vecset<dfa::state> states(std::set<dfa::state>{{
+                {},
+                make_state(closure(state))
+            }});
 
             static const dfa::nfa_set null_state = {nullptr};
 
@@ -515,7 +518,7 @@ namespace alien::automata::algorithm {
             splitters.split(0);
 
             for (const auto& rule_states : automata.rulemap) {
-                for (unsigned int state : rule_states.second) {
+                for (unsigned int state : rule_states) {
                     blocks.mark(state);
                 }
 

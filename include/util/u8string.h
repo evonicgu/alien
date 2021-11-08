@@ -27,7 +27,7 @@ namespace alien::util {
 
     namespace literals {
 
-        u8string operator"" _u8(const char* str, unsigned int size) {
+        u8string operator"" _u8(const char* str, unsigned long long size) {
             return ascii_to_u8string(std::string(str, size));
         }
 
