@@ -44,8 +44,8 @@ namespace alien::generalized {
             return configuration;
         }
 
-    private:
-        static util::u8string scan_start_code(input::stream_input& input) {
+    protected:
+        util::u8string scan_start_code(input::stream_input& input) {
             util::u8char c = input.get();
 
             util::u8string code;
@@ -64,7 +64,7 @@ namespace alien::generalized {
             return code;
         }
 
-        static util::u8string scan_end_code(input::stream_input& input) {
+        util::u8string scan_end_code(input::stream_input& input) {
             util::u8char c = input.get();
 
             util::u8string code;
@@ -78,7 +78,7 @@ namespace alien::generalized {
             return code;
         }
 
-        void parse_settings(input::stream_input& input) {
+        virtual void parse_settings(input::stream_input& input) {
             config::settings::lexer l(input);
             config::settings::parser p(configuration, l);
 
