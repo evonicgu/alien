@@ -17,7 +17,8 @@ namespace alien::config::settings {
         T_NUMBER,
         T_STR,
         T_END,
-        T_BOOL
+        T_BOOL,
+        T_ID_SPECIFIER
     };
 
     using base_token = generalized::generalized_token<token_type>;
@@ -42,6 +43,18 @@ namespace alien::config::settings {
         explicit str_token(const util::u8string& str) : str(str), base_token(token_type::T_STR) {}
 
         explicit str_token(util::u8string&& str) : str(std::move(str)), base_token(token_type::T_STR) {}
+    };
+
+    struct id_specifier_token : public base_token {
+        // only ASCII allowed because of std::regex limitations
+        std::string str;
+        int value;
+
+        id_specifier_token(const std::string& str, int value) : str(str), value(value),
+                                                                base_token(token_type::T_ID_SPECIFIER) {}
+
+        id_specifier_token(std::string&& str, int value) : str(std::move(str)), value(value),
+                                                           base_token(token_type::T_ID_SPECIFIER) {}
     };
 
     struct bool_token : public base_token {

@@ -11,8 +11,9 @@
 
 namespace alien::config::settings {
 
-    static constexpr const char value_type_exception_str[] = "Wrong value type. ";
-    static constexpr const char unknown_setting_exception_str[] = "Unknown setting specified. ";
+    static constexpr const char value_type_exception_str[] = "Wrong value type. ",
+        unknown_setting_exception_str[] = "Unknown setting specified. ",
+        symbol_redefinition_exception_str[] = "Symbol redefinition. ";
 
     using base_parser = generalized::generalized_parser<token_type, alien::config::settings::lexer>;
 
@@ -42,6 +43,7 @@ namespace alien::config::settings {
 
         using value_type_exception = generalized::generalized_exception<value_type_exception_str>;
         using unknown_setting_exception = generalized::generalized_exception<unknown_setting_exception_str>;
+        using symbol_redefinition_exception = generalized::generalized_exception<symbol_redefinition_exception_str>;
 
     private:
         void setting_or_definition() {
@@ -140,8 +142,23 @@ namespace alien::config::settings {
         void identifiers() {
             auto* id = check<identifier_token>("Expected token to be an identifier token instance"_u8);
 
-            unsigned int it = values.symbols.push_back({id->name, {}});
+            auto it = values.symbols.find({id->name, {}, {}});
+
+            if (it != values.symbols.vend()) {
+                throw symbol_redefinition_exception("Cannot redefine symbol "_u8 + id->name);
+            }
+
+            unsigned int index = values.symbols.push_back({std::move(id->name), {}, {}});
+
             match(type::T_IDENTIFIER);
+
+            while (lookahead->type == type::T_ID_SPECIFIER) {
+                auto* specifier = check<id_specifier_token>("Expected specifier to be a specifier token instance"_u8);
+
+                values.symbols[index].specifiers[std::move(specifier->str)] = specifier->value;
+
+                match(type::T_ID_SPECIFIER);
+            }
 
             switch (lookahead->type) {
                 case type::T_COMMA:
@@ -150,13 +167,16 @@ namespace alien::config::settings {
                     break;
                 case type::T_EQUALS: {
                     match(type::T_EQUALS);
-                    auto *stype = check<identifier_token>("Expected symbol type to be an identifier token instance"_u8);
+                    auto* stype = check<identifier_token>("Expected symbol type to be an identifier token instance"_u8);
 
-                    values.symbols[it].second = std::move(stype->name);
+                    values.symbols[index].code_type = std::move(stype->name);
                     match(type::T_IDENTIFIER);
-                    match(type::T_COMMA);
 
-                    identifiers();
+                    if (lookahead->type == type::T_COMMA) {
+                        match(type::T_COMMA);
+
+                        identifiers();
+                    }
                     break;
                 }
             }

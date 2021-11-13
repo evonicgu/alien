@@ -37,13 +37,51 @@ namespace alien::config::settings {
                     return new token(token_type::T_EQUALS);
                 case ',':
                     return new token(token_type::T_COMMA);
-                case '%':
+                case '%': {
                     if (i.peek() == '%') {
                         i.get();
                         return new token(token_type::T_END);
                     }
 
-                    throw lexer_exception("Unexpected character"_u8);
+                    c = i.peek();
+
+                    if (!util::is_start_identifier_char(c)) {
+                        throw lexer_exception("Specifier name must be a valid identifier"_u8);
+                    }
+
+                    std::string name;
+                    name.reserve(32);
+
+                    int value = -1;
+
+                    while (util::is_continuation_identifier_char(c)) {
+                        c = i.get();
+
+                        name += (char) c;
+                        c = i.peek();
+                    }
+
+                    if (c == ':') {
+                        i.get();
+                        c = i.peek();
+
+                        if (!isdigit(c)) {
+                            throw lexer_exception("Specifier value must be an integer"_u8);
+                        }
+
+                        value = 0;
+
+                        while (isdigit(c)) {
+                            c = i.get();
+
+                            value = value * 10 + (c - '0');
+
+                            c = i.peek();
+                        }
+                    }
+
+                    return new id_specifier_token(std::move(name), value);
+                }
                 case '\"': {
                     util::u8string str;
 

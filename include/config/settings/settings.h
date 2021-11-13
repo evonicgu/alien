@@ -39,10 +39,20 @@ namespace alien::config::settings {
         explicit bool_value(bool val) : val(val), value(value_type::BOOL) {}
     };
 
+    struct symbol {
+        util::u8string name, code_type;
+
+        std::map<std::string, int> specifiers;
+
+        bool operator<(const symbol& other) const {
+            return name < other.name;
+        }
+    };
+
     struct settings {
         std::map<util::u8string, std::shared_ptr<alien::config::settings::value>> config;
 
-        util::vecset<std::pair<util::u8string, util::u8string>> symbols;
+        util::vecset<symbol> symbols;
     };
 
 }
