@@ -242,6 +242,11 @@ namespace alien::util {
             return *this;
         }
 
+        void clear() {
+            vec.clear();
+            set.clear();
+        }
+
         explicit operator std::set<T>() {
             std::set<T> out;
 
