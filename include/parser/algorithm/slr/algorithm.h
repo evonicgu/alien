@@ -1,15 +1,15 @@
 #ifndef ALIEN_PARSER_SLR_ALGORITHM_H
 #define ALIEN_PARSER_SLR_ALGORITHM_H
 
-#include <utility>
 #include <set>
+#include <utility>
 #include "parser/algorithm/algorithm.h"
 #include "parser/config/rules/rules.h"
 #include "util/vecset.h"
 
 namespace alien::parser::algorithm::slr {
 
-    using item = std::tuple<int, int, int>;
+    using item = std::tuple<unsigned int, unsigned int, unsigned int>;
 
     using namespace config::rules;
 
@@ -21,21 +21,21 @@ namespace alien::parser::algorithm::slr {
         util::vecset<item> closure{items};
 
         for (unsigned int i = 0; i < closure.size(); ++i) {
-            const production& prod = grammar.ruleset[std::get<0>(closure[i])][std::get<1>(closure[i])];
+            const production& prod = grammar.ruleset.at(std::get<0>(closure[i]))[std::get<1>(closure[i])];
 
-            int pos = std::get<2>(closure[i]), symbol;
+            unsigned int pos = std::get<2>(closure[i]), symbol;
 
-            if (pos >= prod.first.size()) {
+            if (pos >= prod.symbols.size()) {
                 continue;
             }
 
-            symbol = prod.first[pos];
+            symbol = prod.symbols[pos];
 
             if (symbols[symbol].type == grammar_symbol::symbol_type::TERMINAL) {
                 continue;
             }
 
-            for (unsigned int j = 0; j < grammar.ruleset[symbol].size(); ++j) {
+            for (unsigned int j = 0; j < grammar.ruleset.at(symbol).size(); ++j) {
                 closure.push_back({symbol, j, 0});
             }
         }
@@ -47,11 +47,11 @@ namespace alien::parser::algorithm::slr {
         std::vector<item> moved;
 
         for (const item& it : items) {
-            const production& prod = grammar.ruleset[std::get<0>(it)][std::get<1>(it)];
+            const production& prod = grammar.ruleset.at(std::get<0>(it))[std::get<1>(it)];
 
-            int pos = std::get<2>(it);
+            unsigned int pos = std::get<2>(it);
 
-            if (pos < prod.first.size() && prod.first[pos] == symbol) {
+            if (pos < prod.symbols.size() && prod.symbols[pos] == symbol) {
                 moved.push_back({std::get<0>(it), std::get<1>(it), pos + 1});
             }
         }
@@ -71,27 +71,28 @@ namespace alien::parser::algorithm::slr {
         for (unsigned int i = 0; i < states.size(); ++i) {
             if (i > 0) {
                 for (const auto& it : states[i]) {
-                    const production& prod = grammar.ruleset[std::get<0>(it)][std::get<1>(it)];
+                    const production& prod = grammar.ruleset.at(std::get<0>(it))[std::get<1>(it)];
 
-                    if (std::get<2>(it) < prod.first.size()) {
+                    if (std::get<2>(it) < prod.symbols.size()) {
                         continue;
                     }
 
                     parsing_action action{
-                        .arg = (unsigned int) prod.first.size()
+                        .arg1 = std::get<0>(it),
+                        .arg2 = std::get<1>(it)
                     };
 
                     if (std::get<0>(it) == grammar.start) {
                         action.type = parsing_action::action_type::ACCEPT;
 
-                        insert(table, i, -2, action, "Invalid SLR grammar"_u8);
+                        insert(table, i, -2, action, symbols, grammar);
                         continue;
                     }
 
                     action.type = parsing_action::action_type::REDUCE;
 
-                    for (int j : follow[std::get<0>(it)]) {
-                        insert(table, i, j, action, "Invalid SLR grammar"_u8);
+                    for (int symbol : follow[std::get<0>(it)]) {
+                        insert(table, i, symbol, action, symbols, grammar);
                     }
                 }
             }
@@ -109,7 +110,7 @@ namespace alien::parser::algorithm::slr {
                     table.emplace_back();
                 }
 
-                insert(table, i, (int) j, {parsing_action::action_type::SHIFT, to_state}, "Invalid SLR grammar"_u8);
+                insert(table, i, (int) j, {parsing_action::action_type::SHIFT, to_state}, symbols, grammar);
             }
         }
 

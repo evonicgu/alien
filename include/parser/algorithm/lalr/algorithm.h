@@ -75,9 +75,9 @@ namespace alien::parser::algorithm::lalr {
                 for (auto& it : closure) {
                     auto [crule, cprod, cpos, clookahead] = it;
 
-                    const production& item_prod = grammar.ruleset[crule][cprod];
+                    const production& item_prod = grammar.ruleset.at(crule)[cprod];
 
-                    if (cpos >= item_prod.first.size() || item_prod.first[cpos] != j) {
+                    if (cpos >= item_prod.symbols.size() || item_prod.symbols[cpos] != j) {
                         continue;
                     }
 
@@ -134,28 +134,30 @@ namespace alien::parser::algorithm::lalr {
             for (unsigned int j = 0; j < items[i].size(); ++j) {
                 auto [rule, prod, pos, lookahead] = items[i][j];
 
-                const production& item_prod = grammar.ruleset[rule][prod];
+                const production& item_prod = grammar.ruleset.at(rule)[prod];
 
                 parsing_action action{};
                 int symbol;
 
-                if (pos == item_prod.first.size()) {
+                if (pos == item_prod.symbols.size()) {
                     symbol = lookahead;
+
+                    action.arg1 = rule;
+                    action.arg2 = prod;
 
                     if (rule == 0) {
                         action.type = parsing_action::action_type::ACCEPT;
                     } else {
                         action.type = parsing_action::action_type::REDUCE;
-                        action.arg = (unsigned int) item_prod.first.size();
                     }
                 } else {
-                    symbol = item_prod.first[pos];
+                    symbol = item_prod.symbols[pos];
 
                     action.type = parsing_action::action_type::SHIFT;
-                    action.arg = mapping[i][symbol];
+                    action.arg1 = mapping[i][symbol];
                 }
 
-                insert(table, i, symbol, action, "Invalid LALR grammar"_u8);
+                insert(table, i, symbol, action, symbols, grammar);
             }
         }
 

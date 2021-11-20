@@ -15,6 +15,8 @@ namespace alien::parser::config::rules {
             TERMINAL,
         } type;
 
+        int prec = -1, assoc = -1;
+
         bool operator<(const grammar_symbol& other) const {
             if (type == other.type) {
                 return name < other.name;
@@ -25,11 +27,20 @@ namespace alien::parser::config::rules {
     };
 
     using alphabet = util::vecset<grammar_symbol>;
-    using production = std::pair<std::vector<int>, util::u8string>;
+
+    struct production {
+        std::vector<int> symbols;
+        util::u8string code;
+
+        int prec = -1, assoc = -1;
+
+        bool given = false, has_action = false;
+    };
+
     using nonterminal = std::vector<production>;
 
     struct rules {
-        std::vector<nonterminal> ruleset;
+        std::unordered_map<unsigned int, nonterminal> ruleset;
 
         unsigned int start;
     };

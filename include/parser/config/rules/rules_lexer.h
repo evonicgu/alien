@@ -33,12 +33,57 @@ namespace alien::parser::config::rules::lexer {
                     return new token(token_type::T_OR);
                 case -2:
                     return new token(token_type::T_END);
-                case '%':
+                case '%': {
                     if (i.peek() == '%') {
                         i.get();
                         return new token(token_type::T_END);
                     }
-                    return new terminal_token(util::get_identifier<token_type>(i));
+
+                    auto str = util::get_identifier<token_type>(i);
+
+                    if (str == "prec"_u8 || str == "assoc"_u8) {
+                        c = i.get();
+
+                        if (c != ':') {
+                            throw lexer_exception("Expected semicolon after precedence declaration"_u8);
+                        }
+
+                        c = i.peek();
+                        int value = 0;
+
+                        if (!isdigit(c)) {
+                            throw lexer_exception("Precedence must be an integer"_u8);
+                        }
+
+                        while (isdigit(c)) {
+                            i.get();
+
+                            value = value * 10 + (c - '0');
+
+                            c = i.peek();
+                        }
+
+                        using spec_type = spec_declaration_token::spec_type;
+
+                        return new spec_declaration_token(value, str == "prec"_u8 ? spec_type::PREC : spec_type::ASSOC);
+                    } else {
+                        return new terminal_token(std::move(str));
+                    }
+                }
+                case '<': {
+                    util::u8string code_type = util::get_identifier<token_type>(i);
+
+                    if (i.get() != '>') {
+                        throw lexer_exception("Expected '>' after midrule type declaration"_u8);
+                    }
+
+                    if (i.get() != '{') {
+                        throw lexer_exception("Expected code block to start with '{'"_u8);
+                    }
+
+                    //
+                    return new midrule_token(util::get_code_block(i), std::move(code_type));
+                }
                 case '{':
                     return new code_token(util::get_code_block(i));
                 default:

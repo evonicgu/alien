@@ -22,6 +22,7 @@ namespace alien::parser::config::rules::parser {
 
         settings lexer_settings, parser_settings;
 
+        unsigned int auxiliary_rules = 0;
         alphabet symbols;
 
         void init_alphabet() {
@@ -38,13 +39,13 @@ namespace alien::parser::config::rules::parser {
             for (unsigned int i = 0; i < parser_settings.symbols.size(); ++i) {
                 grammar_symbol tmp;
 
-                tmp.name = std::move(parser_settings.symbols[i].first);
-                tmp.code_type = std::move(parser_settings.symbols[i].second);
+                tmp.name = std::move(parser_settings.symbols[i].name);
+                tmp.code_type = std::move(parser_settings.symbols[i].code_type);
                 tmp.type = grammar_symbol::symbol_type::NON_TERMINAL;
 
-                unsigned int it = symbols.push_back(tmp);
+                unsigned int it = symbols.push_back(std::move(tmp));
 
-                if (tmp.name == start_name->str) {
+                if (symbols[it].name == start_name->str) {
                     found_start = true;
                     ruleset.start = it;
                 }
@@ -54,19 +55,37 @@ namespace alien::parser::config::rules::parser {
                 throw invalid_grammar_exception("Unknown start symbol: "_u8 + start_name->str);
             }
 
-            ruleset.ruleset.resize(symbols.size());
-
             ruleset.ruleset[0].push_back({{(int) ruleset.start}, {}});
             ruleset.start = 0;
 
             for (unsigned int i = 0; i < lexer_settings.symbols.size(); ++i) {
                 grammar_symbol tmp;
 
-                tmp.name = std::move(lexer_settings.symbols[i].first);
-                tmp.code_type = std::move(lexer_settings.symbols[i].second);
+                tmp.name = std::move(lexer_settings.symbols[i].name);
+                tmp.code_type = std::move(lexer_settings.symbols[i].code_type);
                 tmp.type = grammar_symbol::symbol_type::TERMINAL;
 
-                symbols.push_back(tmp);
+                set_specifiers(tmp, i);
+
+                symbols.push_back(std::move(tmp));
+            }
+        }
+
+        void set_specifiers(grammar_symbol& symbol, unsigned int index) {
+            const auto& specifiers = lexer_settings.symbols[index].specifiers;
+
+            int &prec = symbol.prec, &assoc = symbol.assoc;
+
+            auto it = specifiers.find("prec");
+
+            if (it != specifiers.end()) {
+                prec = it->second;
+            }
+
+            it = specifiers.find("assoc");
+
+            if (it != specifiers.end() && it->second < 2 && it->second >= 0) {
+                assoc = it->second;
             }
         }
 
@@ -122,25 +141,30 @@ namespace alien::parser::config::rules::parser {
             match(type::T_IDENTIFIER);
             match(type::T_COLON);
 
-            productions(ruleset.ruleset[it - symbols.vbegin()]);
+            productions(it - symbols.vbegin());
 
             match(type::T_SEMICOLON);
         }
 
-        void productions(nonterminal& rule) {
-            prod(rule);
+        void productions(unsigned int rule_index) {
+            prod(rule_index);
 
             if (lookahead->type == type::T_OR) {
                 match(type::T_OR);
-                productions(rule);
+                productions(rule_index);
             }
         }
 
-        void prod(nonterminal& rule) {
-            rule.push_back({});
-            production& rule_production = rule.back();
+        inline bool checkLookahead() {
+            return lookahead->type != type::T_OR && lookahead->type != type::T_SEMICOLON &&
+                                                                                lookahead->type != type::T_CODE_BLOCK;
+        }
 
-            while (lookahead->type != type::T_OR && lookahead->type != type::T_SEMICOLON) {
+        void prod(unsigned int rule_index) {
+            ruleset.ruleset[rule_index].push_back({});
+            production& rule_production = ruleset.ruleset[rule_index].back();
+
+            while (checkLookahead()) {
                 grammar_symbol symbol;
 
                 switch (lookahead->type) {
@@ -158,9 +182,58 @@ namespace alien::parser::config::rules::parser {
                         symbol.name = std::move(token->name);
                         break;
                     }
-                    case type::T_CODE_BLOCK:
-                        // TODO: creation of code blocks, and probably middle-rule productions
+                    case type::T_SPEC: {
+                        if (!rule_production.given) {
+                            rule_production.prec = -1;
+                            rule_production.assoc = -1;
+                        }
+
+                        auto* token = check<lexer::spec_declaration_token>();
+
+                        if (token->type == lexer::spec_declaration_token::spec_type::PREC) {
+                            rule_production.prec = token->value;
+                        } else {
+                            rule_production.assoc = token->value;
+                        }
+
+                        rule_production.given = true;
+                        match(lookahead->type);
+                        continue;
+                    }
+                    case type::T_MIDRULE_BLOCK: {
+                        auto* token = check<lexer::midrule_token>();
+
+                        util::u8string name;
+                        name.reserve(8);
+                        name = {'@', 'e', 'r', '$'};
+
+                        unsigned int number = auxiliary_rules++;
+                        std::stack<int> digits;
+
+                        while (number != 0) {
+                            digits.push(number % 10);
+
+                            number /= 10;
+                        }
+
+                        while (!digits.empty()) {
+                            name.push_back(digits.top());
+                            digits.pop();
+                        }
+
+                        grammar_symbol tmp{
+                            std::move(name),
+                            std::move(token->t),
+                            grammar_symbol::symbol_type::NON_TERMINAL
+                        };
+
+                        unsigned int it = symbols.push_back(std::move(tmp));
+
+                        ruleset.ruleset[it].push_back({{}, std::move(token->code)});
+                        symbol.name = symbols[it].name;
+                        symbol.type = grammar_symbol::symbol_type::NON_TERMINAL;
                         break;
+                    }
                     default:
                         throw syntax_exception("Invalid production body"_u8);
                 }
@@ -173,7 +246,23 @@ namespace alien::parser::config::rules::parser {
                     throw invalid_grammar_exception("Undefined grammar symbol: "_u8 + symbol.name);
                 }
 
-                rule_production.first.push_back(it - symbols.vbegin());
+                unsigned int index = it - symbols.vbegin();
+
+                if (it->type == grammar_symbol::symbol_type::TERMINAL && !rule_production.given) {
+                    rule_production.prec = symbols[index].prec;
+                    rule_production.assoc = symbols[index].assoc;
+                }
+
+                rule_production.symbols.push_back(index);
+            }
+
+            if (lookahead->type == type::T_CODE_BLOCK) {
+                auto* token = check<lexer::code_token>();
+
+                rule_production.has_action = true;
+                rule_production.code = std::move(token->code);
+
+                match(type::T_CODE_BLOCK);
             }
         }
     };

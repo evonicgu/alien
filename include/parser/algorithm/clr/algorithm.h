@@ -9,7 +9,7 @@
 
 namespace alien::parser::algorithm::clr {
 
-    using item = std::tuple<int, int, int, int>;
+    using item = std::tuple<unsigned int, unsigned int, unsigned int, int>;
 
     using namespace config::rules;
 
@@ -18,28 +18,28 @@ namespace alien::parser::algorithm::clr {
         util::vecset<item> closure{items};
 
         for (unsigned int i = 0; i < closure.size(); ++i) {
-            const production& prod = grammar.ruleset[std::get<0>(closure[i])][std::get<1>(closure[i])];
+            const production& prod = grammar.ruleset.at(std::get<0>(closure[i]))[std::get<1>(closure[i])];
 
-            int pos = std::get<2>(closure[i]), symbol;
+            unsigned int pos = std::get<2>(closure[i]), symbol;
 
-            if (pos >= prod.first.size()) {
+            if (pos >= prod.symbols.size()) {
                 continue;
             }
 
-            symbol = prod.first[pos];
+            symbol = prod.symbols[pos];
 
             if (symbols[symbol].type == grammar_symbol::symbol_type::TERMINAL) {
                 continue;
             }
 
-            std::vector<int> str{prod.first.begin() + pos + 1, prod.first.end()};
+            std::vector<int> str{prod.symbols.begin() + pos + 1, prod.symbols.end()};
             str.push_back(std::get<3>(closure[i]));
 
             std::set<int> next_first;
 
             next_first = get_first(str, grammar, symbols, first);
 
-            for (unsigned int j = 0; j < grammar.ruleset[symbol].size(); ++j) {
+            for (unsigned int j = 0; j < grammar.ruleset.at(symbol).size(); ++j) {
                 for (int id : next_first) {
                     closure.push_back({symbol, j, 0, id});
                 }
@@ -53,11 +53,11 @@ namespace alien::parser::algorithm::clr {
         std::vector<item> moved;
 
         for (const item& it : items) {
-            const production& prod = grammar.ruleset[std::get<0>(it)][std::get<1>(it)];
+            const production& prod = grammar.ruleset.at(std::get<0>(it))[std::get<1>(it)];
 
-            int pos = std::get<2>(it);
+            unsigned int pos = std::get<2>(it);
 
-            if (pos < prod.first.size() && prod.first[pos] == symbol) {
+            if (pos < prod.symbols.size() && prod.symbols[pos] == symbol) {
                 item moved_item = {std::get<0>(it), std::get<1>(it), pos + 1, std::get<3>(it)};
 
                 moved.push_back(moved_item);
@@ -78,26 +78,28 @@ namespace alien::parser::algorithm::clr {
         for (unsigned int i = 0; i < states.size(); ++i) {
             if (i > 0) {
                 for (const auto& it : states[i]) {
-                    const production& prod = grammar.ruleset[std::get<0>(it)][std::get<1>(it)];
+                    const production& prod = grammar.ruleset.at(std::get<0>(it))[std::get<1>(it)];
 
-                    if (std::get<2>(it) < prod.first.size()) {
+                    if (std::get<2>(it) < prod.symbols.size()) {
                         continue;
                     }
 
                     parsing_action action{
-                        .arg = (unsigned int) prod.first.size()
+                        .arg1 = std::get<0>(it),
+                        .arg2 = std::get<1>(it)
                     };
+
+                    int symbol = std::get<3>(it);
 
                     if (std::get<0>(it) == grammar.start) {
                         action.type = parsing_action::action_type::ACCEPT;
 
-                        insert(table, i, -2, action, "Invalid CLR grammar"_u8);
-                        continue;
+                        symbol = -2;
+                    } else {
+                        action.type = parsing_action::action_type::REDUCE;
                     }
 
-                    action.type = parsing_action::action_type::REDUCE;
-
-                    insert(table, i, std::get<3>(it), action, "Invalid CLR grammar"_u8);
+                    insert(table, i, symbol, action, symbols, grammar);
                 }
             }
 
@@ -114,7 +116,7 @@ namespace alien::parser::algorithm::clr {
                     table.emplace_back();
                 }
 
-                insert(table, i, (int) j, {parsing_action::action_type::SHIFT, to_state}, "Invalid CLR grammar"_u8);
+                insert(table, i, (int) j, {parsing_action::action_type::SHIFT, to_state}, symbols, grammar);
             }
         }
 
