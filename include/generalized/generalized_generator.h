@@ -27,7 +27,7 @@ namespace alien::generalized {
             output.open(output_file + (gen_header ? ".h" : ".cpp"));
         }
 
-        config::settings::settings generate() {
+        void generate() {
             input::stream_input input(stream);
 
             start_code = scan_start_code(input);
@@ -40,8 +40,6 @@ namespace alien::generalized {
             end_code = scan_end_code(input);
 
             emit();
-
-            return configuration;
         }
 
     protected:
@@ -78,7 +76,7 @@ namespace alien::generalized {
             return code;
         }
 
-        virtual void parse_settings(input::stream_input& input) {
+        void parse_settings(input::stream_input& input) {
             config::settings::lexer l(input);
             config::settings::parser p(configuration, l);
 
@@ -94,6 +92,8 @@ namespace alien::generalized {
 
             output << util::u8string_to_bytes(end_code);
         }
+
+        virtual ~generalized_generator() = default;
 
     protected:
         template<typename V>
