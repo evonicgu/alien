@@ -221,7 +221,7 @@ namespace alien::lexer {
                     auto &action = rule.act;
 
                     if (!action.trailing_return.empty()) {
-                        action.code += "return new "_u8 + token_type->str + "<token_type>("_u8;
+                        action.code += "\nreturn new "_u8 + token_type->str + "<token_type>("_u8;
                         action.code += "token_type::"_u8 + action.trailing_return;
                         action.code += ", {sline, scolumn}, {line, column});"_u8;
                     }
