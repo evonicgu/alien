@@ -7,10 +7,10 @@ int main(int argc, char** argv) {
     cxxopts::Options options("Alien", "Alien - front-end compiler library");
 
     options.add_options()
-            ("linput", "Lexer input file", cxxopts::value<std::string>())
+            ("linput", "Lexer input file", cxxopts::value<std::string>()->default_value(""))
             ("pinput", "Parser input file", cxxopts::value<std::string>()->default_value(""))
-            ("loutput", "Lexer output file", cxxopts::value<std::string>())
-            ("poutput", "Parser output file", cxxopts::value<std::string>()->default_value(""))
+            ("loutput", "Lexer output file", cxxopts::value<std::string>()->default_value("lexer.out"))
+            ("poutput", "Parser output file", cxxopts::value<std::string>()->default_value("parser.out"))
             ("headers", "Generate header file", cxxopts::value<bool>()->default_value("true"))
             ("ptype", "Parser type", cxxopts::value<std::string>()->default_value("lalr"));
 
@@ -24,7 +24,8 @@ int main(int argc, char** argv) {
     if (!lexer.empty()) {
         alien::lexer::generator gen(lexer, result["loutput"].as<std::string>(),result["headers"].as<bool>());
 
-        lexer_settings = gen.generate();
+        gen.generate();
+        lexer_settings = gen.get_settings();
     }
 
     if (!parser.empty() && !lexer.empty()) {
@@ -36,5 +37,4 @@ int main(int argc, char** argv) {
 
         gen.generate();
     }
-
 }
