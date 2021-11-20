@@ -11,15 +11,12 @@ namespace alien::automata {
 
     namespace nfa {
 
-        struct state;
-        using state_ptr = std::shared_ptr<state>;
-
         struct state {
-            std::unordered_map<util::u8char, std::set<state_ptr>> transitions;
+            std::unordered_map<util::u8char, std::set<state*>> transitions;
 
-            bool accepting;
+            bool accepting = false;
 
-            int rule_number;
+            int rule_number = -1;
 
             bool operator<(const state& other) const {
                 if (this->accepting) {
@@ -47,7 +44,7 @@ namespace alien::automata {
 
         template<typename T>
         struct ptr_less {
-            bool operator()(const std::shared_ptr<T>& lhs, const std::shared_ptr<T>& rhs) const {
+            bool operator()(const T* lhs, const T* rhs) const {
                 if (rhs == nullptr) {
                     return false;
                 }
@@ -60,7 +57,7 @@ namespace alien::automata {
             }
         };
 
-        using nfa_set = std::set<nfa::state_ptr, ptr_less<nfa::state>>;
+        using nfa_set = std::set<const nfa::state*, ptr_less<nfa::state>>;
 
         struct state {
             nfa_set nfa_states;
@@ -96,7 +93,7 @@ namespace alien::automata {
         struct dfa {
             std::vector<state> states;
 
-            std::vector<std::vector<unsigned int>> rulemap;
+            std::unordered_map<unsigned int, std::vector<unsigned int>> rulemap;
             std::vector<unsigned int> fstates;
             util::vecset<transition> transitions;
 

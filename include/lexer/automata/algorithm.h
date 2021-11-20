@@ -29,7 +29,7 @@ namespace alien::automata::algorithm {
         using namespace lexer::regex::parser::ast;
 
         struct simple_nfa {
-            nfa::state_ptr first, last;
+            nfa::state *first, *last;
         };
 
         template<typename T>
@@ -43,50 +43,51 @@ namespace alien::automata::algorithm {
             return casted;
         }
 
-        std::pair<simple_nfa, std::set<util::u8char>> traverse(const std::shared_ptr<node>& tree, int rule_number) {
+        std::pair<simple_nfa, std::set<util::u8char>> traverse(const std::shared_ptr<node>& tree, int rule_number,
+                                                               std::vector<nfa::state*>& states) {
             switch (tree->type) {
                 case node::node_type::CONCAT: {
                     auto* n = check<concat_node>(tree);
 
-                    auto lhs = traverse(n->first, rule_number), rhs = traverse(n->second, rule_number);
+                    auto lhs = traverse(n->first, rule_number, states), rhs = traverse(n->second, rule_number, states);
                     auto nfa1 = lhs.first, nfa2 = rhs.first;
 
                     nfa1.last->accepting = false;
                     nfa1.last->transitions = nfa2.first->transitions;
 
-                    std::set<util::u8char> new_alphabet;
-                    std::merge(lhs.second.begin(), lhs.second.end(),
-                               rhs.second.begin(), rhs.second.end(),
-                               std::inserter(new_alphabet, new_alphabet.begin()));
+                    std::set<util::u8char> new_alphabet = std::move(lhs.second);
+                    new_alphabet.merge(std::move(rhs.second));
 
                     return {{nfa1.first, nfa2.last}, new_alphabet};
                 }
                 case node::node_type::STAR: {
                     auto* n = check<star_node>(tree);
 
-                    auto lhs = traverse(n->first, rule_number);
+                    auto lhs = traverse(n->first, rule_number, states);
                     auto nfa1 = lhs.first;
                     nfa1.last->accepting = false;
 
-                    nfa::state_ptr first = std::make_shared<nfa::state>(), last = std::make_shared<nfa::state>();
+                    auto *first = new nfa::state, *last = new nfa::state;
                     first->transitions[-1] = {nfa1.first, last};
                     first->rule_number = rule_number;
                     nfa1.last->transitions[-1] = {nfa1.first, last};
                     last->rule_number = rule_number;
                     last->accepting = true;
 
+                    states.push_back(first);
+                    states.push_back(last);
                     return {{first, last}, lhs.second};
                 }
                 case node::node_type::OR: {
                     auto* n = check<or_node>(tree);
 
-                    auto lhs = traverse(n->first, rule_number), rhs = traverse(n->second, rule_number);
+                    auto lhs = traverse(n->first, rule_number, states), rhs = traverse(n->second, rule_number, states);
                     auto nfa1 = lhs.first, nfa2 = rhs.first;
 
                     nfa1.last->accepting = false;
                     nfa2.last->accepting = false;
 
-                    nfa::state_ptr first = std::make_shared<nfa::state>(), last = std::make_shared<nfa::state>();
+                    auto *first = new nfa::state, *last = new nfa::state;
                     first->transitions[-1] = {nfa1.first, nfa2.first};
                     first->rule_number = rule_number;
                     last->accepting = true;
@@ -94,29 +95,31 @@ namespace alien::automata::algorithm {
                     nfa1.last->transitions[-1] = {last};
                     nfa2.last->transitions[-1] = {last};
 
-                    std::set<util::u8char> new_alphabet;
-                    std::merge(lhs.second.begin(), lhs.second.end(),
-                               rhs.second.begin(), rhs.second.end(),
-                               std::inserter(new_alphabet, new_alphabet.begin()));
+                    std::set<util::u8char> new_alphabet = std::move(lhs.second);
+                    new_alphabet.merge(std::move(rhs.second));
 
+                    states.push_back(first);
+                    states.push_back(last);
                     return {{first, last}, new_alphabet};
                 }
                 case node::node_type::LEAF: {
                     auto* n = check<leaf>(tree);
 
-                    nfa::state_ptr first = std::make_shared<nfa::state>(), last = std::make_shared<nfa::state>();
+                    auto *first = new nfa::state, *last = new nfa::state;
                     first->transitions[n->symbol] = {last};
                     first->rule_number = rule_number;
                     last->accepting = true;
                     last->rule_number = rule_number;
 
+                    states.push_back(first);
+                    states.push_back(last);
                     return {{first, last}, {n->symbol}};
                 }
                 case node::node_type::NEGATIVE_CLASS: {
                     auto *n = check<negative_class>(tree);
                     std::set<util::u8char> alphabet;
 
-                    nfa::state_ptr first = std::make_shared<nfa::state>(), last = std::make_shared<nfa::state>();
+                    auto *first = new nfa::state, *last = new nfa::state;
 
                     for (util::u8char i = -33; i <= -3; ++i) {
                         alphabet.insert(alphabet.end(), i);
@@ -132,14 +135,17 @@ namespace alien::automata::algorithm {
                     last->accepting = true;
                     last->rule_number = rule_number;
 
+                    states.push_back(first);
+                    states.push_back(last);
                     return {{first, last},{alphabet}};
                 }
             }
         }
 
-        std::pair<nfa::state_ptr, std::set<util::u8char>> nfa_from_tree(const std::shared_ptr<node>& tree,
-                                                                        int rule_number) {
-            auto result = traverse(tree, rule_number);
+        std::pair<nfa::state*, std::set<util::u8char>> nfa_from_tree(const std::shared_ptr<node>& tree,
+                                                                     int rule_number,
+                                                                     std::vector<nfa::state*>& states) {
+            auto result = traverse(tree, rule_number, states);
 
             return {result.first.first, result.second};
         }
@@ -232,7 +238,7 @@ namespace alien::automata::algorithm {
             }
         };
 
-        void _closure(dfa::nfa_set& closure_states, std::queue<nfa::state_ptr>& q) {
+        void _closure(dfa::nfa_set& closure_states, std::queue<const nfa::state*>& q) {
             while (!q.empty()) {
                 auto& qf = q.front();
 
@@ -241,8 +247,10 @@ namespace alien::automata::algorithm {
                     continue;
                 }
 
-                if (qf->transitions.find(-1) != qf->transitions.end()) {
-                    for (const auto& closure_state : qf->transitions[-1]) {
+                auto it = qf->transitions.find(-1);
+
+                if (it != qf->transitions.end()) {
+                    for (const auto& closure_state : it->second) {
                         if (closure_states.find(closure_state) == closure_states.end()) {
                             closure_states.insert(closure_state);
                             q.push(closure_state);
@@ -254,10 +262,10 @@ namespace alien::automata::algorithm {
             }
         }
 
-        dfa::nfa_set closure(const nfa::state_ptr& state) {
+        dfa::nfa_set closure(const nfa::state* state) {
             dfa::nfa_set closure_states = {state};
 
-            std::queue<nfa::state_ptr> q;
+            std::queue<const nfa::state*> q;
             q.push(state);
 
             _closure(closure_states, q);
@@ -268,8 +276,8 @@ namespace alien::automata::algorithm {
         dfa::nfa_set closure(const dfa::nfa_set& states) {
             dfa::nfa_set closure_states = states;
 
-            std::queue<nfa::state_ptr> q;
-            for (const auto& state : states) {
+            std::queue<const nfa::state*> q;
+            for (auto* state : states) {
                 q.push(state);
             }
 
@@ -286,8 +294,10 @@ namespace alien::automata::algorithm {
                     continue;
                 }
 
-                if (state->transitions.find(c) != state->transitions.end()) {
-                    for (const auto& reached_state : state->transitions[c]) {
+                auto it = state->transitions.find(c);
+
+                if (it != state->transitions.end()) {
+                    for (const auto& reached_state : it->second) {
                         reached_states.insert(reached_state);
                     }
                 }
@@ -304,8 +314,10 @@ namespace alien::automata::algorithm {
                     continue;
                 }
 
-                if (state->transitions.find(req_char) != state->transitions.end()) {
-                    for (const auto& reached_state : state->transitions[req_char]) {
+                auto it = state->transitions.find(req_char);
+
+                if (it != state->transitions.end()) {
+                    for (const auto& reached_state : it->second) {
                         reached_states.insert(reached_state);
                     }
                 }
@@ -339,10 +351,9 @@ namespace alien::automata::algorithm {
             return state;
         }
 
-        dfa::dfa convert_nfa2dfa(const nfa::state_ptr& state, const std::set<util::u8char>& alphabet,
+        dfa::dfa convert_nfa2dfa(const nfa::state* state, const std::set<util::u8char>& alphabet,
                                  unsigned int rules) {
             dfa::dfa automata;
-            automata.rulemap.resize(rules);
             automata.start_state = 1;
             util::vecset<dfa::state> states(std::set<dfa::state>{{
                 {},
@@ -372,12 +383,11 @@ namespace alien::automata::algorithm {
                     } else {
                         int c_class = lexer::regex::ranges::get_class(c);
                         if (classes[c_class + sizeof classes + 2]) {
-                            dfa::nfa_set class_states = closure(cmove(states[i].nfa_states, c_class, c)), all_states;
-                            std::merge(class_states.begin(), class_states.end(),
-                                       new_state.nfa_states.begin(), new_state.nfa_states.end(),
-                                       std::inserter(all_states, all_states.begin()));
+                            dfa::nfa_set class_states = closure(cmove(states[i].nfa_states, c_class, c));
 
-                            new_state.nfa_states = std::move(all_states);
+                            class_states.merge(new_state.nfa_states);
+
+                            new_state.nfa_states = std::move(class_states);
                             set_accepting(new_state);
                         }
                     }
@@ -520,7 +530,7 @@ namespace alien::automata::algorithm {
             splitters.split(0);
 
             for (const auto& rule_states : automata.rulemap) {
-                for (unsigned int state : rule_states) {
+                for (unsigned int state : rule_states.second) {
                     blocks.mark(state);
                 }
 

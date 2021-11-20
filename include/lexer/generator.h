@@ -21,6 +21,10 @@ namespace alien::lexer {
                   const std::string& output_file,
                   bool gen_header) : base_generator(input_file, output_file, gen_header) {}
 
+        settings&& get_settings() {
+            return std::move(configuration);
+        }
+
     private:
         void init_settings() override {
             configuration = {
@@ -85,7 +89,7 @@ namespace alien::lexer {
                 for (unsigned int i = 0; i < configuration.symbols.size(); ++i) {
                     const auto& token = configuration.symbols[i];
 
-                    const util::u8string& name = token.first;
+                    const util::u8string& name = token.name;
 
                     util::u8string macro = "#define _"_u8;
                     macro += name + " return new "_u8;
@@ -107,7 +111,7 @@ namespace alien::lexer {
             for (unsigned int i = 0; i < configuration.symbols.size(); ++i) {
                 const auto& token = configuration.symbols[i];
 
-                const util::u8string& name = token.first;
+                const util::u8string& name = token.name;
 
                 output << "    " << util::u8string_to_bytes(name) << ",\n";
             }
@@ -168,7 +172,8 @@ namespace alien::lexer {
         }
 
         automata::dfa::dfa build_dfa(unsigned int context) {
-            alien::automata::nfa::state_ptr start_nfa_state = std::make_shared<automata::nfa::state>();
+            auto* start_nfa_state = new automata::nfa::state{{}, false, -1};
+            std::vector<automata::nfa::state*> nfa_states{start_nfa_state};
 
             start_nfa_state->accepting = false;
 
@@ -183,19 +188,22 @@ namespace alien::lexer {
                 p.parse();
 
                 alien::lexer::regex::parser::ast::node_ptr ast = p.get_ast();
-                auto result = automata::algorithm::nfa_from_tree(ast, rule.rule_number);
 
-                std::set<util::u8char> m_alphabet;
+                auto result = automata::algorithm::nfa_from_tree(ast, rule.rule_number, nfa_states);
 
-                std::merge(A.begin(), A.end(),
-                           result.second.begin(), result.second.end(),
-                           std::inserter(m_alphabet, m_alphabet.begin()));
-
-                A = std::move(m_alphabet);
+                A.merge(result.second);
                 start_nfa_state->transitions[-1].insert(result.first);
             }
 
-            return automata::algorithm::minimize(automata::algorithm::convert_nfa2dfa(start_nfa_state, A, rules), A);
+            auto dfa = automata::algorithm::minimize(
+                    automata::algorithm::convert_nfa2dfa(start_nfa_state, A, rules),
+                    A);
+
+            for (auto* nfa_state : nfa_states) {
+                delete nfa_state;
+            }
+
+            return dfa;
         }
 
         void emit_lexer_mid() {
@@ -208,13 +216,14 @@ namespace alien::lexer {
             output << "(line, column);\n" << lex_method_mid;
 
             for (unsigned int context = 0; context < ruleset.context_mapping.size(); ++context) {
-                for (auto &rule: ruleset.ruleset[context]) {
+                for (auto &rule : ruleset.ruleset[context]) {
                     output << "                case " << rule.rule_number << ": {\n";
                     auto &action = rule.act;
 
                     if (!action.trailing_return.empty()) {
                         action.code += "return new "_u8 + token_type->str + "<token_type>("_u8;
-                        action.code += "token_type::"_u8 + action.trailing_return + ");"_u8;
+                        action.code += "token_type::"_u8 + action.trailing_return;
+                        action.code += ", {sline, scolumn}, {line, column});"_u8;
                     }
 
                     output << util::u8string_to_bytes(action.code) << "\nbreak;\n                }\n";

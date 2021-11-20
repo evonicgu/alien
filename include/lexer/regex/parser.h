@@ -91,11 +91,11 @@ namespace alien::lexer::regex::parser {
         node_ptr factor() {
             node_ptr tree = base();
 
-            quantifier::quantifier* q = quantifier();
+            auto res = quantifier();
 
-            if (q) {
-                tree = q->traverse(tree);
-                delete q;
+            if (res.first) {
+                tree = res.second->traverse(tree);
+                delete res.second;
             }
 
             return tree;
@@ -304,17 +304,17 @@ namespace alien::lexer::regex::parser {
             return tree;
         }
 
-        quantifier::quantifier* quantifier() {
+        std::pair<bool, quantifier::quantifier*> quantifier() {
             switch (lookahead->type) {
                 case type::T_STAR:
                     match(type::T_STAR);
-                    return new quantifier::star_quantifier();
+                    return {true, new quantifier::star_quantifier()};
                 case type::T_PLUS:
                     match(type::T_PLUS);
-                    return new quantifier::plus_quantifier();
+                    return {true, new quantifier::plus_quantifier()};
                 case type::T_QUESTION_MARK:
                     match(type::T_QUESTION_MARK);
-                    return new quantifier::question_quantifier();
+                    return {true, new quantifier::question_quantifier()};
                 case type::T_BRACE_OPEN: {
                     unsigned int start, end;
 
@@ -324,10 +324,10 @@ namespace alien::lexer::regex::parser {
                     end = numbers();
                     match(type::T_BRACE_CLOSE);
 
-                    return new quantifier::range_quantifier(start, end);
+                    return {true, new quantifier::range_quantifier(start, end)};
                 }
                 default:
-                    return nullptr;
+                    return {false, nullptr};
             }
         }
 
