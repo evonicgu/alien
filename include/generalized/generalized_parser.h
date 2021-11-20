@@ -67,6 +67,10 @@ namespace alien::generalized {
 
             return casted;
         }
+
+        virtual ~generalized_parser() {
+            delete lookahead;
+        }
     };
 
 }
