@@ -147,7 +147,7 @@ namespace alien::config::settings {
                         return new number_token(number);
                     }
 
-                    throw lexer_exception();
+                    throw lexer_exception("Unexpected '"_u8 + c + "' in the input"_u8);
                 }
             }
         }
