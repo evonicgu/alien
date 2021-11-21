@@ -39,6 +39,8 @@ namespace alien::lexer {
         }
 
         void parse_rules(input::stream_input& input) override {
+            add_symbol_types();
+
             auto* val = check<bool_value>("general.enable_trailing_return"_u8);
 
             config::rules::lexer::lexer l(val->val, input);
@@ -48,6 +50,17 @@ namespace alien::lexer {
 
             if (ruleset.eof_action.code.empty()) {
                 ruleset.eof_action.code = util::ascii_to_u8string(default_eof_action);
+            }
+        }
+
+        void add_symbol_types() {
+            util::u8string default_type = check<string_value>("generation.token_type"_u8)->str;
+            default_type += "<token_type>"_u8;
+
+            for (auto it = configuration.symbols.vbegin(); it < configuration.symbols.vend(); ++it) {
+                if (it->code_type.empty()) {
+                    it->code_type = default_type;
+                }
             }
         }
 
