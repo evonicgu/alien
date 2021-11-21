@@ -53,6 +53,8 @@ namespace alien::config::settings {
         std::map<util::u8string, std::shared_ptr<alien::config::settings::value>> config;
 
         util::vecset<symbol> symbols;
+
+        std::vector<util::u8string> code_top, code, code_content;
     };
 
 }

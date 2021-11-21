@@ -36,6 +36,14 @@ namespace alien::config::settings {
                     }
 
                     break;
+                case type::T_CODE:
+                    add_code();
+
+                    if (lookahead->type != type::T_END) {
+                        parse();
+                    }
+
+                    break;
                 default:
                     throw syntax_exception("Expected token to be a setting or a definition"_u8);
             }
@@ -180,6 +188,24 @@ namespace alien::config::settings {
                     break;
                 }
             }
+        }
+
+        void add_code() {
+            auto* token = check<code_token>();
+
+            switch (token->loc) {
+                case code_token::location::TOP:
+                    values.code_top.push_back(std::move(token->code));
+                    break;
+                case code_token::location::DEFAULT:
+                    values.code.push_back(std::move(token->code));
+                    break;
+                case code_token::location::CONTENT:
+                    values.code_content.push_back(std::move(token->code));
+                    break;
+            }
+
+            match(type::T_CODE);
         }
     };
 

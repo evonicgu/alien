@@ -19,7 +19,7 @@ namespace alien::generalized {
 
         T ruleset;
 
-        util::u8string start_code, end_code;
+        util::u8string end_code;
 
     public:
         generalized_generator(const std::string& input_file, const std::string& output_file, bool gen_header) {
@@ -29,8 +29,6 @@ namespace alien::generalized {
 
         void generate() {
             input::stream_input input(stream);
-
-            start_code = scan_start_code(input);
 
             init_settings();
             parse_settings(input);
@@ -43,25 +41,6 @@ namespace alien::generalized {
         }
 
     protected:
-        util::u8string scan_start_code(input::stream_input& input) {
-            util::u8char c = input.get();
-
-            util::u8string code;
-
-            while (c != -2) {
-                if (c == '%' && input.peek() == '%') {
-                    input.get();
-                    break;
-                }
-
-                code += c;
-
-                c = input.get();
-            }
-
-            return code;
-        }
-
         util::u8string scan_end_code(input::stream_input& input) {
             util::u8char c = input.get();
 
@@ -84,9 +63,7 @@ namespace alien::generalized {
         }
 
         void emit() {
-            emit_pre_start_code();
-
-            output << util::u8string_to_bytes(start_code);
+            emit_start_code();
 
             emit_pre_end_code();
 
@@ -112,7 +89,7 @@ namespace alien::generalized {
 
         virtual void parse_rules(input::stream_input&) = 0;
 
-        virtual void emit_pre_start_code() = 0;
+        virtual void emit_start_code() = 0;
 
         virtual void emit_pre_end_code() = 0;
     };

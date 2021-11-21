@@ -60,7 +60,7 @@ namespace alien::parser {
             };
         }
 
-        void emit_pre_start_code() override {
+        void emit_start_code() override {
             //TODO: add code generation
         }
 

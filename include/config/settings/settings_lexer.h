@@ -54,11 +54,26 @@ namespace alien::config::settings {
 
                     int value = -1;
 
-                    while (util::is_continuation_identifier_char(c)) {
+                    while (util::is_continuation_identifier_char(c) || c == '-') {
                         c = i.get();
 
                         name += (char) c;
                         c = i.peek();
+                    }
+
+                    if (name == "code") {
+                        check_block_start();
+                        return new code_token(util::get_code_block(i), code_token::location::DEFAULT);
+                    }
+
+                    if (name == "code-top") {
+                        check_block_start();
+                        return new code_token(util::get_code_block(i), code_token::location::TOP);
+                    }
+
+                    if (name == "code-content") {
+                        check_block_start();
+                        return new code_token(util::get_code_block(i), code_token::location::CONTENT);
                     }
 
                     if (c == ':') {
@@ -166,6 +181,16 @@ namespace alien::config::settings {
             }
 
             str += number_str;
+        }
+
+        void check_block_start() {
+            while (isspace(i.peek())) {
+                i.get();
+            }
+
+            if (i.get() != '{') {
+                throw lexer_exception("Expected a code block after %code declaration"_u8);
+            }
         }
     };
 

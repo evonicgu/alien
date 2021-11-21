@@ -51,7 +51,11 @@ namespace alien::lexer {
             }
         }
 
-        void emit_pre_start_code() override {
+        void emit_start_code() override {
+            for (auto& code : configuration.code_top) {
+                output << "\n\n" << util::u8string_to_bytes(code) << "\n\n";
+            }
+
             output << required_code;
 
             emit_macros();
@@ -61,6 +65,10 @@ namespace alien::lexer {
             emit_token_enum();
 
             emit_error_function();
+
+            for (auto& code : configuration.code) {
+                output << "\n\n" << util::u8string_to_bytes(code) << "\n\n";
+            }
         }
 
         void emit_pre_end_code() override {
@@ -168,7 +176,13 @@ namespace alien::lexer {
                 output << start_state << ", ";
             }
 
-            output << "};\n\n" << lexer_constructor_start << start_states[0] << lexer_constructor_end;
+            output << "};\n\n";
+
+            for (auto& code : configuration.code_content) {
+                output << "\n\n" << util::u8string_to_bytes(code) << "\n\n";
+            }
+
+            output << lexer_constructor_start << start_states[0] << lexer_constructor_end;
         }
 
         automata::dfa::dfa build_dfa(unsigned int context) {

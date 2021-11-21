@@ -18,7 +18,8 @@ namespace alien::config::settings {
         T_STR,
         T_END,
         T_BOOL,
-        T_ID_SPECIFIER
+        T_ID_SPECIFIER,
+        T_CODE
     };
 
     using base_token = generalized::generalized_token<token_type>;
@@ -61,6 +62,21 @@ namespace alien::config::settings {
         bool value;
 
         explicit bool_token(bool value) : value(value), base_token(token_type::T_BOOL) {}
+    };
+
+    struct code_token : public base_token {
+        util::u8string code;
+
+        enum class location {
+            TOP,
+            DEFAULT,
+            CONTENT
+        } loc;
+
+        code_token(const util::u8string& code, location loc) : code(code), loc(loc), base_token(token_type::T_CODE) {}
+
+        code_token(util::u8string&& code, location loc) : code(std::move(code)), loc(loc),
+                                                          base_token(token_type::T_CODE) {}
     };
 
 }
