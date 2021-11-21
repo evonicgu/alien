@@ -10,6 +10,7 @@ namespace alien::lexer {
             "#include <string>\n"
             "#include <vector>\n"
             "#include \"utf8proc.h\"\n\n"
+            "namespace lexer {\n\n"
             "#define BEGIN(context) const auto& ncontext = context_mapping.find(#context); \\\n"
             "if (ncontext == context_mapping.end()) {                                      \\\n"
             "    throw context_exception(#context);                                        \\\n"
@@ -552,7 +553,8 @@ namespace alien::lexer {
             "    std::basic_string<utf8proc_int32_t> gettext() {\n"
             "        return {std::begin(buffer), std::begin(buffer) + pos};\n"
             "    }\n"
-            "};";
+            "};\n\n"
+            "}";
 }
 
 #endif //ALIEN_LEXER_STUBS_H
