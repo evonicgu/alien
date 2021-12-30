@@ -1,23 +1,27 @@
-#ifndef ALIEN_UTIL_LEXING_H
-#define ALIEN_UTIL_LEXING_H
+#ifndef ALIEN_LEXING_H
+#define ALIEN_LEXING_H
 
-#include "generalized/generalized_lexer.h"
+#include <stdexcept>
+#include <utility>
+
 #include "input/input.h"
-#include "util/u8string.h"
+#include "u8string.h"
 
 namespace alien::util {
 
-    using namespace util::literals;
-
-    util::u8string get_code_block(input::input& i) {
-        unsigned int fold_level = 0;
+    std::pair<u8string, bool> get_code_block(input::input& i) {
+        std::size_t fold_level = 0;
         bool in_string = false, in_character = false;
 
-        util::u8string code;
+        u8string code;
 
-        util::u8char c = i.get();
+        u8char c = i.get();
 
         while (c != '}' || in_string || fold_level > 0) {
+            if (c == -2) {
+                break;
+            }
+
             if (!in_character && c == '"') {
                 in_string = !in_string;
             }
@@ -45,50 +49,133 @@ namespace alien::util {
             c = i.get();
         }
 
-        return code;
+        return {code, c == -2};
     }
 
-    bool is_start_identifier_char(util::u8char c) {
+    bool is_start_identifier_char(u8char c) {
         return isalpha(c) || c == '_' || c == '$';
     }
 
     bool is_continuation_identifier_char(util::u8char c) {
-        return isalnum(c) || c == '_' || c == '$';
+        return isalnum(c) || c == '_' || c == '$' || c == '-';
     }
 
-    util::u8string _get_rest_identifier(input::input& i) {
-        util::u8char c = i.peek();
-        util::u8string rest;
+    u8string get_identifier(input::input& i, u8char first) {
+        if (!is_start_identifier_char(first)) {
+            return {};
+        }
+
+        u8string name{first};
+        u8char c = i.peek();
 
         while (is_continuation_identifier_char(c)) {
-            rest += i.get();
+            name.push_back(i.get());
 
             c = i.peek();
         }
 
-        return rest;
+        return name;
     }
 
-    template<typename T>
-    util::u8string get_identifier(input::input& i, util::u8char sc) {
-        if (!is_start_identifier_char(sc)) {
-            throw typename generalized::generalized_lexer<T>::lexer_exception("Invalid identifier name"_u8);
+    u8string get_identifier(input::input& i) {
+        if (!is_start_identifier_char(i.peek())) {
+            return {};
         }
 
-        return sc + _get_rest_identifier(i);
+        return get_identifier(i, i.get());
     }
 
-    template<typename T>
-    util::u8string get_identifier(input::input& i) {
-        util::u8char c = i.peek();
-
-        if (!is_start_identifier_char(c)) {
-            throw typename generalized::generalized_lexer<T>::lexer_exception("Invalid identifier name"_u8);
+    short xdigit_to_num(u8char c) {
+        if (c >= 'a' && c <= 'f') {
+            return char(c - 'a' + 10);
+        } else if (c >= 'A' && c <= 'F') {
+            return char(c - 'A' + 10);
+        } else if (c >= '0' && c <= '9') {
+            return char(c - '0');
         }
 
-        return _get_rest_identifier(i);
+        // Invalid xdigit
+        return -1;
+    }
+
+    int hex_to_codepoint(input::input& input, unsigned short size) {
+        short digits[8];
+
+        for (unsigned short i = 0; i < size; ++i) {
+            digits[i] = xdigit_to_num(input.get());
+
+            if (digits[i] == -1) {
+                return -1;
+            }
+        }
+
+        int codepoint = 0, multiplier = 1;
+
+        for (unsigned short i = 0; i < size; ++i) {
+            codepoint += digits[size - i - 1] * multiplier;
+            multiplier *= 16;
+        }
+
+        if (!utf8proc_codepoint_valid(codepoint)) {
+            return -1;
+        }
+
+        return codepoint;
+    }
+
+    u8char parse_escape(input::input& i) {
+        u8char c = i.get(), codepoint;
+
+        switch (c) {
+            case '\'':
+                codepoint = '\'';
+                break;
+            case '"':
+                codepoint = '"';
+                break;
+            case '?':
+                codepoint = '?';
+                break;
+            case '\\':
+                codepoint = '\\';
+                break;
+            case 'a':
+                codepoint = '\a';
+                break;
+            case 'b':
+                codepoint = '\b';
+                break;
+            case 'f':
+                codepoint = '\f';
+                break;
+            case 'n':
+                codepoint = '\n';
+                break;
+            case 'r':
+                codepoint = '\r';
+                break;
+            case 't':
+                codepoint = '\t';
+                break;
+            case 'v':
+                codepoint = '\v';
+                break;
+            case 'X':
+                codepoint = hex_to_codepoint(i, 2);
+                break;
+            case 'u':
+                codepoint = hex_to_codepoint(i, 4);
+                break;
+            case 'U':
+                codepoint = hex_to_codepoint(i, 8);
+                break;
+            default:
+                codepoint = -2;
+        }
+
+        return codepoint;
     }
 
 }
 
-#endif //ALIEN_UTIL_LEXING_H
+#endif //ALIEN_LEXING_H

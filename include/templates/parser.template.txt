@@ -1,0 +1,99 @@
+{% if not fixed_stack %}#include <vector>{% else %}#define STACK_SIZE {{stack_size}}{% endif %}
+{% for code in code_top %}{{ bytes(code) }}{% endfor %}
+namespace parser {
+
+    struct grammar_symbol {
+        std::ptrdiff_t index;
+
+        std::size_t state;
+
+        void* data;
+    };
+{% for code in code_default %}{{ bytes(code) }}{% endfor %}
+    template<typename Stream>
+    class parser {
+        {% if not fixed_stack %}std::vector<grammar_symbol> symbols{% else %}grammar_symbol symbols[STACK_SIZE]{% endif %};
+
+        grammar_symbol lookahead, rule_lookahead{0, 0, nullptr};
+
+        std::ptrdiff_t saved_index = -1;
+
+        lexer::lexer<Stream>& lexer;
+{% for code in code_content %}{{ bytes(code) }}{% endfor %}
+    public:
+        explicit parser(lexer::lexer<Stream>& lexer)
+            : lexer(lexer) {
+            lexer::token_t* token = lexer.lex();
+
+            lookahead.index = (std::ptrdiff_t) token->type;
+            lookahead.data = token;
+
+            symbols.push_back({0, 0, nullptr});
+        }
+
+        {% set start_rule_type = bytes(at(types, start_rule)) %}{{ start_rule_type }}* parse() {
+            std::ptrdiff_t rule = 0, prod = 0;
+
+{% for state in table %}            S{{ loop.index }}:{% for transitions in state %}{% set first_symbol = true %}{% set first = true %}{% set start = transitions.1.0 %}{% set prev = start %}{% for symbol in transitions.1 %}{% if symbol < terminals %}{% if first_symbol %}{% set start = symbol %}{% set prev = start %}
+            if ({% set first_symbol = false %}{% endif %}{% if symbol != start and symbol != prev + 1 %}{% if not first %} || {% endif %}{{ create_parser_range(start, prev, false) }}{% set first = false %}{% set start = symbol %}{% set prev = symbol %}{% else %}{% set prev = symbol %}{% endif %}{% endif %}{% endfor %}{% if not first_symbol %}{% if not first %} || {% endif %}{{ create_parser_range(start, prev, false) }}) {
+                {% if transitions.0.type == 0 %}lookahead.state = {{ transitions.0.arg1 }};
+                symbols.push_back(lookahead);
+
+                lexer::token_t* token = lexer.lex();
+
+                if (token == nullptr) {
+                    lookahead.index = -2;
+                } else {
+                    lookahead.index = (std::ptrdiff_t) token->type;
+                }
+                lookahead.data = token;
+
+                goto S{{ transitions.0.arg1 }};{% else if transitions.0.type == 1 %}rule = {{ transitions.0.arg1 }};
+                prod = {{ transitions.0.arg2 }};
+                saved_index = lookahead.index;
+                lookahead.index = -1;
+                goto rules;{% else %}return static_cast<{{ start_rule_type }}*>(symbols.back().data);{% endif %}
+            }{% endif %}{% set first_symbol = true %}{% set first = true %}{% set start = transitions.1.0 %}{% set prev = start %}{% for symbol in transitions.1 %}{% if symbol > terminals %}{% if first_symbol %}{% set start = symbol %}{% set prev = start %}
+            if ({% set first_symbol = false %}{% endif %}{% if symbol != start and symbol != prev + 1 %}{% if not first %} || {% endif %}{{ create_parser_range(start, prev, true) }}{% set first = false %}{% set start = symbol %}{% set prev = symbol %}{% else %}{% set prev = symbol %}{% endif %}{% endif %}{% endfor %}{% if not first_symbol %}{% if not first %} || {% endif %}{{ create_parser_range(start, prev, true) }}) {
+                {% if transitions.0.type == 0 %}rule_lookahead.state = {{ transitions.0.arg1 }};
+                symbols.push_back(rule_lookahead);
+                rule_lookahead.index = -1;
+                lookahead.index = saved_index;
+
+                goto S{{ transitions.0.arg1 }};{% else if transitions.0.type == 1 %}rule = {{ transitions.0.arg1 }};
+                prod = {{ transitions.0.arg2 }};
+                goto rules;{% else %}static_cast<{{ start_rule_type }}*>(return symbols.back().data);{% endif %}
+            }{% endif %}
+{% endfor %}
+{% endfor %}            rules:
+            void* $$$;
+
+            switch (rule) {#{}#{% for rule in rules %}{% if loop.index != 0 %}
+                case {{ loop.index }}: {
+                    {{ bytes(at(types, terminals + loop.index)) }}* $$ = nullptr;
+
+                    switch (prod) {#{}#{% for production in rule %}
+                        case {{ loop.index }}: {#{}#{% set listed = 0 %}{% for symbol in production %}{% if bytes(at(types, symbol)) != "void" %}{% set type = bytes(at(types, symbol)) %}
+                            auto* ${{ loop.index }}{% set listed = listed + 1 %} = static_cast<{{ type }}*>(symbols[symbols.size() - {{ length(production) - loop.index }}].data);
+{% endif %}{% endfor %}{% set length = at(at(lengths, loop.parent.index), loop.index) %}{% if length > 0 %}
+                            symbols.resize(symbols.size() - {{ at(at(lengths, loop.parent.index), loop.index) }});{% endif %}
+                            {{ bytes(at(at(actions, loop.parent.index), loop.index)) }}
+                            break;
+                        }{% endfor %}
+                    }
+
+                    $$$ = $$;
+                    break;
+                }{% endif %}{% endfor %}
+            }
+
+            rule_lookahead.index = rule + {{ terminals }};
+            rule_lookahead.data = $$$;
+
+            switch (symbols.back().state) {
+{% for i in range(length(table)) %}                case {{ i }}: goto S{{ i }};
+{% endfor %}            }
+        }
+    };
+
+}

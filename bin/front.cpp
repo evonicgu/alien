@@ -1,40 +1,71 @@
-#include <utility>
-#include <cxxopts.hpp>
-#include "lexer/generator.h"
-#include "parser/generator.h"
+#include <iostream>
+#include <list>
+
+#include "cxxopts.hpp"
+
+#include "generator.h"
+#include "util/u8string.h"
 
 int main(int argc, char** argv) {
-    cxxopts::Options options("Alien", "Alien - front-end compiler library");
+    using namespace alien::util::literals;
 
-    options.add_options()
-            ("linput", "Lexer input file", cxxopts::value<std::string>()->default_value(""))
-            ("pinput", "Parser input file", cxxopts::value<std::string>()->default_value(""))
-            ("loutput", "Lexer output file", cxxopts::value<std::string>()->default_value("lexer.out"))
-            ("poutput", "Parser output file", cxxopts::value<std::string>()->default_value("parser.out"))
-            ("headers", "Generate header file", cxxopts::value<bool>()->default_value("true"))
-            ("ptype", "Parser type", cxxopts::value<std::string>()->default_value("lalr"));
+    bool verbose = false, quiet = false;
 
-    auto result = options.parse(argc, argv);
+    try {
+        cxxopts::Options options("Alien", "Alien - front-end compiler library");
 
-    std::string lexer = result["linput"].as<std::string>();
-    std::string parser = result["pinput"].as<std::string>();
+        options.show_positional_help().add_options()
+                ("i,input", "Input file location", cxxopts::value<std::string>())
+                ("o,output", "Output file location", cxxopts::value<std::string>()->default_value("parser.out"))
+                ("v,verbose", "Verbose error output", cxxopts::value(verbose))
+                ("header", "Generates header file if true", cxxopts::value<bool>()->default_value("true"))
+                ("h,help", "Prints the help message")
+                ("q,quiet", "Quiet mode (no warnings, not recommended)", cxxopts::value(quiet))
+                ("args", "Positional args", cxxopts::value<std::vector<std::string>>());
 
-    alien::config::settings::settings lexer_settings;
+        options.parse_positional({"input", "args"});
 
-    if (!lexer.empty()) {
-        alien::lexer::generator gen(lexer, result["loutput"].as<std::string>(),result["headers"].as<bool>());
+        auto result = options.parse(argc, argv);
+
+        if (result.count("help") > 0)
+        {
+            std::cout << options.help() << '\n';
+            return 0;
+        }
+
+        if (result.count("input") == 0) {
+            std::cout << "No input file";
+            return 0;
+        }
+
+        std::list<alien::util::u8string> err;
+        std::ifstream in(result["input"].as<std::string>());
+        std::ofstream out(result["output"].as<std::string>() + (result["header"].as<bool>() ? ".h" : ".cpp"));
+        alien::generator gen(in, out, err);
 
         gen.generate();
-        lexer_settings = gen.get_settings();
-    }
 
-    if (!parser.empty() && !lexer.empty()) {
-        alien::parser::generator gen(parser,
-                                     result["poutput"].as<std::string>(),
-                                     result["headers"].as<bool>(),
-                                     result["ptype"].as<std::string>(),
-                                     std::move(lexer_settings));
+        if (!err.empty()) {
+            if (!quiet) {
+                for (const auto& str : err) {
+                    std::cerr << alien::util::u8string_to_bytes(str) << '\n';
+                }
+            }
 
-        gen.generate();
+            return 1;
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Configuration error:\n" << e.what() << '\n';
+        return 1;
+    } catch (const cxxopts::OptionException& e) {
+        std::cerr << "Option parsing error: " << e.what() << '\n';
+        return 1;
+    } catch (...) {
+        if (verbose) {
+            std::rethrow_exception(std::current_exception());
+        }
+
+        std::cerr << "Internal error\n";
+        return 1;
     }
 }

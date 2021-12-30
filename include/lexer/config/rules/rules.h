@@ -1,31 +1,42 @@
-#ifndef ALIEN_LEXER_CONFIG_RULES_H
-#define ALIEN_LEXER_CONFIG_RULES_H
+#ifndef ALIEN_LEXER_RULES
+#define ALIEN_LEXER_RULES
 
 #include <map>
 #include <vector>
+
+#include "nlohmann/json.hpp"
+
 #include "util/u8string.h"
 
-namespace alien::lexer::config::rules {
+namespace alien::lexer::rules {
 
     struct action {
         util::u8string code;
 
-        util::u8string trailing_return;
+        util::u8string symbol;
     };
 
     struct rule {
+        bool no_utf8 = false;
+
         util::u8string regex;
+
         action act;
-        int rule_number;
+
+        std::ptrdiff_t rule_number;
     };
 
     struct rules {
         std::vector<std::vector<rule>> ruleset;
-        std::map<util::u8string, unsigned int> context_mapping;
+        std::map<util::u8string, std::size_t> ctx;
 
-        action eof_action;
+        action on_eof;
     };
 
+    void to_json(nlohmann::json& json, const action& act) {
+        json["code"] = util::u8string_to_bytes(act.code);
+        json["symbol"] = util::u8string_to_bytes(act.symbol);
+    }
 }
 
-#endif //ALIEN_LEXER_CONFIG_RULES_H
+#endif //ALIEN_LEXER_RULES

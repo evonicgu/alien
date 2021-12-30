@@ -2,123 +2,50 @@
 #define ALIEN_INPUT_H
 
 #include <fstream>
-#include <vector>
 #include <stdexcept>
+
+#include "util/charutils.h"
 #include "util/u8string.h"
 
 namespace alien::input {
 
-//    class input {
-//    public:
-//        virtual char get() = 0;
-//
-//        virtual char peek() = 0;
-//
-//        input(const input&) = delete;
-//
-//        input() = default;
-//    };
-//
-//    class string_input : public input {
-//        std::string str;
-//
-//        unsigned int pos = 0, end;
-//
-//    public:
-//        explicit string_input(const std::string& str) : str(str) {
-//            end = this->str.size();
-//        }
-//
-//        explicit string_input(std::string&& str) : str(str) {
-//            end = this->str.size();
-//        }
-//
-//        char get() override {
-//            return pos == end ? -2 : str[pos++];
-//        }
-//
-//        char peek() override {
-//            return pos == end ? -2 : str[pos];
-//        }
-//    };
-//
-//    class stream_input : public input {
-//        std::istream& stream;
-//
-//        char buffer[4096];
-//        unsigned int pos, max;
-//
-//        bool end = false;
-//
-//    public:
-//        explicit stream_input(std::istream& stream) : stream(stream) {
-//            fill();
-//        }
-//
-//        char get() override {
-//            if (end) {
-//                return -2;
-//            }
-//
-//            if (pos == max) {
-//                fill();
-//            }
-//
-//            return buffer[pos++];
-//        }
-//
-//        char peek() override {
-//            if (end) {
-//                return -2;
-//            }
-//
-//            if (pos == max) {
-//                fill();
-//            }
-//
-//            return buffer[pos];
-//        }
-//
-//    private:
-//        void fill() {
-//            stream.read(buffer, 4096);
-//
-//            pos = 0;
-//            max = stream.gcount();
-//
-//            if (max == 0) {
-//                end = true;
-//                buffer[0] = -2;
-//            }
-//        }
-//    };
+    using namespace util;
+
     class input {
     public:
-        virtual util::u8char get() = 0;
+        std::size_t line = 1, column = 1;
 
-        virtual util::u8char peek() = 0;
+        virtual u8char get() = 0;
 
-        input(const input&) = delete;
-
-        input() = default;
+        virtual u8char peek() = 0;
     };
 
     class string_input : public input {
-        util::u8string str;
+        const util::u8string& str;
 
-        unsigned int pos = 0, end;
+        std::size_t pos = 0, end;
 
     public:
-        explicit string_input(const util::u8string& str) : str(str) {
-            end = this->str.size();
-        }
-
-        explicit string_input(util::u8string&& str) : str(std::move(str)) {
+        explicit string_input(const util::u8string& str)
+            : str(str) {
             end = this->str.size();
         }
 
         util::u8char get() override {
-            return pos == end ? -2 : str[pos++];
+            if (pos == end) {
+                return -2;
+            }
+
+            u8char c = str[pos++], c_class = util::get_class(c);
+
+            if (c_class == -5 || c_class == -31 || c_class == -32) {
+                ++line;
+                column = 1;
+            } else {
+                ++column;
+            }
+
+            return c;
         }
 
         util::u8char peek() override {
@@ -130,13 +57,18 @@ namespace alien::input {
         std::ifstream& stream;
         bool eof = false;
 
-        utf8proc_uint8_t cbuffer[16387];
-        util::u8char buffer[16384];
+        utf8proc_uint8_t cbuffer[32771];
+        util::u8char buffer[8192];
 
-        int unread = 0, max = 0, pos = 0;
+        std::size_t unread = 0, max = 0, pos = 0;
 
     public:
-        explicit stream_input(std::ifstream& stream) : stream(stream) {}
+        explicit stream_input(std::ifstream& stream)
+            : stream(stream) {
+            if (stream.fail() || stream.bad()) {
+                throw std::runtime_error("Unable to open input stream");
+            }
+        }
 
         util::u8char get() override {
             if (pos == max) {
@@ -147,7 +79,16 @@ namespace alien::input {
                 return -2;
             }
 
-            return buffer[pos++];
+            u8char c = buffer[pos++], c_class = get_class(c);
+
+            if (c_class == -5 || c_class == -31 || c_class == -32) {
+                ++line;
+                column = 1;
+            } else {
+                ++column;
+            }
+
+            return c;
         }
 
         util::u8char peek() override {
@@ -169,16 +110,17 @@ namespace alien::input {
                 return;
             }
 
-            stream.read((char*) cbuffer + unread, (int) sizeof cbuffer - unread);
+            stream.read((char*) cbuffer + unread, sizeof cbuffer - unread);
 
-            int str_size = get_str_size();
+            std::size_t str_size = get_str_size();
+
             if (stream.eof()) {
                 unread = 0;
             } else {
-                unread = (int) sizeof cbuffer - str_size;
+                unread = sizeof cbuffer - str_size;
             }
-            pos = 0;
 
+            pos = 0;
             max = utf8proc_decompose(cbuffer, str_size, buffer, sizeof buffer, utf8proc_option_t::UTF8PROC_REJECTNA);
 
             for (int i = 0; i < unread; ++i) {
@@ -198,7 +140,7 @@ namespace alien::input {
             return (byte & 0x80) == 0;
         }
 
-        int get_str_size() {
+        std::size_t get_str_size() {
             if (stream.eof()) {
                 return unread + stream.gcount();
             }

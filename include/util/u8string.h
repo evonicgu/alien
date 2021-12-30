@@ -1,25 +1,27 @@
-#ifndef ALIEN_UTIL_U8STRING_H
-#define ALIEN_UTIL_U8STRING_H
+#ifndef ALIEN_U8STRING_H
+#define ALIEN_U8STRING_H
 
+#include <array>
 #include <stdexcept>
 #include <string>
+
 #include "utf8proc.h"
 
 namespace alien::util {
 
     using u8char = utf8proc_int32_t;
     using u8string = std::basic_string<u8char>;
+    using u8string_view = std::basic_string_view<u8char>;
 
     u8string ascii_to_u8string(const std::string& str) {
         u8string out;
         out.reserve(str.size());
 
-        for (unsigned char c: str) {
-            if (c > 127) {
-                throw std::invalid_argument("Not a valid ASCII character");
+        for (std::size_t i = 0; i < str.size(); ++i) {
+            if (str[i] > 127) {
+                throw std::invalid_argument(std::string("Invalid ASCII char at index ") + std::to_string(i));
             }
-
-            out.push_back(c);
+            out.push_back(str[i]);
         }
 
         return out;
@@ -27,56 +29,85 @@ namespace alien::util {
 
     namespace literals {
 
-        u8string operator"" _u8(const char* str, unsigned long long size) {
-            return ascii_to_u8string(std::string(str, size));
+        u8string operator""_u8(const char* str, std::size_t size) {
+            return ascii_to_u8string({str, size});
         }
 
-    }
-
-    std::string u8string_to_bytes(const u8string& str) {
-        std::string byte_str;
-        byte_str.reserve(str.size() * 4);
-
-        utf8proc_uint8_t buffer[5];
-
-        for (u8char c : str) {
-            utf8proc_ssize_t c_size = utf8proc_encode_char(c, buffer);
-
-            if (c_size == 0) {
-                throw std::invalid_argument("Invalid utf-8 codepoint");
-            }
-
-            buffer[c_size] = 0;
-            byte_str += (char*) buffer;
-        }
-
-        return byte_str;
     }
 
     void u8string_to_bytes(const u8string& str, std::string& out) {
-        out = u8string_to_bytes(str);
+        utf8proc_uint8_t buffer[5];
+
+        for (std::size_t i = 0; i < str.size(); ++i) {
+            if (!utf8proc_codepoint_valid(str[i])) {
+                throw std::invalid_argument(std::string("Invalid utf-8 codepoint at index ") + std::to_string(i));
+            }
+
+            utf8proc_size_t size = utf8proc_encode_char(str[i], buffer);
+            buffer[size] = 0;
+
+            out += (char*) buffer;
+        }
     }
 
-    int _u8_stoi(const u8string& str, unsigned int pos) {
-        if (!isdigit(str[pos])) {
-            throw std::invalid_argument("String must consist of digits");
-        }
+    std::string u8string_to_bytes(const u8string& str) {
+        std::string bytes;
 
-        if (pos == str.size() - 1) {
-            return str[pos];
-        }
+        u8string_to_bytes(str, bytes);
 
-        return _u8_stoi(str, pos + 1) * 10 + str[pos] - '0';
+        return bytes;
     }
 
-    int u8_stoi(const u8string& str) {
+    long long u8_stoi(const u8string& str) {
         if (str.empty()) {
-            throw std::invalid_argument("String must not be empty");
+            throw std::invalid_argument("String cannot be empty");
         }
 
-        return _u8_stoi(str, 0);
+        long long number = 0;
+        short multiplier = 1;
+        std::size_t start = 0;
+
+        if (str[0] == '-') {
+            start = 1;
+            multiplier = -1;
+        }
+
+        for (std::size_t i = start; i < str.size(); ++i) {
+            if (!isdigit(str[i])) {
+                throw std::invalid_argument("Invalid integer string");
+            }
+
+            number = number * 10 + (str[i] - '0') * multiplier;
+        }
+
+        return number;
+    }
+
+    util::u8string to_u8string(unsigned long long number) {
+        using namespace literals;
+
+        if (number == 0) {
+            return "0"_u8;
+        }
+
+        std::array<u8char, 26> symbols{};
+        std::size_t filled = 0;
+
+        while (number != 0) {
+            symbols[filled++] = (u8char) number % 10 + '0';
+            number /= 10;
+        }
+
+        util::u8string str;
+        str.resize(filled);
+
+        for (std::size_t i = 0; i < filled; ++i) {
+            str[filled - i - 1] = symbols[i];
+        }
+
+        return str;
     }
 
 }
 
-#endif //ALIEN_UTIL_U8STRING_H
+#endif //ALIEN_U8STRING_H

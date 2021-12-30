@@ -1,10 +1,9 @@
 #ifndef ALIEN_REGEX_TOKEN_H
 #define ALIEN_REGEX_TOKEN_H
 
-#include "generalized/generalized_token.h"
-#include "util/u8string.h"
+#include "util/token.h"
 
-namespace alien::lexer::regex::lexer {
+namespace alien::lexer::regex {
 
     enum class token_type {
         T_STAR,
@@ -40,29 +39,32 @@ namespace alien::lexer::regex::lexer {
         T_END
     };
 
-    using base_token = generalized::generalized_token<token_type>;
+    using base = util::token<token_type>;
 
-    struct symbol_token : public base_token {
+    struct symbol_token : public base {
         util::u8char symbol;
 
-        explicit symbol_token(util::u8char c) : symbol(c), base_token(token_type::T_SYMBOL) {}
+        explicit symbol_token(util::u8char c, util::pos start, util::pos end)
+            : symbol(c),
+              base(token_type::T_SYMBOL, start, end) {}
     };
 
-    struct number_token : public base_token {
+    struct number_token : public base {
         uint8_t number;
 
-        explicit number_token(int number) : number(number), base_token(token_type::T_NUMBER) {}
+        explicit number_token(int number, util::pos start, util::pos end)
+            : number(number),
+              base(token_type::T_NUMBER, start, end) {}
     };
 
-    struct symbol_class_token : public base_token {
+    struct symbol_class_token : public base {
         util::u8string class_name;
 
-        explicit symbol_class_token(const util::u8string& class_name) : class_name(class_name),
-                                                                                base_token(token_type::T_CLASS) {}
-
-        explicit symbol_class_token(util::u8string&& class_name) : class_name(std::move(class_name)),
-                                                                           base_token(token_type::T_CLASS) {}
+        explicit symbol_class_token(util::u8string&& class_name, util::pos start, util::pos end)
+            : class_name(std::move(class_name)),
+              base(token_type::T_CLASS, start, end) {}
     };
+
 }
 
 #endif //ALIEN_REGEX_TOKEN_H

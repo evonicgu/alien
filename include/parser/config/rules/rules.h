@@ -1,49 +1,50 @@
-#ifndef ALIEN_PARSER_CONFIG_RULES_H
-#define ALIEN_PARSER_CONFIG_RULES_H
+#ifndef ALIEN_PARSER_RULES_H
+#define ALIEN_PARSER_RULES_H
 
-#include <vector>
 #include <map>
+#include <vector>
+
+#include "nlohmann/json.hpp"
+
 #include "util/u8string.h"
 
-namespace alien::parser::config::rules {
+namespace alien::parser::rules {
+
+    enum class symbol_type {
+        TERMINAL,
+        NON_TERMINAL
+    };
 
     struct grammar_symbol {
-        util::u8string name, code_type;
+        symbol_type type = symbol_type::TERMINAL;
 
-        enum class symbol_type {
-            NON_TERMINAL,
-            TERMINAL,
-        } type;
+        std::ptrdiff_t index = -2;
 
-        int prec = -1, assoc = -1;
+        bool operator==(const grammar_symbol& other) const {
+            return type == other.type && index == other.index;
+        }
 
         bool operator<(const grammar_symbol& other) const {
-            if (type == other.type) {
-                return name < other.name;
-            }
-
-            return type < other.type;
+            return type < other.type || index < other.index;
         }
     };
 
-    using alphabet = util::vecset<grammar_symbol>;
-
     struct production {
-        std::vector<int> symbols;
-        util::u8string code;
+        std::vector<grammar_symbol> symbols;
 
-        int prec = -1, assoc = -1;
+        std::ptrdiff_t prec = -1, assoc = -1;
+        bool explicit_precedence = false, has_action = false;
 
-        bool given = false, has_action = false;
+        std::size_t length;
+        util::u8string action;
     };
-
-    using nonterminal = std::vector<production>;
 
     struct rules {
-        std::unordered_map<unsigned int, nonterminal> ruleset;
+        std::vector<std::vector<production>> ruleset;
 
-        unsigned int start;
+        std::size_t start = 0;
     };
+
 }
 
-#endif //ALIEN_PARSER_CONFIG_RULES_H
+#endif //ALIEN_PARSER_RULES_H
