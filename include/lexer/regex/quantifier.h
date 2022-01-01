@@ -41,6 +41,10 @@ namespace alien::lexer::regex::quantifier {
         ast::node_ptr traverse(const ast::node_ptr& tree) override {
             ast::node_ptr modified = nullptr;
 
+            if (start == 0 && end == 0) {
+                return std::make_shared<ast::leaf>(-1);
+            }
+
             for (std::size_t i = 0; i < start; ++i) {
                 if (modified == nullptr) {
                     modified = tree;

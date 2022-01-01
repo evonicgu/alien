@@ -43,8 +43,6 @@ namespace alien::lexer::automata {
 
                 p.parse();
 
-                /// asdfasdfad asdfasdfasdfadsf
-
                 auto ast = p.get_ast();
 
                 auto [nfa, alphabet] = nfa_gen.nfa_from_ast(ast, rule.rule_number, rule.no_utf8 || no_utf8);
