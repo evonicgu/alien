@@ -294,7 +294,7 @@ namespace alien::lexer::regex {
                     case type::T_CLASS: {
                         auto* token = check<symbol_class_token>();
 
-                        err.push_back("Properties are disallowed in non-utf8 mode"_u8);
+                        err.push_back("Property used in no-utf8 mode at pos "_u8 + (util::u8string) lookahead->start);
                         tree = std::make_shared<ast::leaf>(-1);
                         break;
                     }

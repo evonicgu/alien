@@ -71,7 +71,13 @@ namespace alien::lexer::rules {
         void rule() {
             auto* token = check<regex_token>();
 
-            ruleset.ruleset[current_context].push_back({next_rule_no_utf8, std::move(token->regex), {}, rule_number++});
+            ruleset.ruleset[current_context].push_back({
+                                                               next_rule_no_utf8,
+                                                               std::move(token->regex),
+                                                               {},
+                                                               token->start,
+                                                               rule_number++
+                                                       });
 
             match(type::T_REGEX);
             set_action(ruleset.ruleset[current_context].back().act);

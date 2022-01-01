@@ -35,10 +35,15 @@ namespace alien::lexer::automata {
 
             for (auto& rule : rules) {
                 input::string_input i(rule.regex);
+                i.line = rule.position.line;
+                i.column = rule.position.column;
+
                 regex::lexer l(i, err);
                 regex::parser p(l, err, rule.no_utf8 || no_utf8);
 
                 p.parse();
+
+                /// asdfasdfad asdfasdfasdfadsf
 
                 auto ast = p.get_ast();
 

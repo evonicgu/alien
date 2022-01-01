@@ -23,6 +23,8 @@ namespace alien::lexer::rules {
 
         action act;
 
+        util::pos position;
+
         std::ptrdiff_t rule_number;
     };
 
