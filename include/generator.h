@@ -187,10 +187,17 @@ namespace alien {
             bool no_utf8 = get_value(lconfig.config["generation.noutf8"_u8]);
             std::size_t current_states = 0;
 
+            if (alphabet.terminals.size() == 0) {
+                err.push_back("Cannot create lexer: no terminals are defined"_u8);
+            }
+
             for (auto& rules : lrules.ruleset) {
                 if (rules.empty()) {
+                    err.push_back("Cannot define empty contexts"_u8);
+
                     continue;
                 }
+
                 lexer::automata::generator gen(err, no_utf8);
 
                 if (rules[0].rule_number >= actions.size()) {
@@ -257,7 +264,23 @@ namespace alien {
         void generate_parser() {
             using namespace util::literals;
 
+            if (alphabet.non_terminals.size() == 1) {
+                err.push_back("Cannot create parser: no symbols are defined"_u8);
+                return;
+            }
+
+            for (std::size_t i = 0; i < alphabet.non_terminals.size(); ++i) {
+                if (prules.ruleset[i].empty()) {
+                    err.push_back("No productions are defined for symbol "_u8 + alphabet.non_terminals[i].name);
+                    return;
+                }
+            }
+
             parser::generator::parsing_table table = parser_generator->generate_table();
+
+            if (!err.empty()) {
+                return;
+            }
 
             long long stack_size = util::check<config::settings::number_value>(
                     pconfig.config["generation.stack_size"_u8].get()
