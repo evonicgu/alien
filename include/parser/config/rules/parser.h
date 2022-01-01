@@ -333,6 +333,7 @@ namespace alien::parser::rules {
                         err.push_back("Illegal symbol used in action at "_u8 + (util::u8string) lookahead->start);
                     }
                 } else if (cleaned[i] == '$' && isdigit(cleaned[i + 1])) {
+                    number = 0;
                     state = true;
                 } else if (cleaned[i] == '$' && cleaned[i + 1] == '$') {
                     if (alphabet.non_terminals[rule].type == "void"_u8) {
