@@ -277,11 +277,11 @@ namespace alien::util {
             return vec.cend();
         }
 
-        typename set_type::iterator sbegin() {
+        typename set_type::iterator sbegin() const {
             return set.begin();
         }
 
-        typename set_type::iterator send() {
+        typename set_type::iterator send() const {
             return set.end();
         }
 
