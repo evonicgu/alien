@@ -168,6 +168,8 @@ namespace alien::lexer::automata {
                         states[i].out_transitions.push_back(automata.transitions.size());
                         states[0].in_transitions.push_back(automata.transitions.size());
                         automata.transitions.push_back({i, 0, c});
+
+                        automata.null_state_used = true;
                         continue;
                     }
 
@@ -192,11 +194,13 @@ namespace alien::lexer::automata {
             return automata;
         }
 
-        static dfa::dfa minimize(dfa::dfa&& automata) {
+        static dfa::dfa minimize(const dfa::dfa& automata) {
             dfa::dfa min_automata;
             partition::partition blocks(automata.states.size()), splitters(automata.transitions.size());
             std::stack<std::size_t> unready_splitters, touched_blocks, touched_splitters;
             unready_splitters.push(0);
+
+            min_automata.null_state_used = automata.null_state_used;
 
             auto split = [&](std::size_t block) {
                 std::size_t b = blocks.split(block);

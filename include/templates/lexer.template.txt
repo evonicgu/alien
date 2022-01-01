@@ -20,8 +20,8 @@ namespace lexer {
         explicit operator std::string() const {
             return std::to_string(line) + ':' + std::to_string(column);
         }
-    };
-{% endif %}{% if emit_stream %}
+    };{% endif %}{% if emit_stream %}
+
     template<typename Stream = std::ifstream>
     class u8_stream {
         Stream stream;
@@ -189,7 +189,7 @@ namespace lexer {
             {% endif %}
             bool first = true;
             goto start_resolution;
-{% set current_max_state = 0 %}{% for automata in automations %}{% for state in automata.states %}
+{% set current_max_state = 0 %}{% for automata in automations %}{% for state in automata.states %}{% if automata.null_state_used or loop.index != 0 %}
             S{{ loop.index + current_max_state}}:
             if (unread > 0{% if loop.index == automata.start_state %} && !first{% endif %}) {
                 {% if track_lines %}{% if no_utf8 %}curr.line += c == '\n';
@@ -256,7 +256,7 @@ namespace lexer {
             }{% endif %}{% endif %}{% endfor %}
 
             goto resolution;
-            {% endfor %}{% set current_max_state = current_max_state + length(automata.states) %}{% endfor %}
+            {% endif %}{% endfor %}{% set current_max_state = current_max_state + length(automata.states) %}{% endfor %}
             resolution:
             if (c == -2 && last_rule_number == -1) {
                 // execute eof action
