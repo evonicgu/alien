@@ -44,7 +44,7 @@ namespace parser {
         }
 
         {% set start_rule_type = bytes(at(types, start_rule)) %}{{ start_rule_type }}* parse() {
-            std::ptrdiff_t rule = 0, prod = 0;
+            std::ptrdiff_t rule, prod;
 
 {% for state in table %}            S{{ loop.index }}:{% for transitions in state %}{% if transitions.1.0 == 0 %}
             if (lookahead.index == 0) {
@@ -102,7 +102,9 @@ namespace parser {
 {% endif %}{% endfor %}{% set length = at(at(lengths, loop.parent.index), loop.index) %}{% if length > 0 %}
                             symbols.resize(symbols.size() - {{ at(at(lengths, loop.parent.index), loop.index) }});{% endif %}
                             {{ bytes(at(at(actions, loop.parent.index), loop.index)) }}
-                            break;
+{% set has_tokens = false %}{% for symbol in production %}{% if symbol < terminals %}{% set has_tokens = true %}
+                            delete ${{ loop.index }};{% endif %}{% endfor %}{% if has_tokens %}
+{% endif %}                            break;
                         }{% endfor %}
                     }
 
