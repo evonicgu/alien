@@ -306,6 +306,10 @@ namespace alien::lexer::automata {
                     continue;
                 }
 
+                if (min_head == min_automata.start_state) {
+                    min_automata.transitions_to_start = true;
+                }
+
                 std::size_t transition = min_automata.transitions.push_back({min_tail, min_head, label});
                 min_automata.states[min_tail].out_transitions.push_back(transition);
                 min_automata.states[min_head].in_transitions.push_back(transition);

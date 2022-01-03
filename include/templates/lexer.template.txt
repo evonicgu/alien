@@ -171,27 +171,27 @@ namespace lexer {
 
 {% for code in code_content %}{{ bytes(code) }}{% endfor %}
     public:
-        lexer(const Stream& stream)
+        explicit lexer(const Stream& stream)
             : stream(stream) {
             init_buffers();
             fill();
         }
 
         template<typename... Args>
-        lexer(Args&& ...args)
+        explicit lexer(Args&& ...args)
             : stream(std::forward<Args>(args)...) {
             init_buffers();
             fill();
         }
 
         {% if no_return %}void{% else %}token_t*{% endif %} lex() {
-            {{ char_type }} c = 0;{% if not no_utf8 %}
-            {{ char_type }} c_class = 0;
-            {% endif %}
-            bool first = true;
+            {{ char_type }} c;{% if not no_utf8 %}
+            {{ char_type }} c_class;
+            {% endif %}{% if has_any_start_transitions %}
+            bool first = true;{% endif %}
             goto start_resolution;
 {% set current_max_state = 0 %}{% for automata in automations %}{% for state in automata.states %}{% if automata.null_state_used or loop.index != 0 %}
-            S{{ loop.index + current_max_state}}:
+            S{{ loop.index + current_max_state}}:{% if loop.index != automata.start_state or automata.transitions_to_start %}
             if (unread > 0{% if loop.index == automata.start_state %} && !first{% endif %}) {
                 {% if track_lines %}{% if no_utf8 %}curr.line += c == '\n';
                 curr.column = (c != '\n') * curr.column + 1;
@@ -212,8 +212,8 @@ namespace lexer {
                 {% endif %}++bufpos;
                 lexeme[lexemepos++] = c;
             }
-
-            {% if not state.accepting %}{% if loop.index == automata.start_state %}if (!first) {
+{% endif %}
+            {% if not state.accepting %}{% if loop.index == automata.start_state and automata.transitions_to_start %}if (!first) {
                 ++chars_since_last_rule;
             }{% else %}++chars_since_last_rule;{% endif %}{% else %}chars_since_last_rule = 0;
             last_rule_number = {{ state.rule_number }};{% if track_lines %}
@@ -221,7 +221,7 @@ namespace lexer {
 {% set collection = lexer_collect(state, automata) %}
 {% for symbols in collection %}{% if length(symbols) > 0 %}{% if read_first %}{% set read_first = false %}            if (unread > 0) {
                 c = lexeme[lexemepos];{% if not no_utf8 %}
-                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state %}
+                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
                 first = false;{% endif %}
             } else {
                 if (bufpos == max) {
@@ -230,7 +230,7 @@ namespace lexer {
                 }
 
                 c = buffer[bufpos];{% if not no_utf8 %}
-                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state %}
+                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
                 first = false;{% endif %}
             }{% endif %}{% set first = true %}{% set first_symbol = true %}{% set start = symbols.0 %}{% set prev = symbols.0 %}{% for symbol in symbols %}{% if symbol >= 0 %}{% if first_symbol %}
 
@@ -239,7 +239,7 @@ namespace lexer {
             }{% endif %}{% endif %}{% endfor %}
 {% for symbols in collection %}{% if length(symbols) > 0 %}{% if read_first %}{% set read_first = false %}                if (unread > 0) {
                 c = lexeme[lexemepos];{% if not no_utf8 %}
-                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state %}
+                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
                 first = false;{% endif %}
             } else {
                 if (bufpos == max) {
@@ -248,7 +248,7 @@ namespace lexer {
                 }
 
                 c = buffer[bufpos];{% if not no_utf8 %}
-                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state %}
+                c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
                 first = false;{% endif %}
             }{% endif %}{% set first = true %}{% set first_symbol = true %}{% set start = symbols.0 %}{% set prev = symbols.0 %}{% for symbol in symbols %}{% if symbol < 0 %}{% if first_symbol %}
 
@@ -291,8 +291,8 @@ namespace lexer {
                 start = curr;{% endif %}
                 chars_since_last_rule = 0;
             }
-
-            first = true;
+{% if has_any_start_transitions %}
+            first = true;{% endif %}
             switch (current_context) { {% for start_state in ctx_start_states %}
                 case {{ loop.index }}: goto S{{ start_state }};{% endfor %}
             }

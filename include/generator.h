@@ -192,6 +192,7 @@ namespace alien {
             std::vector<lexer::automata::dfa::dfa> automations;
 
             bool no_utf8 = get_value(lconfig.config["generation.noutf8"_u8]);
+            bool has_any_start_transitions = false;
             std::size_t current_states = 0;
 
             if (alphabet.terminals.size() == 0) {
@@ -218,6 +219,8 @@ namespace alien {
                 automations.push_back(gen.generate_automata(rules));
                 ctx_start_states.push_back(automations.back().start_state + current_states);
                 current_states += automations.back().states.size();
+
+                has_any_start_transitions = has_any_start_transitions || automations.back().transitions_to_start;
             }
 
             if (!err.empty()) {
@@ -251,6 +254,7 @@ namespace alien {
                     {"token_type", std::move(token_type)},
                     {"use_enum_class", get_value(lconfig.config["generation.enum_class"_u8])},
                     {"ctx_start_states", std::move(ctx_start_states)},
+                    {"has_any_start_transitions", has_any_start_transitions},
                     {"symbols", util::to_json(alphabet.terminals, [](const lexer::settings::lexer_symbol& symbol) {
                         return util::u8string_to_bytes(symbol.name);
                     })},

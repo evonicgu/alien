@@ -68,7 +68,7 @@ namespace alien::lexer::automata::dfa {
 
         std::size_t start_state;
 
-        bool null_state_used = false;
+        bool null_state_used = false, transitions_to_start = false;
     };
 
     void to_json(nlohmann::json& json, const dfa& automata) {
@@ -95,6 +95,8 @@ namespace alien::lexer::automata::dfa {
         json["start_state"] = automata.start_state;
 
         json["null_state_used"] = automata.null_state_used;
+
+        json["transitions_to_start"] = automata.transitions_to_start;
     }
 
 }
