@@ -124,7 +124,13 @@ namespace alien::parser::rules {
                     util::pos start{i.line, i.column - 1};
 
                     if (util::is_start_identifier_char(c)) {
-                        return new identifier_token(util::get_identifier(i, c), start, {i.line, i.column});
+                        util::u8string identifier = util::get_identifier(i, c);
+
+                        if (identifier == "error"_u8) {
+                            return new token(token_type::T_ERROR, start, {i.line, i.column});
+                        }
+
+                        return new identifier_token(std::move(identifier), start, {i.line, i.column});
                     }
 
                     throw std::runtime_error("Tokenizing error at " + (std::string) start);

@@ -37,9 +37,10 @@ namespace alien::parser::settings {
                     {
                         {"generation.type"_u8, std::make_shared<config::settings::string_value>("lalr"_u8)},
                         {"general.start"_u8, std::make_shared<config::settings::string_value>(""_u8)},
-                        {"generation.fixed_stack"_u8, std::make_shared<config::settings::bool_value>(false)},
-                        {"generation.stack_size"_u8, std::make_shared<config::settings::number_value>(4096)},
-                        {"symbol.namespace"_u8, std::make_shared<config::settings::string_value>(""_u8)}
+                        {"generation.symbol_type"_u8, std::make_shared<config::settings::string_value>(""_u8)},
+                        {"symbol.namespace"_u8, std::make_shared<config::settings::string_value>(""_u8)},
+                        {"generation.custom_error"_u8, std::make_shared<config::settings::bool_value>(false)},
+                        {"generation.use_token_to_str"_u8, std::make_shared<config::settings::bool_value>(false)}
                     }
             };
         }
@@ -54,9 +55,19 @@ namespace alien::parser::settings {
         void add_types() override {
             using namespace util::literals;
 
-            auto& symbol_namespace = util::check<config::settings::string_value>(
+            util::u8string& symbol_type = util::check<config::settings::string_value>(
+                    configuration.config["generation.symbol_type"_u8].get()
+                    )->str;
+
+            if (symbol_type.empty()) {
+                err.push_back("Symbol type, a common type for all symbols, must be defined"_u8);
+            }
+
+            util::u8string& symbol_namespace = util::check<config::settings::string_value>(
                     configuration.config["symbol.namespace"_u8].get()
             )->str;
+
+            symbol_type = symbol_namespace + "::"_u8 + symbol_type;
 
             for (std::size_t i = 0; i < configuration.symbols.size(); ++i) {
                 auto& symbol = configuration.symbols[i];

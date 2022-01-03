@@ -145,6 +145,14 @@ namespace alien::parser::rules {
 
                         break;
                     }
+                    case type::T_ERROR: {
+                        match(type::T_ERROR);
+
+                        symbol.type = symbol_type::TERMINAL;
+                        symbol.index = 0;
+
+                        break;
+                    }
                     case type::T_PREC: {
                         match(type::T_PREC);
 
@@ -160,6 +168,10 @@ namespace alien::parser::rules {
                         auto it = check_terminal(std::move(token->name));
 
                         match(type::T_TERMINAL);
+
+                        if (current_prod.explicit_precedence) {
+                            throw std::runtime_error("Explicit precedence used more than once");
+                        }
 
                         current_prod.explicit_precedence = true;
                         current_prod.prec = it->prec;

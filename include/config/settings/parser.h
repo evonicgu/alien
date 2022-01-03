@@ -180,8 +180,14 @@ namespace alien::config::settings {
             while (lookahead->type == type::T_IDENTIFIER) {
                 util::pos pos = lookahead->start;
 
+                util::u8string name = std::move(check<identifier_token>()->name);
+
+                if (name == "error"_u8) {
+                    throw std::runtime_error("Cannot use predefined name 'error' at pos " + (std::string) pos);
+                }
+
                 T symbol{
-                    .name = std::move(check<identifier_token>()->name)
+                    .name = std::move(name)
                 };
 
                 match(type::T_IDENTIFIER);

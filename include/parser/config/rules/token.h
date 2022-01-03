@@ -11,6 +11,7 @@ namespace alien::parser::rules {
         T_COLON,
         T_OR,
         T_TERMINAL,
+        T_ERROR,
         T_MIDRULE_ACTION,
         T_PREC,
         T_ACTION,

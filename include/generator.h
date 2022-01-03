@@ -105,6 +105,8 @@ namespace alien {
 
     private:
         void parse_lexer_config() {
+            using namespace util::literals;
+
             config::settings::lexer settings_lexer(input, err);
             lexer::settings::settings_parser settings_parser(settings_lexer, err);
 
@@ -112,6 +114,11 @@ namespace alien {
 
             lconfig = settings_parser.get_settings();
             token_type_default = settings_parser.is_token_default();
+
+            alphabet.terminals.push_back({
+                "error"_u8,
+                "lexer::token_t"_u8
+            });
 
             for (std::size_t i = 0; i < lconfig.symbols.size(); ++i) {
                 lexer::settings::lexer_symbol symbol{
@@ -278,27 +285,44 @@ namespace alien {
 
             parser::generator::parsing_table table = parser_generator->generate_table();
 
+            std::vector<bool> err_states(table.size()), recover_states(table.size());
+
+            for (std::size_t i = 0; i < table.size(); ++i) {
+                auto it = table[i].find({parser::rules::symbol_type::TERMINAL, 0});
+
+                if (it != table[i].end()) {
+                    err_states[i] = true;
+                    recover_states[it->second.arg1] = true;
+                } else {
+                    err_states[i] = false;
+                }
+            }
+
             if (!err.empty()) {
                 return;
             }
 
-            long long stack_size = util::check<config::settings::number_value>(
-                    pconfig.config["generation.stack_size"_u8].get()
-                    )->number;
+            util::u8string& symbol_type = util::check<config::settings::string_value>(
+                    pconfig.config["generation.symbol_type"_u8].get()
+            )->str;
 
             inja::json data{
                     {"code_top", std::move(pconfig.code_top)},
                     {"code_default", std::move(pconfig.code)},
                     {"code_content", std::move(pconfig.code_content)},
-                    {"fixed_stack", get_value(pconfig.config["generation.fixed_stack"_u8])},
-                    {"stack_size", stack_size},
                     {"table", parser::generator::transform_table(table, (std::ptrdiff_t) alphabet.terminals.size())},
                     {"terminals", alphabet.terminals.size()},
+                    {"symbol_type", std::move(symbol_type)},
                     {"lengths", get_parser_lengths()},
                     {"types", get_parser_types()},
                     {"rules", get_parser_rules()},
                     {"start_rule", prules.start + alphabet.terminals.size()},
                     {"actions", get_parser_actions()},
+                    {"custom_error", get_value(pconfig.config["generation.custom_error"_u8])},
+                    {"use_token_to_str", get_value(pconfig.config["generation.use_token_to_str"_u8])},
+                    {"err_states", std::move(err_states)},
+                    {"track_lines", get_value(lconfig.config["generation.track_lines"_u8])},
+                    {"recover_states", std::move(recover_states)}
             };
 
             inja::Template tmpl = env.parse_file("templates/parser.template.txt");
