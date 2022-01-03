@@ -119,12 +119,13 @@ namespace parser {
 {% for i in range(length(table)) %}                case {{ i }}: goto S{{ i }};
 {% endfor %}            }
 
-            error:
+            error:{% if has_error_productions %}
             if (in_error) {
                 delete (lexer::token_t*) lookahead.data;
 
                 if (lookahead.index == -2) {
                     fatal_error(err_state, err_lookahead);
+                    return nullptr;
                 }
 
                 lexer::token_t* token = lexer.lex();
@@ -139,6 +140,7 @@ namespace parser {
                 goto state_resolution;
             } else {
                 std::size_t state = symbols.back().state;
+                err_lookahead = lookahead.index;
                 err_state = state;{% if track_lines %}
                 err_pos = ((lexer::token_t*) symbols.back().data)->start;{% endif %}
 
@@ -153,6 +155,7 @@ namespace parser {
 
                     if (symbols.empty()) {
                         fatal_error(state, err_lookahead);
+                        return nullptr;
                     }
 
                     state = symbols.back().state;
@@ -164,13 +167,38 @@ namespace parser {
                 lookahead.data = nullptr;
 
                 goto state_resolution;
-            }
-        }{% if not custom_error %}
+            }{% else %}
+            err_state = symbols.back().state;
+            err_lookahead = lookahead.index;{% if track_lines %}
+            err_pos = ((lexer::token_t*) symbols.back().data)->start;{% endif %}
 
-    private:
+            while (!symbols.empty()) {
+                if (symbols.back().index >= {{ terminals }}) {
+                    delete (symbol_t*) symbols.back().data;
+                } else {
+                    delete (lexer::token_t*) symbols.back().data;
+                }
+
+                symbols.pop_back();
+            }
+
+            fatal_error(err_state, err_lookahead);
+            return nullptr;{% endif %}
+        }{% if not custom_error or default_token_to_str %}
+
+    private:{% endif %}{% if not custom_error %}
         void fatal_error(std::size_t, std::ptrdiff_t{% if use_token_to_str %} got{% endif %}) {#{}#{% if use_token_to_str %}
-            {% if track_lines %}throw std::runtime_error("Syntax error (" + (std::string) err_pos + ") - unexpected " + token_to_str(got));{% else %}{% endif %}throw std::runtime_error("Syntax error - unexpected " + token_to_str(got));{% else %}
+            {% if track_lines %}throw std::runtime_error("Syntax error (" + (std::string) err_pos + ") - unexpected " + token_to_str(got));{% else %}throw std::runtime_error("Syntax error - unexpected " + token_to_str(got));{% endif %}{% else %}
             {% if track_lines %}throw std::runtime_error("Syntax error (" + (std::string) err_pos + ") - unexpected token");{% else %}throw std::runtime_error("Syntax error - unexpected token");{%endif %}{% endif %}
+        }{% endif %}{% if default_token_to_str %}{% if not custom_error %}
+        {% endif %}
+        const char* token_to_str(std::ptrdiff_t terminal) {
+            switch (terminal) {
+                case -2: return "EOF";{% for terminal in tokens %}
+                case {{ loop.index }}: return "{{ terminal }}";{% endfor %}
+                default:
+                    throw std::invalid_argument("Unknown terminal index: " + std::to_string(terminal));
+            }
         }{% endif %}
     };
 

@@ -40,7 +40,8 @@ namespace alien::parser::settings {
                         {"generation.symbol_type"_u8, std::make_shared<config::settings::string_value>(""_u8)},
                         {"symbol.namespace"_u8, std::make_shared<config::settings::string_value>(""_u8)},
                         {"generation.custom_error"_u8, std::make_shared<config::settings::bool_value>(false)},
-                        {"generation.use_token_to_str"_u8, std::make_shared<config::settings::bool_value>(false)}
+                        {"generation.use_token_to_str"_u8, std::make_shared<config::settings::bool_value>(false)},
+                        {"generation.default_token_to_str"_u8, std::make_shared<config::settings::bool_value>(false)}
                     }
             };
         }

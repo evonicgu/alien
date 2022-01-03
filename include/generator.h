@@ -287,11 +287,14 @@ namespace alien {
 
             std::vector<bool> err_states(table.size()), recover_states(table.size());
 
+            bool has_error_productions = false;
+
             for (std::size_t i = 0; i < table.size(); ++i) {
                 auto it = table[i].find({parser::rules::symbol_type::TERMINAL, 0});
 
                 if (it != table[i].end()) {
                     err_states[i] = true;
+                    has_error_productions = true;
                     recover_states[it->second.arg1] = true;
                 } else {
                     err_states[i] = false;
@@ -320,7 +323,12 @@ namespace alien {
                     {"actions", get_parser_actions()},
                     {"custom_error", get_value(pconfig.config["generation.custom_error"_u8])},
                     {"use_token_to_str", get_value(pconfig.config["generation.use_token_to_str"_u8])},
+                    {"default_token_to_str", get_value(pconfig.config["generation.default_token_to_str"_u8])},
                     {"err_states", std::move(err_states)},
+                    {"has_error_productions", has_error_productions},
+                    {"tokens", util::to_json(alphabet.terminals, [](const lexer::settings::lexer_symbol& symbol) {
+                        return util::u8string_to_bytes(symbol.name);
+                    })},
                     {"track_lines", get_value(lconfig.config["generation.track_lines"_u8])},
                     {"recover_states", std::move(recover_states)}
             };
@@ -355,10 +363,10 @@ namespace alien {
 
                         if (symbol.type == t::NON_TERMINAL) {
                             bool is_midrule = alphabet.non_terminals[symbol.index].is_midrule;
-                            bool is_empty = prules.ruleset[symbol.index][0].symbols.empty();
+                            auto& midrule_symbols = prules.ruleset[symbol.index][0].symbols;
 
-                            if (is_midrule && is_empty) {
-                                prules.ruleset[symbol.index][0].symbols = {symbols.begin(), symbols.begin() + prod.size()};
+                            if (is_midrule && midrule_symbols.empty()) {
+                                midrule_symbols = {symbols.begin(), symbols.begin() + prod.size()};
                             }
                         }
 
