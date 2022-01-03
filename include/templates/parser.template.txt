@@ -144,7 +144,7 @@ namespace parser {
                 std::size_t state = symbols.back().state;
                 err_lookahead = lookahead.index;
                 err_state = state;{% if track_lines %}
-                err_pos = ((lexer::token_t*) symbols.back().data)->start;{% endif %}
+                err_pos = ((lexer::token_t*) lookahead.data)->start;{% endif %}
 
                 while (!err_states[state]) {
                     if (symbols.back().index >= {{ terminals }}) {
@@ -172,7 +172,8 @@ namespace parser {
             }{% else %}
             err_state = symbols.back().state;
             err_lookahead = lookahead.index;{% if track_lines %}
-            err_pos = ((lexer::token_t*) symbols.back().data)->start;{% endif %}
+            err_pos = ((lexer::token_t*) lookahead.data)->start;{% endif %}
+            delete (lexer::token_t*) lookahead.data;
 
             while (!symbols.empty()) {
                 if (symbols.back().index >= {{ terminals }}) {
