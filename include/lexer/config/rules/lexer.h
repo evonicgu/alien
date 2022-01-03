@@ -51,7 +51,7 @@ namespace alien::lexer::rules {
                     if (name.empty()) {
                         util::pos pos{i.line, i.column};
 
-                        throw std::runtime_error("Expected a valid identifier at" + (std::string) pos);
+                        throw std::runtime_error("Expected a valid identifier at " + (std::string) pos);
                     }
 
                     if (i.peek() != ']') {
