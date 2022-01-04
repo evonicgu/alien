@@ -88,19 +88,19 @@ namespace alien {
             env.set_comment("#{", "}#");
         }
 
-        void generate() {
+        void generate(const std::string& ltemplate, const std::string& ptemplate) {
             parse_lexer_config();
 
             parse_parser_config();
 
             if (!err.empty()) {
-                // there are errorsё
+                // there are errors
                 return;
             }
 
-            generate_lexer();
+            generate_lexer(ltemplate);
 
-            generate_parser();
+            generate_parser(ptemplate);
         }
 
     private:
@@ -184,7 +184,7 @@ namespace alien {
             }
         }
 
-        void generate_lexer() {
+        void generate_lexer(const std::string& ltemplate) {
             using namespace util::literals;
 
             std::vector<std::size_t> ctx_start_states;
@@ -268,11 +268,11 @@ namespace alien {
                     {"custom_error", get_value(lconfig.config["generation.custom_error"_u8])},
             };
 
-            inja::Template tmpl = env.parse_file("templates/lexer.template.txt");
+            inja::Template tmpl = env.parse_file(ltemplate);
             env.render_to(output, tmpl, data);
         }
 
-        void generate_parser() {
+        void generate_parser(const std::string& ptemplate) {
             using namespace util::literals;
 
             if (alphabet.non_terminals.size() == 1) {
@@ -337,7 +337,7 @@ namespace alien {
                     {"recover_states", std::move(recover_states)}
             };
 
-            inja::Template tmpl = env.parse_file("templates/parser.template.txt");
+            inja::Template tmpl = env.parse_file(ptemplate);
             env.render_to(output, tmpl, data);
         }
 

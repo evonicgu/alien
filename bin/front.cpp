@@ -21,6 +21,10 @@ int main(int argc, char** argv) {
                 ("header", "Generates header file if true", cxxopts::value<bool>()->default_value("true"))
                 ("h,help", "Prints the help message")
                 ("q,quiet", "Quiet mode (no warnings, not recommended)", cxxopts::value(quiet))
+                ("ltemplate", "Lexer template file", cxxopts::value<std::string>()
+                        ->default_value("templates/lexer.template.txt"))
+                ("ptemplate", "Parser template file", cxxopts::value<std::string>()
+                        ->default_value("templates/parser.template.txt"))
                 ("args", "Positional args", cxxopts::value<std::vector<std::string>>());
 
         options.parse_positional({"input", "args"});
@@ -43,7 +47,7 @@ int main(int argc, char** argv) {
         std::ofstream out(result["output"].as<std::string>() + (result["header"].as<bool>() ? ".h" : ".cpp"));
         alien::generator gen(in, out, err);
 
-        gen.generate();
+        gen.generate(result["ltemplate"].as<std::string>(), result["ptemplate"].as<std::string>());
 
         if (!err.empty()) {
             if (!quiet) {

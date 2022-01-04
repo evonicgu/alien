@@ -68,7 +68,9 @@ namespace alien::parser::settings {
                     configuration.config["symbol.namespace"_u8].get()
             )->str;
 
-            symbol_type = symbol_namespace + "::"_u8 + symbol_type;
+            if (!symbol_namespace.empty()) {
+                symbol_type = symbol_namespace + "::"_u8 + symbol_type;
+            }
 
             for (std::size_t i = 0; i < configuration.symbols.size(); ++i) {
                 auto& symbol = configuration.symbols[i];
