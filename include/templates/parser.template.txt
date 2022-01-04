@@ -25,7 +25,7 @@ namespace {{ bytes(parser_namespace) }} {
         grammar_symbol saved_symbol;
 
         std::size_t err_state;{% if track_lines %}
-        {{ bytes(lexer_relative_namespace) }}position err_pos;{% endif %}
+        {{ bytes(lexer_relative_namespace) }}pos_t err_pos;{% endif %}
         std::ptrdiff_t err_lookahead = lookahead.index;
 
         bool in_error = false;

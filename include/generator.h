@@ -29,7 +29,7 @@ namespace alien {
         lexer::rules::rules lrules;
         parser::rules::rules prules;
 
-        bool token_type_default = true;
+        bool token_type_default = false, position_type_default = false;
 
         util::u8string lexer_relative_namespace;
 
@@ -151,7 +151,8 @@ namespace alien {
             settings_parser.parse();
 
             lconfig = settings_parser.get_settings();
-            token_type_default = settings_parser.is_token_default();
+            token_type_default = settings_parser.token_default;
+            position_type_default = settings_parser.position_default;
 
             alphabet.terminals.push_back({
                 "error"_u8,
@@ -280,9 +281,14 @@ namespace alien {
                     lconfig.config["generation.token_type"_u8].get()
             )->str + "<token_type>"_u8;
 
+            util::u8string position_type = std::move(util::check<config::settings::string_value>(
+                    lconfig.config["generation.position_type"_u8].get()
+            )->str);
+
             util::u8string lexer_namespace = std::move(util::check<config::settings::string_value>(
                     lconfig.config["generation.namespace"_u8].get()
             )->str);
+
 
             inja::json data{
                     {"no_utf8", no_utf8},
@@ -293,7 +299,9 @@ namespace alien {
                     {"macros", get_value(lconfig.config["generation.macros"_u8])},
                     {"emit_stream", !no_utf8 && get_value(lconfig.config["generation.emit_stream"_u8])},
                     {"token_default", token_type_default},
+                    {"position_default", position_type_default},
                     {"token_type", std::move(token_type)},
+                    {"position_type", std::move(position_type)},
                     {"use_enum_class", get_value(lconfig.config["generation.enum_class"_u8])},
                     {"ctx_start_states", std::move(ctx_start_states)},
                     {"has_any_start_transitions", has_any_start_transitions},

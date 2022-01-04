@@ -24,9 +24,9 @@ namespace alien::lexer::settings {
 
     class settings_parser : public config::settings::parser<lexer_symbol> {
         std::ptrdiff_t prec_level = 0;
-        bool token_default = false;
-
     public:
+        bool token_default = false, position_default = false;
+
         settings_parser(lexer& l, std::list<util::u8string>& err)
             : config::settings::parser<lexer_symbol>(l, err) {
             using namespace util::literals;
@@ -34,6 +34,7 @@ namespace alien::lexer::settings {
             configuration = {
                     {
                         {"generation.token_type"_u8, std::make_shared<config::settings::string_value>("default"_u8)},
+                        {"generation.position_type"_u8, std::make_shared<config::settings::string_value>("default"_u8)},
                         {"generation.macros"_u8, std::make_shared<config::settings::bool_value>(false)},
                         {"generation.enum_class"_u8, std::make_shared<config::settings::bool_value>(true)},
                         {"generation.custom_error"_u8, std::make_shared<config::settings::bool_value>(false)},
@@ -50,15 +51,11 @@ namespace alien::lexer::settings {
             };
         }
 
-        bool is_token_default() const {
-            return token_default;
-        }
-
     protected:
         void add_types() override {
             using namespace util::literals;
 
-            util::u8string& value = util::check<config::settings::string_value>(
+            util::u8string& token_type = util::check<config::settings::string_value>(
                     configuration.config["generation.token_type"_u8].get()
                     )->str;
 
@@ -66,11 +63,22 @@ namespace alien::lexer::settings {
                     configuration.config["token.namespace"_u8].get()
                     )->str;
 
-            if (value == "default"_u8) {
+            util::u8string& position_type = util::check<config::settings::string_value>(
+                    configuration.config["generation.position_type"_u8].get()
+                    )->str;
+
+            if (token_type == "default"_u8) {
                 token_default = true;
-                value = "token"_u8;
+                token_type = "token"_u8;
             } else if (!symbol_namespace.empty()) {
-                value = symbol_namespace + "::"_u8 + value;
+                token_type = symbol_namespace + "::"_u8 + token_type;
+            }
+
+            if (position_type == "default"_u8) {
+                position_default = true;
+                position_type = "position"_u8;
+            } else if (!symbol_namespace.empty()) {
+                position_type = symbol_namespace + "::"_u8 + position_type;
             }
 
             for (std::size_t i = 0; i < configuration.symbols.size(); ++i) {

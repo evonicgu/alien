@@ -14,7 +14,7 @@ namespace {{ bytes(lexer_namespace) }} {
 {% endfor %}{% endif %}
 {% if macros %}{% for symbol in symbols %}#define _{{ symbol }} new token_t(token_type::{{ symbol }})
 {% endfor %}
-{% endif %}{% if track_lines %}    struct position {
+{% endif %}{% if track_lines and position_default %}    struct position {
         std::size_t line, column;
 
         explicit operator std::string() const {
@@ -134,9 +134,9 @@ namespace {{ bytes(lexer_namespace) }} {
         static_assert(std::is_enum_v<T>, "Template argument must be an enum");
 
         T type;{% if track_lines %}
-        position start, end;{% endif %}
+        {{ bytes(position_type) }} start, end;{% endif %}
 
-        token(T type{% if track_lines %}, position start, position end{% endif %})
+        token(T type{% if track_lines %}, {{ bytes(position_type) }} start, {{ bytes(position_type) }} end{% endif %})
             : type(type){% if track_lines %},
               start(start),
               end(end){% endif %} {}
@@ -149,6 +149,7 @@ namespace {{ bytes(lexer_namespace) }} {
 {% endfor %}    };
 {% for code in code_default %}{{ bytes(code) }}{% endfor %}
     using token_t = {{ bytes(token_type) }};
+    using pos_t = {{ bytes(position_type) }};
 
     template<typename Stream>
     class lexer {
@@ -165,7 +166,7 @@ namespace {{ bytes(lexer_namespace) }} {
             lexeme = new {{ char_type }}[LEXEME_SIZE];
         }{% if track_lines %}
 
-        position start{1, 1}, last_rule{1, 1}, curr{1, 1};{% endif %}
+        {{ bytes(position_type) }} start{1, 1}, last_rule{1, 1}, curr{1, 1};{% endif %}
 
         unsigned int current_context = 0;
 
