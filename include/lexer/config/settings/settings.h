@@ -43,6 +43,8 @@ namespace alien::lexer::settings {
                         {"generation.lexeme_size"_u8, std::make_shared<config::settings::number_value>(32768)},
                         {"generation.noreturn"_u8, std::make_shared<config::settings::bool_value>(false)},
                         {"generation.emit_stream"_u8, std::make_shared<config::settings::bool_value>(true)},
+                        {"generation.namespace"_u8, std::make_shared<config::settings::string_value>("lexer"_u8)},
+                        {"generation.no_default_constructor"_u8, std::make_shared<config::settings::bool_value>(false)},
                         {"token.namespace"_u8, std::make_shared<config::settings::string_value>(""_u8)}
                     }
             };
@@ -56,11 +58,11 @@ namespace alien::lexer::settings {
         void add_types() override {
             using namespace util::literals;
 
-            auto& value = util::check<config::settings::string_value>(
+            util::u8string& value = util::check<config::settings::string_value>(
                     configuration.config["generation.token_type"_u8].get()
                     )->str;
 
-            auto& symbol_namespace = util::check<config::settings::string_value>(
+            util::u8string& symbol_namespace = util::check<config::settings::string_value>(
                     configuration.config["token.namespace"_u8].get()
                     )->str;
 
@@ -75,7 +77,7 @@ namespace alien::lexer::settings {
                 auto& symbol = configuration.symbols[i];
 
                 if (symbol.type.empty()) {
-                    symbol.type = "lexer::token_t"_u8;
+                    symbol.type = "__::token_t"_u8;
                 } else if (!symbol_namespace.empty()) {
                     symbol.type = symbol_namespace + "::"_u8 + configuration.symbols[i].type;
                 }

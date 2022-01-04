@@ -1,6 +1,6 @@
 #include <vector>
 {% for code in code_top %}{{ bytes(code) }}{% endfor %}
-namespace parser {
+namespace {{ bytes(parser_namespace) }} {
 
     struct grammar_symbol {
         std::ptrdiff_t index;
@@ -25,24 +25,24 @@ namespace parser {
         grammar_symbol saved_symbol;
 
         std::size_t err_state;{% if track_lines %}
-        lexer::position err_pos;{% endif %}
+        {{ bytes(lexer_relative_namespace) }}position err_pos;{% endif %}
         std::ptrdiff_t err_lookahead = lookahead.index;
 
         bool in_error = false;
 
-        lexer::lexer<Stream>& lexer;
+        {{ bytes(lexer_relative_namespace) }}lexer<Stream>& l;
 {% for code in code_content %}{{ bytes(code) }}{% endfor %}
-    public:
-        explicit parser(lexer::lexer<Stream>& lexer)
-            : lexer(lexer) {
+    public:{% if not no_default_constructor %}
+        explicit parser({{ bytes(lexer_relative_namespace) }}lexer<Stream>& l)
+            : l(l) {
             symbols.push_back(lookahead);
 
-            lexer::token_t* token = lexer.lex();
+            {{ bytes(lexer_relative_namespace) }}token_t* token = l.lex();
 
             lookahead.index = (std::ptrdiff_t) token->type;
             lookahead.data = token;
         }
-
+{% endif %}
         {% set start_rule_type = bytes(at(types, start_rule)) %}{{ start_rule_type }}* parse() {
             std::ptrdiff_t rule, prod;
 
@@ -62,7 +62,7 @@ namespace parser {
 
                 in_error = false;{% endif %}
 
-                lexer::token_t* token = lexer.lex();
+                {{ bytes(lexer_relative_namespace) }}token_t* token = l.lex();
 
                 if (token == nullptr) {
                     lookahead.index = -2;
@@ -123,14 +123,14 @@ namespace parser {
 
             error:{% if has_error_productions %}
             if (in_error) {
-                delete (lexer::token_t*) lookahead.data;
+                delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
 
                 if (lookahead.index == -2) {
                     fatal_error(err_state, err_lookahead);
                     return nullptr;
                 }
 
-                lexer::token_t* token = lexer.lex();
+                {{ bytes(lexer_relative_namespace) }}token_t* token = l.lex();
 
                 if (token == nullptr) {
                     lookahead.index = -2;
@@ -144,13 +144,13 @@ namespace parser {
                 std::size_t state = symbols.back().state;
                 err_lookahead = lookahead.index;
                 err_state = state;{% if track_lines %}
-                err_pos = ((lexer::token_t*) lookahead.data)->start;{% endif %}
+                err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
 
                 while (!err_states[state]) {
                     if (symbols.back().index >= {{ terminals }}) {
                         delete (symbol_t*) symbols.back().data;
                     } else {
-                        delete (lexer::token_t*) symbols.back().data;
+                        delete ({{ bytes(lexer_relative_namespace) }}token_t*) symbols.back().data;
                     }
 
                     symbols.pop_back();
@@ -172,14 +172,14 @@ namespace parser {
             }{% else %}
             err_state = symbols.back().state;
             err_lookahead = lookahead.index;{% if track_lines %}
-            err_pos = ((lexer::token_t*) lookahead.data)->start;{% endif %}
-            delete (lexer::token_t*) lookahead.data;
+            err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
+            delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
 
             while (!symbols.empty()) {
                 if (symbols.back().index >= {{ terminals }}) {
                     delete (symbol_t*) symbols.back().data;
                 } else {
-                    delete (lexer::token_t*) symbols.back().data;
+                    delete ({{ bytes(lexer_relative_namespace) }}token_t*) symbols.back().data;
                 }
 
                 symbols.pop_back();

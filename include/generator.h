@@ -31,6 +31,8 @@ namespace alien {
 
         bool token_type_default = true;
 
+        util::u8string lexer_relative_namespace;
+
         alphabet::alphabet alphabet;
         inja::Environment env;
 
@@ -89,9 +91,45 @@ namespace alien {
         }
 
         void generate(const std::string& ltemplate, const std::string& ptemplate) {
+            using namespace util::literals;
+
             parse_lexer_config();
 
             parse_parser_config();
+
+            util::u8string& lexer_namespace = util::check<config::settings::string_value>(
+                    lconfig.config["generation.namespace"_u8].get()
+            )->str;
+
+            util::u8string& parser_namespace = util::check<config::settings::string_value>(
+                    pconfig.config["generation.namespace"_u8].get()
+            )->str;
+
+            std::size_t common_prefix_length = 0;
+
+            for (std::size_t i = 0; i < std::min(lexer_namespace.size(), parser_namespace.size()); ++i) {
+                if (lexer_namespace[i] != parser_namespace[i]) {
+                    break;
+                }
+
+                ++common_prefix_length;
+            }
+
+            lexer_relative_namespace = lexer_namespace.substr(common_prefix_length);
+
+            if (lexer_relative_namespace.find("::"_u8) == 0) {
+                lexer_relative_namespace = lexer_relative_namespace.substr(2);
+            }
+
+            if (!lexer_relative_namespace.empty()) {
+                lexer_relative_namespace += "::"_u8;
+            }
+
+            for (std::size_t i = 0; i < alphabet.terminals.size(); ++i) {
+                if (alphabet.terminals[i].type == "__::token_t"_u8) {
+                    alphabet.terminals[i].type = lexer_relative_namespace + "token_t"_u8;
+                }
+            }
 
             if (!err.empty()) {
                 // there are errors
@@ -242,6 +280,10 @@ namespace alien {
                     lconfig.config["generation.token_type"_u8].get()
             )->str + "<token_type>"_u8;
 
+            util::u8string lexer_namespace = std::move(util::check<config::settings::string_value>(
+                    lconfig.config["generation.namespace"_u8].get()
+            )->str);
+
             inja::json data{
                     {"no_utf8", no_utf8},
                     {"code_top", std::move(lconfig.code_top)},
@@ -266,6 +308,8 @@ namespace alien {
                     {"on_eof", std::move(lrules.on_eof)},
                     {"automations", automations},
                     {"custom_error", get_value(lconfig.config["generation.custom_error"_u8])},
+                    {"lexer_namespace", std::move(lexer_namespace)},
+                    {"no_default_constructor", get_value(lconfig.config["generation.no_default_constructor"_u8])}
             };
 
             inja::Template tmpl = env.parse_file(ltemplate);
@@ -309,9 +353,13 @@ namespace alien {
                 return;
             }
 
-            util::u8string& symbol_type = util::check<config::settings::string_value>(
+            util::u8string symbol_type = std::move(util::check<config::settings::string_value>(
                     pconfig.config["generation.symbol_type"_u8].get()
-            )->str;
+            )->str);
+
+            util::u8string parser_namespace = std::move(util::check<config::settings::string_value>(
+                    pconfig.config["generation.namespace"_u8].get()
+            )->str);
 
             inja::json data{
                     {"code_top", std::move(pconfig.code_top)},
@@ -334,7 +382,10 @@ namespace alien {
                         return util::u8string_to_bytes(symbol.name);
                     })},
                     {"track_lines", get_value(lconfig.config["generation.track_lines"_u8])},
-                    {"recover_states", std::move(recover_states)}
+                    {"recover_states", std::move(recover_states)},
+                    {"parser_namespace", std::move(parser_namespace)},
+                    {"no_default_constructor", get_value(pconfig.config["generation.no_default_constructor"_u8])},
+                    {"lexer_relative_namespace", std::move(lexer_relative_namespace)}
             };
 
             inja::Template tmpl = env.parse_file(ptemplate);

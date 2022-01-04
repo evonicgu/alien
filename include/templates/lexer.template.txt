@@ -4,7 +4,7 @@
 {% if not no_utf8 %}
 #include "utf8proc.h"
 {% endif %}{% for code in code_top %}{{ bytes(code) }}{% endfor %}
-namespace lexer {
+namespace {{ bytes(lexer_namespace) }} {
 
 #define BUF_SIZE {{ buffer_size }}
 #define LEXEME_SIZE {{ lexeme_size }}{% if no_utf8 %}{% set char_type = "char" %}{% else %}{% set char_type = "int" %}{% endif %}
@@ -170,7 +170,7 @@ namespace lexer {
         unsigned int current_context = 0;
 
 {% for code in code_content %}{{ bytes(code) }}{% endfor %}
-    public:
+    public:{% if not no_default_constructor %}
         explicit lexer(const Stream& stream)
             : stream(stream) {
             init_buffers();
@@ -183,7 +183,7 @@ namespace lexer {
             init_buffers();
             fill();
         }
-
+{% endif %}
         {% if no_return %}void{% else %}token_t*{% endif %} lex() {
             {{ char_type }} c;{% if not no_utf8 %}
             {{ char_type }} c_class;
