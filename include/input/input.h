@@ -58,7 +58,7 @@ namespace alien::input {
         bool eof = false;
 
         utf8proc_uint8_t cbuffer[32771];
-        util::u8char buffer[8192];
+        util::u8char buffer[32768];
 
         std::size_t unread = 0, max = 0, pos = 0;
 
