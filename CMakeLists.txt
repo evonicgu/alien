@@ -10,6 +10,7 @@ include(cmake/install.cmake)
 add_subdirectory(include)
 
 configure_file(include/templates/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/lexer.template.txt COPYONLY)
+configure_file(include/templates/token.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/token.template.txt COPYONLY)
 configure_file(include/templates/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/parser.template.txt COPYONLY)
 
 add_executable(alien-front bin/front.cpp)

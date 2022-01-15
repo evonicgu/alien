@@ -46,7 +46,8 @@ namespace alien::lexer::settings {
                         {"generation.emit_stream"_u8, std::make_shared<config::settings::bool_value>(true)},
                         {"generation.namespace"_u8, std::make_shared<config::settings::string_value>("lexer"_u8)},
                         {"generation.no_default_constructor"_u8, std::make_shared<config::settings::bool_value>(false)},
-                        {"token.namespace"_u8, std::make_shared<config::settings::string_value>(""_u8)}
+                        {"general.guard_prefix"_u8, std::make_shared<config::settings::string_value>(""_u8)},
+                        {"token.namespace"_u8, std::make_shared<config::settings::string_value>(""_u8)},
                     }
             };
         }

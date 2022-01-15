@@ -19,8 +19,8 @@
 namespace alien {
 
     class generator {
-        input::stream_input input;
-        std::ofstream& output;
+        input::stream_input in;
+        std::ofstream &parser_out, &token_out;
         std::list<util::u8string>& err;
 
         config::settings::settings<lexer::settings::lexer_symbol> lconfig;
@@ -31,7 +31,7 @@ namespace alien {
 
         bool token_type_default = false, position_type_default = false;
 
-        util::u8string lexer_relative_namespace;
+        util::u8string lexer_relative_namespace, guard_prefix;
 
         alphabet::alphabet alphabet;
         inja::Environment env;
@@ -39,9 +39,10 @@ namespace alien {
         std::shared_ptr<parser::generator::generator> parser_generator;
 
     public:
-        generator(std::ifstream& in, std::ofstream& out, std::list<util::u8string>& err)
-            : input(in),
-              output(out),
+        generator(std::ifstream& in, std::ofstream& parser_out, std::ofstream& token_out, std::list<util::u8string>& err)
+            : in(in),
+              parser_out(parser_out),
+              token_out(token_out),
               err(err) {
             env.add_callback("bytes", 1, [](inja::Arguments& args) {
                 return util::u8string_to_bytes(args.at(0)->get<util::u8string>());
@@ -90,7 +91,7 @@ namespace alien {
             env.set_comment("#{", "}#");
         }
 
-        void generate(const std::string& ltemplate, const std::string& ptemplate) {
+        void generate(const std::string& ltemplate, const std::string& ttemplate, const std::string& ptemplate) {
             using namespace util::literals;
 
             parse_lexer_config();
@@ -104,6 +105,10 @@ namespace alien {
             util::u8string& parser_namespace = util::check<config::settings::string_value>(
                     pconfig.config["generation.namespace"_u8].get()
             )->str;
+
+            guard_prefix = std::move(util::check<config::settings::string_value>(
+                    lconfig.config["general.guard_prefix"_u8].get()
+                    )->str);
 
             std::size_t common_prefix_length = 0;
 
@@ -136,7 +141,7 @@ namespace alien {
                 return;
             }
 
-            generate_lexer(ltemplate);
+            generate_lexer(ltemplate, ttemplate);
 
             generate_parser(ptemplate);
         }
@@ -145,7 +150,7 @@ namespace alien {
         void parse_lexer_config() {
             using namespace util::literals;
 
-            config::settings::lexer settings_lexer(input, err);
+            config::settings::lexer settings_lexer(in, err);
             lexer::settings::settings_parser settings_parser(settings_lexer, err);
 
             settings_parser.parse();
@@ -170,7 +175,7 @@ namespace alien {
                 alphabet.terminals.push_back(std::move(symbol));
             }
 
-            lexer::rules::lexer rules_lexer(input, err);
+            lexer::rules::lexer rules_lexer(in, err);
             lexer::rules::parser rules_parser(rules_lexer, err, alphabet);
 
             rules_parser.parse();
@@ -181,7 +186,7 @@ namespace alien {
         void parse_parser_config() {
             using namespace util::literals;
 
-            config::settings::lexer settings_lexer(input, err);
+            config::settings::lexer settings_lexer(in, err);
             parser::settings::settings_parser settings_parser(settings_lexer, err);
 
             settings_parser.parse();
@@ -205,7 +210,7 @@ namespace alien {
                     pconfig.config["general.start"_u8].get()
             )->str;
 
-            parser::rules::lexer rules_lexer(input, err);
+            parser::rules::lexer rules_lexer(in, err);
             parser::rules::parser rules_parser(rules_lexer, err, alphabet, first_symbol);
 
             rules_parser.parse();
@@ -223,7 +228,7 @@ namespace alien {
             }
         }
 
-        void generate_lexer(const std::string& ltemplate) {
+        void generate_lexer(const std::string& ltemplate, const std::string& ttemplate) {
             using namespace util::literals;
 
             std::vector<std::size_t> ctx_start_states;
@@ -289,7 +294,6 @@ namespace alien {
                     lconfig.config["generation.namespace"_u8].get()
             )->str);
 
-
             inja::json data{
                     {"no_utf8", no_utf8},
                     {"code_top", std::move(lconfig.code_top)},
@@ -308,6 +312,7 @@ namespace alien {
                     {"symbols", util::to_json(alphabet.terminals, [](const lexer::settings::lexer_symbol& symbol) {
                         return util::u8string_to_bytes(symbol.name);
                     })},
+                    {"guard_prefix", guard_prefix},
                     {"track_lines", get_value(lconfig.config["generation.track_lines"_u8])},
                     {"buffer_size", buffer_size},
                     {"lexeme_size", lexeme_size},
@@ -320,8 +325,11 @@ namespace alien {
                     {"no_default_constructor", get_value(lconfig.config["generation.no_default_constructor"_u8])}
             };
 
-            inja::Template tmpl = env.parse_file(ltemplate);
-            env.render_to(output, tmpl, data);
+            inja::Template token_tmpl = env.parse_file(ttemplate);
+            env.render_to(token_out, token_tmpl, data);
+
+            inja::Template lexer_tmpl = env.parse_file(ltemplate);
+            env.render_to(parser_out, lexer_tmpl, data);
         }
 
         void generate_parser(const std::string& ptemplate) {
@@ -379,6 +387,7 @@ namespace alien {
                     {"lengths", get_parser_lengths()},
                     {"types", get_parser_types()},
                     {"rules", get_parser_rules()},
+                    {"guard_prefix", guard_prefix},
                     {"start_rule", prules.start + alphabet.terminals.size()},
                     {"actions", get_parser_actions()},
                     {"custom_error", get_value(pconfig.config["generation.custom_error"_u8])},
@@ -397,7 +406,7 @@ namespace alien {
             };
 
             inja::Template tmpl = env.parse_file(ptemplate);
-            env.render_to(output, tmpl, data);
+            env.render_to(parser_out, tmpl, data);
         }
 
     private:

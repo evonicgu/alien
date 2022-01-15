@@ -205,4 +205,6 @@ namespace {{ bytes(parser_namespace) }} {
         }{% endif %}
     };
 
-}
+}{% set prefix = bytes(guard_prefix) %}{% if length(prefix) != 0 %}
+
+#endif // {{ prefix }}_GEN_PARSER{% endif %}
