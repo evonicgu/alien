@@ -102,9 +102,9 @@ namespace {{ bytes(parser_namespace) }} {
 {% endif %}{% endfor %}{% set length = at(at(lengths, loop.parent.index), loop.index) %}{% if length > 0 %}
                             symbols.resize(symbols.size() - {{ at(at(lengths, loop.parent.index), loop.index) }});{% endif %}
                             {{ bytes(at(at(actions, loop.parent.index), loop.index)) }}
-{% set has_tokens = false %}{% for symbol in production %}{% if symbol < terminals %}{% set has_tokens = true %}
+{% if length > 0 %}{% set has_tokens = false %}{% for symbol in production %}{% if symbol < terminals %}{% set has_tokens = true %}
                             delete ${{ loop.index }};{% endif %}{% endfor %}{% if has_tokens %}
-{% endif %}                            break;
+{% endif %}{% endif %}                            break;
                         }{% endfor %}
                     }
 
