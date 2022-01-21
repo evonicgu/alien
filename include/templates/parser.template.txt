@@ -123,12 +123,13 @@ namespace {{ bytes(parser_namespace) }} {
 
             error:{% if has_error_productions %}
             if (in_error) {
-                delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
-
                 if (lookahead.index == -2) {
+                    unwind_stack();
                     fatal_error(err_state, err_lookahead);
                     return nullptr;
                 }
+
+                delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
 
                 {{ bytes(lexer_relative_namespace) }}token_t* token = l.lex();
 
@@ -143,8 +144,13 @@ namespace {{ bytes(parser_namespace) }} {
             } else {
                 std::size_t state = symbols.back().state;
                 err_lookahead = lookahead.index;
-                err_state = state;{% if track_lines %}
-                err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
+                err_state = state;
+
+                if (lookahead.data != nullptr) {
+                    {% if track_lines %}err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
+                } else {
+                    err_pos = l.get_pos();
+                }
 
                 while (!err_states[state]) {
                     if (symbols.back().index >= {{ terminals }}) {
@@ -156,7 +162,8 @@ namespace {{ bytes(parser_namespace) }} {
                     symbols.pop_back();
 
                     if (symbols.empty()) {
-                        fatal_error(state, err_lookahead);
+                        delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
+                        fatal_error(err_state, err_lookahead);
                         return nullptr;
                     }
 
@@ -171,19 +178,16 @@ namespace {{ bytes(parser_namespace) }} {
                 goto state_resolution;
             }{% else %}
             err_state = symbols.back().state;
-            err_lookahead = lookahead.index;{% if track_lines %}
-            err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
-            delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
+            err_lookahead = lookahead.index;
 
-            while (!symbols.empty()) {
-                if (symbols.back().index >= {{ terminals }}) {
-                    delete (symbol_t*) symbols.back().data;
-                } else {
-                    delete ({{ bytes(lexer_relative_namespace) }}token_t*) symbols.back().data;
-                }
-
-                symbols.pop_back();
+            if (lookahead.data != nullptr) {
+                {% if track_lines %}err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
+                delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
+            } else {
+                err_pos = l.get_pos();
             }
+
+            unwind_stack();
 
             fatal_error(err_state, err_lookahead);
             return nullptr;{% endif %}
@@ -202,7 +206,19 @@ namespace {{ bytes(parser_namespace) }} {
                 default:
                     throw std::invalid_argument("Unknown terminal index: " + std::to_string(terminal));
             }
-        }{% endif %}
+        }
+        {% endif %}
+        void unwind_stack() {
+            while (!symbols.empty()) {
+                if (symbols.back().index >= {{ terminals }}) {
+                    delete (symbol_t*) symbols.back().data;
+                } else {
+                    delete ({{ bytes(lexer_relative_namespace) }}token_t*) symbols.back().data;
+                }
+
+                symbols.pop_back();
+            }
+        }
     };
 
 }{% set prefix = bytes(guard_prefix) %}{% if length(prefix) != 0 %}

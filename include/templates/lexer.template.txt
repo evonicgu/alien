@@ -166,6 +166,10 @@ namespace {{ bytes(lexer_namespace) }} {
             fill();
         }
 {% endif %}
+        pos_t get_pos() const {
+            return curr;
+        }
+
         {% if no_return %}void{% else %}token_t*{% endif %} lex() {
             {{ char_type }} c;{% if not no_utf8 %}
             {{ char_type }} c_class;
