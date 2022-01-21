@@ -73,6 +73,8 @@ namespace {{ bytes(parser_namespace) }} {
 
                 goto S{{ transitions.0.arg1 }};{% else if transitions.0.type == 1 %}rule = {{ transitions.0.arg1 }};
                 prod = {{ transitions.0.arg2 }};
+                {% if at(recover_states, loop.parent.index) %}
+                in_error = false;{% endif %}
                 saved_symbol = lookahead;
                 lookahead = {-1, 0, nullptr};
                 goto rules;{% else %}return static_cast<{{ start_rule_type }}*>(symbols.back().data);{% endif %}
