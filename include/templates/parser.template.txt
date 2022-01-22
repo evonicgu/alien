@@ -12,7 +12,7 @@ namespace {{ bytes(parser_namespace) }} {
 {% for code in code_default %}{{ bytes(code) }}{% endfor %}
     using symbol_t = {{ bytes(symbol_type) }};
 
-    static const bool err_states[{{ length(err_states) }}]{#{}#{% for is_err in err_states %}
+    static const bool err_states[{{ length(shift_err_states) }}]{#{}#{% for is_err in shift_err_states %}
         {{ is_err }},{% endfor %}
     };
 
@@ -46,7 +46,7 @@ namespace {{ bytes(parser_namespace) }} {
         {% set start_rule_type = bytes(at(types, start_rule)) %}{{ start_rule_type }}* parse() {
             std::ptrdiff_t rule, prod;
 
-{% for state in table %}            S{{ loop.index }}:{% for transitions in state %}{% if transitions.1.0 == 0 %}
+{% for state in table %}            S{{ loop.index }}:{% for transitions in state %}{% if at(shift_err_states, loop.parent.index) and (transitions.1.0 == 0 or (length(transitions.1) > 1 and transitions.1.1 == 0)) %}
             if (lookahead.index == 0) {
                 lookahead.state = {{ transitions.0.arg1 }};
                 symbols.push_back(lookahead);
@@ -55,7 +55,8 @@ namespace {{ bytes(parser_namespace) }} {
                 lookahead = saved_symbol;
 
                 goto S{{transitions.0.arg1 }};
-            }{% endif %}{% set first_symbol = true %}{% set first = true %}{% set start = transitions.1.0 %}{% set prev = start %}{% for symbol in transitions.1 %}{% if symbol < terminals and symbol != 0 %}{% if first_symbol %}{% set start = symbol %}{% set prev = start %}
+            }
+            {% endif %}{% set first_symbol = true %}{% set first = true %}{% set start = transitions.1.0 %}{% set prev = start %}{% for symbol in transitions.1 %}{% if symbol < terminals and symbol != 0 %}{% if first_symbol %}{% set start = symbol %}{% set prev = start %}
             if ({% set first_symbol = false %}{% endif %}{% if symbol != start and symbol != prev + 1 %}{% if not first %} || {% endif %}{{ create_parser_range(start, prev, false) }}{% set first = false %}{% set start = symbol %}{% set prev = symbol %}{% else %}{% set prev = symbol %}{% endif %}{% endif %}{% endfor %}{% if not first_symbol %}{% if not first %} || {% endif %}{{ create_parser_range(start, prev, false) }}) {
                 {% if transitions.0.type == 0 %}lookahead.state = {{ transitions.0.arg1 }};
                 symbols.push_back(lookahead);{% if at(recover_states, loop.parent.index) %}
@@ -89,8 +90,14 @@ namespace {{ bytes(parser_namespace) }} {
                 prod = {{ transitions.0.arg2 }};
                 goto rules;{% else %}static_cast<{{ start_rule_type }}*>(return symbols.back().data);{% endif %}
             }{% endif %}
-{% endfor %}
-            goto error;
+{% endfor %}{% if at(reduce_err_states, loop.index) %}
+            rule = {{ at(reduce_err_actions, loop.index).arg1 }};
+            prod = {{ at(reduce_err_actions, loop.index).arg2 }};
+
+            saved_symbol = lookahead;
+            lookahead = {-1, 0, nullptr};
+            goto rules;
+{% else %}            goto error;{%endif %}
 {% endfor %}            rules:
             void* $$$;
 
@@ -127,7 +134,6 @@ namespace {{ bytes(parser_namespace) }} {
             if (in_error) {
                 if (lookahead.index == -2) {
                     unwind_stack();
-                    fatal_error(err_state, err_lookahead);
                     return nullptr;
                 }
 
@@ -154,6 +160,8 @@ namespace {{ bytes(parser_namespace) }} {
                     err_pos = l.get_pos();
                 }
 
+                error(err_state, err_lookahead);
+
                 while (!err_states[state]) {
                     if (symbols.back().index >= {{ terminals }}) {
                         delete (symbol_t*) symbols.back().data;
@@ -165,7 +173,6 @@ namespace {{ bytes(parser_namespace) }} {
 
                     if (symbols.empty()) {
                         delete ({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data;
-                        fatal_error(err_state, err_lookahead);
                         return nullptr;
                     }
 
@@ -181,6 +188,7 @@ namespace {{ bytes(parser_namespace) }} {
             }{% else %}
             err_state = symbols.back().state;
             err_lookahead = lookahead.index;
+            error(err_state, err_lookahead);
 
             if (lookahead.data != nullptr) {
                 {% if track_lines %}err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
@@ -191,12 +199,11 @@ namespace {{ bytes(parser_namespace) }} {
 
             unwind_stack();
 
-            fatal_error(err_state, err_lookahead);
             return nullptr;{% endif %}
         }{% if not custom_error or default_token_to_str %}
 
     private:{% endif %}{% if not custom_error %}
-        void fatal_error(std::size_t, std::ptrdiff_t{% if use_token_to_str %} got{% endif %}) {#{}#{% if use_token_to_str %}
+        void error(std::size_t, std::ptrdiff_t{% if use_token_to_str %} got{% endif %}) {#{}#{% if use_token_to_str %}
             {% if track_lines %}throw std::runtime_error("Syntax error (" + (std::string) err_pos + ") - unexpected " + token_to_str(got));{% else %}throw std::runtime_error("Syntax error - unexpected " + token_to_str(got));{% endif %}{% else %}
             {% if track_lines %}throw std::runtime_error("Syntax error (" + (std::string) err_pos + ") - unexpected token");{% else %}throw std::runtime_error("Syntax error - unexpected token");{%endif %}{% endif %}
         }{% endif %}{% if default_token_to_str %}{% if not custom_error %}

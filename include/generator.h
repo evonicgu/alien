@@ -349,7 +349,11 @@ namespace alien {
 
             parser::generator::parsing_table table = parser_generator->generate_table();
 
-            std::vector<bool> err_states(table.size()), recover_states(table.size());
+            std::vector<bool> shift_err_states(table.size(), false),
+                              reduce_err_states(table.size(), false),
+                              recover_states(table.size(), false);
+
+            std::vector<parser::generator::parsing_action> reduce_err_actions(table.size());
 
             bool has_error_productions = false;
 
@@ -357,11 +361,14 @@ namespace alien {
                 auto it = table[i].find({parser::rules::symbol_type::TERMINAL, 0});
 
                 if (it != table[i].end()) {
-                    err_states[i] = true;
+                    if (it->second.type == parser::generator::action_type::SHIFT) {
+                        shift_err_states[i] = true;
+                        recover_states[it->second.arg1] = true;
+                    } else {
+                        reduce_err_states[i] = true;
+                        reduce_err_actions[i] = it->second;
+                    }
                     has_error_productions = true;
-                    recover_states[it->second.arg1] = true;
-                } else {
-                    err_states[i] = false;
                 }
             }
 
@@ -393,7 +400,9 @@ namespace alien {
                     {"custom_error", get_value(pconfig.config["generation.custom_error"_u8])},
                     {"use_token_to_str", get_value(pconfig.config["generation.use_token_to_str"_u8])},
                     {"default_token_to_str", get_value(pconfig.config["generation.default_token_to_str"_u8])},
-                    {"err_states", std::move(err_states)},
+                    {"shift_err_states", std::move(shift_err_states)},
+                    {"reduce_err_states", std::move(reduce_err_states)},
+                    {"reduce_err_actions", std::move(reduce_err_actions)},
                     {"has_error_productions", has_error_productions},
                     {"tokens", util::to_json(alphabet.terminals, [](const lexer::settings::lexer_symbol& symbol) {
                         return util::u8string_to_bytes(symbol.name);
