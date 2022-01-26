@@ -39,7 +39,12 @@ namespace {{ bytes(parser_namespace) }} {
 
             {{ bytes(lexer_relative_namespace) }}token_t* token = l.lex();
 
-            lookahead.index = (std::ptrdiff_t) token->type;
+            if (token != nullptr) {
+                lookahead.index = (std::ptrdiff_t) token->type;
+            } else {
+                lookahead.index = -2;
+            }
+
             lookahead.data = token;
         }
 {% endif %}
