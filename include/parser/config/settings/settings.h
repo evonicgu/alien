@@ -29,7 +29,7 @@ namespace alien::parser::settings {
 
     class settings_parser : public config::settings::parser<parser_symbol> {
     public:
-        settings_parser(lexer& l, std::list<util::u8string>& err)
+        settings_parser(lexer_t& l, std::list<util::u8string>& err)
                 : config::settings::parser<parser_symbol>(l, err) {
             using namespace util::literals;
 

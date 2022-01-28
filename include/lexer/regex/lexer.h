@@ -15,7 +15,7 @@ namespace alien::lexer::regex {
         explicit lexer(input::input& i, std::list<util::u8string>& err)
             : util::lexer<token_type>(i, err) {}
 
-        token* lex() override {
+        token_t* lex() override {
             using namespace util::literals;
 
             util::pos start{i.line, i.column};
@@ -23,27 +23,27 @@ namespace alien::lexer::regex {
 
             switch (c) {
                 case '*':
-                    return new token(token_type::T_STAR, start, {i.line, i.column});
+                    return new token_t(token_type::T_STAR, start, {i.line, i.column});
                 case '|':
-                    return new token(token_type::T_OR, start, {i.line, i.column});
+                    return new token_t(token_type::T_OR, start, {i.line, i.column});
                 case '+':
-                    return new token(token_type::T_PLUS, start, {i.line, i.column});
+                    return new token_t(token_type::T_PLUS, start, {i.line, i.column});
                 case '(':
-                    return new token(token_type::T_PARENTHESIS_OPEN, start, {i.line, i.column});
+                    return new token_t(token_type::T_PARENTHESIS_OPEN, start, {i.line, i.column});
                 case ')':
-                    return new token(token_type::T_PARENTHESIS_CLOSE, start, {i.line, i.column});
+                    return new token_t(token_type::T_PARENTHESIS_CLOSE, start, {i.line, i.column});
                 case '{':
-                    return new token(token_type::T_BRACE_OPEN, start, {i.line, i.column});
+                    return new token_t(token_type::T_BRACE_OPEN, start, {i.line, i.column});
                 case '}':
-                    return new token(token_type::T_BRACE_CLOSE, start, {i.line, i.column});
+                    return new token_t(token_type::T_BRACE_CLOSE, start, {i.line, i.column});
                 case ',':
-                    return new token(token_type::T_COMMA, start, {i.line, i.column});
+                    return new token_t(token_type::T_COMMA, start, {i.line, i.column});
                 case '-':
-                    return new token(token_type::T_HYPHEN, start, {i.line, i.column});
+                    return new token_t(token_type::T_HYPHEN, start, {i.line, i.column});
                 case '.':
-                    return new token(token_type::T_DOT, start, {i.line, i.column});
+                    return new token_t(token_type::T_DOT, start, {i.line, i.column});
                 case '?':
-                    return new token(token_type::T_QUESTION_MARK, start, {i.line, i.column});
+                    return new token_t(token_type::T_QUESTION_MARK, start, {i.line, i.column});
                 case '\\': {
                     util::u8char symbol = i.get();
 
@@ -81,35 +81,35 @@ namespace alien::lexer::regex {
                             return new symbol_class_token(std::move(name), start, {i.line, i.column});
                         }
                         case 'h':
-                            return new token(token_type::T_HORIZONTAL_SPACE, start, {i.line, i.column});
+                            return new token_t(token_type::T_HORIZONTAL_SPACE, start, {i.line, i.column});
                         case 'H':
-                            return new token(token_type::T_NON_HORIZONTAL_SPACE, start, {i.line, i.column});
+                            return new token_t(token_type::T_NON_HORIZONTAL_SPACE, start, {i.line, i.column});
                         case 'X':
-                            return new token(token_type::T_VALID_SEQUENCE, start, {i.line, i.column});
+                            return new token_t(token_type::T_VALID_SEQUENCE, start, {i.line, i.column});
                         case 'R':
-                            return new token(token_type::T_UNICODE_NEWLINE, start, {i.line, i.column});
+                            return new token_t(token_type::T_UNICODE_NEWLINE, start, {i.line, i.column});
                         case 's':
-                            return new token(token_type::T_SPACE, start, {i.line, i.column});
+                            return new token_t(token_type::T_SPACE, start, {i.line, i.column});
                         case 'S':
-                            return new token(token_type::T_NON_SPACE, start, {i.line, i.column});
+                            return new token_t(token_type::T_NON_SPACE, start, {i.line, i.column});
                         case 'd':
-                            return new token(token_type::T_DIGIT, start, {i.line, i.column});
+                            return new token_t(token_type::T_DIGIT, start, {i.line, i.column});
                         case 'D':
-                            return new token(token_type::T_NON_DIGIT, start, {i.line, i.column});
+                            return new token_t(token_type::T_NON_DIGIT, start, {i.line, i.column});
                         case 'n':
                             return new symbol_token('\n', start, {i.line, i.column});
                         case 'N':
-                            return new token(token_type::T_NON_NEWLINE, start, {i.line, i.column});
+                            return new token_t(token_type::T_NON_NEWLINE, start, {i.line, i.column});
                         case 't':
                             return new symbol_token('\t', start, {i.line, i.column});
                         case 'v':
-                            return new token(token_type::T_VERTICAL_SPACE, start, {i.line, i.column});
+                            return new token_t(token_type::T_VERTICAL_SPACE, start, {i.line, i.column});
                         case 'V':
-                            return new token(token_type::T_NON_VERTICAL_SPACE, start, {i.line, i.column});
+                            return new token_t(token_type::T_NON_VERTICAL_SPACE, start, {i.line, i.column});
                         case 'w':
-                            return new token(token_type::T_WORD_CHAR, start, {i.line, i.column});
+                            return new token_t(token_type::T_WORD_CHAR, start, {i.line, i.column});
                         case 'W':
-                            return new token(token_type::T_NON_WORD_CHAR, start, {i.line, i.column});
+                            return new token_t(token_type::T_NON_WORD_CHAR, start, {i.line, i.column});
                         case 'f':
                             return new symbol_token('\f', start, {i.line, i.column});
                         case 'r' :
@@ -141,13 +141,13 @@ namespace alien::lexer::regex {
                     }
                 }
                 case '[':
-                    return new token(token_type::T_SQUARE_BRACKET_OPEN, start, {i.line, i.column});
+                    return new token_t(token_type::T_SQUARE_BRACKET_OPEN, start, {i.line, i.column});
                 case ']':
-                    return new token(token_type::T_SQUARE_BRACKET_CLOSE, start, {i.line, i.column});
+                    return new token_t(token_type::T_SQUARE_BRACKET_CLOSE, start, {i.line, i.column});
                 case '^':
-                    return new token(token_type::T_NEGATIVE_CLASS, start, {i.line, i.column});
+                    return new token_t(token_type::T_NEGATIVE_CLASS, start, {i.line, i.column});
                 case -2:
-                    return new token(token_type::T_END, start, {i.line, i.column});
+                    return new token_t(token_type::T_END, start, {i.line, i.column});
                 default:
                     if (isdigit(c)) {
                         int number = c - '0';

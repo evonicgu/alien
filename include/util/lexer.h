@@ -13,7 +13,7 @@ namespace alien::util {
     class lexer {
     protected:
         input::input& i;
-        using token = token<T>;
+        using token_t = token<T>;
         using type = T;
 
     public:
@@ -22,7 +22,7 @@ namespace alien::util {
         explicit lexer(input::input& i, std::list<util::u8string>& err)
             : i(i), err(err) {}
 
-        virtual token* lex() = 0;
+        virtual token_t* lex() = 0;
     };
 
 }

@@ -22,7 +22,7 @@ namespace alien::lexer::regex {
         bool no_utf8;
 
     public:
-        parser(lexer& l, std::list<util::u8string>& err, bool no_utf8)
+        parser(lexer_t& l, std::list<util::u8string>& err, bool no_utf8)
             : util::parser<token_type>(l, err),
               no_utf8(no_utf8) {}
 

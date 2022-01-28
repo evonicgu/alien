@@ -14,12 +14,12 @@ namespace alien::util {
     template<typename T>
     class parser {
     protected:
-        using lexer = lexer<T>;
-        using token = token<T>;
+        using lexer_t = lexer<T>;
+        using token_t = token<T>;
         using type = T;
 
-        lexer& l;
-        token* lookahead;
+        lexer_t& l;
+        token_t* lookahead;
 
         void initialize() {
             lookahead = l.lex();
@@ -28,7 +28,7 @@ namespace alien::util {
     public:
         std::list<util::u8string>& err;
 
-        explicit parser(lexer& l, std::list<util::u8string>& err)
+        explicit parser(lexer_t& l, std::list<util::u8string>& err)
             : l(l),
               err(err) {
             initialize();
@@ -54,7 +54,7 @@ namespace alien::util {
 
         template<typename To>
         To* check() {
-            return util::check<To, token>(lookahead);
+            return util::check<To, token_t>(lookahead);
         }
 
         virtual ~parser() {

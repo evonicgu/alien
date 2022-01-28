@@ -18,7 +18,7 @@ namespace alien::config::settings {
         explicit lexer(input::input& i, std::list<util::u8string>& err)
             : util::lexer<token_type>(i, err) {}
 
-        token* lex() override {
+        token_t* lex() override {
             util::u8char c = i.get();
 
             while (util::isspace(c)) {
@@ -42,21 +42,21 @@ namespace alien::config::settings {
 
             switch (c) {
                 case '#':
-                    return new token(type::T_HASHTAG, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_HASHTAG, {i.line, i.column - 1}, {i.line, i.column});
                 case '.':
-                    return new token(type::T_DOT, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_DOT, {i.line, i.column - 1}, {i.line, i.column});
                 case '{':
-                    return new token(type::T_OPEN_BRACE, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_OPEN_BRACE, {i.line, i.column - 1}, {i.line, i.column});
                 case '}':
-                    return new token(type::T_CLOSE_BRACE, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_CLOSE_BRACE, {i.line, i.column - 1}, {i.line, i.column});
                 case '=':
-                    return new token(type::T_EQUALS, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_EQUALS, {i.line, i.column - 1}, {i.line, i.column});
                 case ',':
-                    return new token(type::T_COMMA, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_COMMA, {i.line, i.column - 1}, {i.line, i.column});
                 case '%': {
                     if (i.peek() == '%') {
                         i.get();
-                        return new token(type::T_END, {i.line, i.column - 2}, {i.line, i.column});
+                        return new token_t(type::T_END, {i.line, i.column - 2}, {i.line, i.column});
                     }
 
                     util::pos start{i.line, i.column - 1};

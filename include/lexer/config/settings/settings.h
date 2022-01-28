@@ -27,7 +27,7 @@ namespace alien::lexer::settings {
     public:
         bool token_default = false, position_default = false;
 
-        settings_parser(lexer& l, std::list<util::u8string>& err)
+        settings_parser(lexer_t& l, std::list<util::u8string>& err)
             : config::settings::parser<lexer_symbol>(l, err) {
             using namespace util::literals;
 

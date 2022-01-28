@@ -22,7 +22,7 @@ namespace alien::config::settings {
         settings<T> configuration;
 
     public:
-        explicit parser(lexer& l, std::list<util::u8string>& err)
+        explicit parser(lexer_t& l, std::list<util::u8string>& err)
             : util::parser<token_type>(l, err) {}
 
         void parse() override {

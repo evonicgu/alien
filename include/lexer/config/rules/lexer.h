@@ -16,7 +16,7 @@ namespace alien::lexer::rules {
         lexer(input::input& i, std::list<util::u8string>& err)
             : util::lexer<token_type>(i, err) {}
 
-        token* lex() override {
+        token_t* lex() override {
             using namespace util::literals;
 
             util::u8char c = i.get();
@@ -27,9 +27,9 @@ namespace alien::lexer::rules {
 
             switch (c) {
                 case ':':
-                    return new token(type::T_COLON, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_COLON, {i.line, i.column - 1}, {i.line, i.column});
                 case ';':
-                    return new token(type::T_SEMICOLON, {i.line, i.column - 1}, {i.line, i.column});
+                    return new token_t(type::T_SEMICOLON, {i.line, i.column - 1}, {i.line, i.column});
                 case -2:
                     throw std::runtime_error("Unexpected end of file");
                 case '{': {
@@ -79,11 +79,11 @@ namespace alien::lexer::rules {
                         regex.push_back(c);
 
                         if (regex.size() == 2 && regex == "%%"_u8) {
-                            return new token(type::T_END, start, {i.line, i.column});
+                            return new token_t(type::T_END, start, {i.line, i.column});
                         }
 
                         if (regex.size() == 7 && regex == "%noutf8"_u8) {
-                            return new token(type::T_NO_UTF8, start, {i.line, i.column});
+                            return new token_t(type::T_NO_UTF8, start, {i.line, i.column});
                         }
 
                         if (c == '\\') {
@@ -94,7 +94,7 @@ namespace alien::lexer::rules {
                     }
 
                     if (regex == "<<<EOF>>>"_u8) {
-                        return new token(type::T_EOF_RULE, start, {i.line, i.column});
+                        return new token_t(type::T_EOF_RULE, start, {i.line, i.column});
                     }
 
                     if (is_valid_context(regex)) {

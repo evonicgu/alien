@@ -22,7 +22,7 @@ namespace alien::parser::rules {
         int auxiliary_rules = 0;
 
     public:
-        parser(lexer& l, std::list<util::u8string>& err, alphabet::alphabet& alphabet, const util::u8string& first)
+        parser(lexer_t& l, std::list<util::u8string>& err, alphabet::alphabet& alphabet, const util::u8string& first)
             : alphabet(alphabet),
               util::parser<token_type>(l, err) {
             using namespace util::literals;

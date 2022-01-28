@@ -21,7 +21,7 @@ namespace alien::lexer::rules {
         bool next_rule_no_utf8 = false;
 
     public:
-        parser(lexer& l, std::list<util::u8string>& err, alphabet::alphabet& alphabet)
+        parser(lexer_t& l, std::list<util::u8string>& err, alphabet::alphabet& alphabet)
             : alphabet(alphabet),
               util::parser<token_type>(l, err) {
             using namespace util::literals;
