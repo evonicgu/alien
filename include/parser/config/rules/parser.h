@@ -167,7 +167,7 @@ namespace alien::parser::rules {
 
                         auto it = check_terminal(std::move(token->name));
 
-                        match(type::T_TERMINAL);
+                        match(type::T_IDENTIFIER);
 
                         if (current_prod.explicit_precedence) {
                             throw std::runtime_error("Explicit precedence used more than once");
