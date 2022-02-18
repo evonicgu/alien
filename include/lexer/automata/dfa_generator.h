@@ -16,17 +16,24 @@ namespace alien::lexer::automata {
 
     class dfa_generator {
         std::set<util::u8char> alphabet;
+        std::map<dfa::nfa_set, dfa::nfa_set> cache;
 
     public:
         explicit dfa_generator(std::set<util::u8char>&& alphabet)
-            : alphabet(std::move(alphabet)) {}
+                : alphabet(std::move(alphabet)) {}
 
         dfa::dfa get_minimized_dfa(nfa::state* start_state) {
-           return minimize(convert_automata(start_state));
+            return minimize(convert_automata(start_state));
         }
 
     private:
-        static dfa::nfa_set closure(const dfa::nfa_set& states) {
+        const dfa::nfa_set& closure(const dfa::nfa_set& states) {
+            auto cached = cache.find(states);
+
+            if (cached != cache.end()) {
+                return cached->second;
+            }
+
             dfa::nfa_set closure_states = states;
             std::queue<nfa::state*> q;
 
@@ -59,7 +66,7 @@ namespace alien::lexer::automata {
                 q.pop();
             }
 
-            return closure_states;
+            return cache.insert({states, std::move(closure_states)}).first->second;
         }
 
         static dfa::nfa_set move(const dfa::nfa_set& states, util::u8char c) {
@@ -106,9 +113,9 @@ namespace alien::lexer::automata {
             return reached_states;
         }
 
-        static dfa::state make_state(dfa::nfa_set&& states) {
+        static dfa::state make_state(const dfa::nfa_set& states) {
             dfa::state state;
-            state.nfa_states = std::move(states);
+            state.nfa_states = states;
 
             for (auto nfa_state : state.nfa_states) {
                 if (nfa_state == nullptr || !nfa_state->accepting) {
@@ -160,7 +167,7 @@ namespace alien::lexer::automata {
                             dfa::nfa_set class_states = closure(cmove(states[i].nfa_states, char_class, c));
                             class_states.merge(new_state.nfa_states);
 
-                            new_state = make_state(std::move(class_states));
+                            new_state = make_state(class_states);
                         }
                     }
 
