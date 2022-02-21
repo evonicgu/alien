@@ -1,6 +1,7 @@
 #ifndef ALIEN_CLR_H
 #define ALIEN_CLR_H
 
+#include <map>
 #include <set>
 #include <tuple>
 
@@ -17,9 +18,11 @@ namespace alien::parser::generator {
     }
 
     class clr_generator : public virtual generator {
+        std::map<std::set<clr::item>, std::set<clr::item>> cache;
+
     public:
         clr_generator(alphabet::alphabet& alphabet, rules::rules& rules)
-            : generator(alphabet, rules) {}
+                : generator(alphabet, rules) {}
 
         parsing_table generate_table() override {
             util::vecset<std::set<clr::item>> states{clr_closure({{0, 0, 0, -2}})};
@@ -37,9 +40,9 @@ namespace alien::parser::generator {
                     }
 
                     parsing_action action{
-                        action_type::REDUCE,
-                        rule,
-                        production
+                            action_type::REDUCE,
+                            rule,
+                            production
                     };
 
                     if (rule == 0) {
@@ -85,6 +88,12 @@ namespace alien::parser::generator {
         }
 
         std::set<clr::item> clr_closure(const std::set<clr::item>& items) {
+            auto it = cache.find(items);
+
+            if (it != cache.end()) {
+                return it->second;
+            }
+
             util::vecset<clr::item> closure{items};
 
             for (std::size_t i = 0; i < closure.size(); ++i) {
@@ -114,7 +123,7 @@ namespace alien::parser::generator {
                 }
             }
 
-            return (std::set<clr::item>) closure;
+            return cache.insert({items, (std::set<clr::item>) closure}).first->second;
         }
 
         std::set<clr::item> clr_move(const std::set<clr::item>& items, const rules::grammar_symbol& symbol) {

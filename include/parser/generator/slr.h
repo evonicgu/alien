@@ -1,6 +1,7 @@
 #ifndef ALIEN_SLR_H
 #define ALIEN_SLR_H
 
+#include <map>
 #include <set>
 #include <tuple>
 
@@ -17,6 +18,8 @@ namespace alien::parser::generator {
     }
 
     class slr_generator : public virtual generator {
+        std::map<std::set<slr::item>, std::set<slr::item>> cache;
+
     public:
         slr_generator(alphabet::alphabet& alphabet, rules::rules& rules)
             : generator(alphabet, rules) {}
@@ -97,7 +100,13 @@ namespace alien::parser::generator {
             return states;
         }
 
-        std::set<slr::item> slr_closure(const std::set<slr::item>& items) const {
+        std::set<slr::item> slr_closure(const std::set<slr::item>& items) {
+            auto it = cache.find(items);
+
+            if (it != cache.end()) {
+                return it->second;
+            }
+
             util::vecset<slr::item> closure{items};
 
             for (std::size_t i = 0; i < closure.size(); ++i) {
@@ -120,7 +129,7 @@ namespace alien::parser::generator {
                 }
             }
 
-            return (std::set<slr::item>) closure;
+            return cache.insert({items, (std::set<slr::item>) closure}).first->second;
         }
 
         std::set<slr::item> slr_move(const std::set<slr::item>& items, const rules::grammar_symbol& symbol) const {
