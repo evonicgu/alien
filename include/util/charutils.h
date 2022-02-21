@@ -75,7 +75,7 @@ namespace alien::util {
                     return -4;
                 }
 
-                if (c == '\n' || c == '\v' || c == '\f' || c == '\r' || c == 133) { // 133 - u+85, NEL
+                if (c == '\n' || c == '\v' || c == '\f' || c == 133) { // 133 - u+85, NEL
                     return -5;
                 }
 
