@@ -383,7 +383,7 @@ namespace {{ bytes(lexer_namespace) }} {
         }{% endif %}
 
         inline {% if no_utf8 %}std::string{% else %}std::basic_string<{{ char_type }}>{% endif %} gettext() {
-            return {lexeme, lexeme + lexemepos};
+            return {lexeme, lexeme + lexemepos - chars_since_last_rule};
         }
     };
 }
