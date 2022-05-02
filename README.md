@@ -6,10 +6,10 @@
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 
-<h3 align="center">Best-README-Template</h3>
+<h3 align="center">Alien</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    Compiler frontend generator
     <br />
     <br />
     <br />
@@ -32,15 +32,13 @@
       <a href="#getting-started">Getting Started</a>
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#installation">Usage</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
@@ -63,7 +61,7 @@ Here are the main features:
 
 ### Built With
 
-Alien is written in C++ and uses CMake as the build system. [CPM](https://github.com/cpm-cmake/CPM.cmake) is the dependency manager being used. 
+Alien is written in C++ and uses CMake as the build system. [CPM](https://github.com/cpm-cmake/CPM.cmake) is the dependency manager being used.
 
 Dependencies:
 * [CxxOpts](https://github.com/jarro2783/cxxopts)
@@ -100,7 +98,7 @@ _You shouldn't install any of the dependencies yourself since CPM handles the on
 3. Create a config file
    <details>
         <summary>Config file</summary>
-   
+
     ```text
     #generation.noutf8 = true       // ascii-only lexer is generated
     #generation.track_lines = false // for performance reasons
