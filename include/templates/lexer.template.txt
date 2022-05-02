@@ -129,8 +129,8 @@ namespace {{ bytes(lexer_namespace) }} {
         }
     };{% endif %}
     {% for code in code_default %}{{ bytes(code) }}{% endfor %}
-    using token_t = {{ bytes(token_type) }};
-    using pos_t = {{ bytes(position_type) }};
+    using token_t = {{ bytes(token_type) }};{% if track_lines %}
+    using pos_t = {{ bytes(position_type) }};{% endif %}
 
     template<typename Stream>
     class lexer {
@@ -165,10 +165,10 @@ namespace {{ bytes(lexer_namespace) }} {
             init_buffers();
             fill();
         }
-{% endif %}
+{% endif %}{% if track_lines %}
         pos_t get_pos() const {
             return curr;
-        }
+        }{% endif %}
 
         {% if no_return %}void{% else %}token_t*{% endif %} lex() {
             {{ char_type }} c;{% if not no_utf8 %}
