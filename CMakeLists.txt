@@ -13,6 +13,6 @@ configure_file(include/templates/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/
 configure_file(include/templates/token.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/token.template.txt COPYONLY)
 configure_file(include/templates/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/parser.template.txt COPYONLY)
 
-add_executable(alien-front bin/front.cpp)
-target_link_libraries(alien-front cxxopts)
-target_link_libraries(alien-front alien)
+add_executable(alien bin/front.cpp)
+target_link_libraries(alien cxxopts)
+target_link_libraries(alien alien_lib)
