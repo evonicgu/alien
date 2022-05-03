@@ -193,7 +193,6 @@ namespace {{ bytes(parser_namespace) }} {
             }{% else %}
             err_state = symbols.back().state;
             err_lookahead = lookahead.index;
-            error(err_state, err_lookahead);
 
             if (lookahead.data != nullptr) {
                 {% if track_lines %}err_pos = (({{ bytes(lexer_relative_namespace) }}token_t*) lookahead.data)->start;{% endif %}
@@ -201,6 +200,8 @@ namespace {{ bytes(parser_namespace) }} {
             }{% if track_lines %} else {
                 err_pos = l.get_pos();
             }{% endif %}
+
+            error(err_state, err_lookahead);
 
             unwind_stack();
 
