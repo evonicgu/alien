@@ -13,6 +13,8 @@
     <br />
     <br />
     <br />
+    <a href="https://github.com/evonicgu/alien/wiki">Project documentation</a>
+    ·
     <a href="https://github.com/evonicgu/alien/issues">Report Bug</a>
     ·
     <a href="https://github.com/evonicgu/alien/issues">Request Feature</a>
