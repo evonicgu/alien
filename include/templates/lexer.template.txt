@@ -18,7 +18,7 @@ namespace {{ bytes(lexer_namespace) }} {
 #define BEGIN(ctx) current_context = BEGIN_##ctx
 {% for ctx, index in contexts %}#define BEGIN_{{ ctx }} {{ index }}
 {% endfor %}{% endif %}
-{% if macros %}{% for symbol in symbols %}#define _{{ symbol }} new token_t(token_type::{{ symbol }})
+{% if macros %}{% for symbol in symbols %}#define _{{ symbol }} new token_t(token_type::{{ symbol }}{% if track_lines %}, start, curr{% endif %})
 {% endfor %}
 {% endif %}{% if emit_stream %}
 
