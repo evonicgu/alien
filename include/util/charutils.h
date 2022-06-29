@@ -71,7 +71,7 @@ namespace alien::util {
             case UTF8PROC_CATEGORY_ZP:
                 return -32;
             case UTF8PROC_CATEGORY_CC:
-                if (c == '\t') {
+                if (c == '\t' || c == '\r') {
                     return -4;
                 }
 
