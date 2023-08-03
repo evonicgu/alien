@@ -16,7 +16,7 @@ namespace alien::parser::generator {
 
     using comparator = util::comparators::iterator_elem_addr_less<item_iterator>;
 
-    using lookahead_table = std::map<item_iterator, std::set<std::ptrdiff_t>, comparator>;
+    using lookahead_table = std::map<item_iterator, std::unordered_set<std::ptrdiff_t>, comparator>;
     using propagation_table = std::map<item_iterator, std::set<item_iterator, comparator>, comparator>;
 
     class lalr_generator : public base_table_generator {
