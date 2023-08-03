@@ -13,11 +13,11 @@
     <br />
     <br />
     <br />
-    <a href="https://sunfline.github.io/alien-docs">Project documentation</a>
+    <a href="https://evonicgu.github.io/alien-docs">Project documentation</a>
     ·
-    <a href="https://github.com/sunfline/alien/issues">Report Bug</a>
+    <a href="https://github.com/evonicgu/alien/issues">Report Bug</a>
     ·
-    <a href="https://github.com/sunfline/alien/issues">Request Feature</a>
+    <a href="https://github.com/evonicgu/alien/issues">Request Feature</a>
   </p>
 
 <!-- TABLE OF CONTENTS -->
@@ -93,7 +93,7 @@ _You shouldn't install any of the dependencies yourself since CPM handles the on
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/sunfline/alien.git && cd alien
+   git clone https://github.com/evonicgu/alien.git && cd alien
    ```
 2. Let cmake do its work
    ```sh
@@ -258,7 +258,8 @@ _You shouldn't install any of the dependencies yourself since CPM handles the on
 - [x] Lexer documentation
 - [ ] Parser documentation
 - [ ] Proper error messages
-- [ ] GLR Parsing 
+- [ ] GLR Parsing
+- [ ] Parser generation for other languages 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -294,20 +295,20 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 Anton - [evonicgu@gmail.com](mailto:evonicgu@gmail.com)
 
-Project Link: [https://github.com/sunfline/alien](https://github.com/sunfline/alien)
+Project Link: [https://github.com/evonicgu/alien](https://github.com/evonicgu/alien)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/sunfline/alien.svg?style=for-the-badge
-[contributors-url]: https://github.com/sunfline/alien/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/sunfline/alien.svg?style=for-the-badge
-[forks-url]: https://github.com/sunfline/alien/network/members
-[stars-shield]: https://img.shields.io/github/stars/sunfline/alien.svg?style=for-the-badge
-[stars-url]: https://github.com/sunfline/alien/stargazers
-[issues-shield]: https://img.shields.io/github/issues/sunfline/alien.svg?style=for-the-badge
-[issues-url]: https://github.com/sunfline/alien/issues
-[license-shield]: https://img.shields.io/github/license/sunfline/alien.svg?style=for-the-badge
-[license-url]: https://github.com/sunfline/alien/blob/master/LICENSE.txt
+[contributors-shield]: https://img.shields.io/github/contributors/evonicgu/alien.svg?style=for-the-badge
+[contributors-url]: https://github.com/evonicgu/alien/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/evonicgu/alien.svg?style=for-the-badge
+[forks-url]: https://github.com/evonicgu/alien/network/members
+[stars-shield]: https://img.shields.io/github/stars/evonicgu/alien.svg?style=for-the-badge
+[stars-url]: https://github.com/evonicgu/alien/stargazers
+[issues-shield]: https://img.shields.io/github/issues/evonicgu/alien.svg?style=for-the-badge
+[issues-url]: https://github.com/evonicgu/alien/issues
+[license-shield]: https://img.shields.io/github/license/evonicgu/alien.svg?style=for-the-badge
+[license-url]: https://github.com/evonicgu/alien/blob/master/LICENSE.txt
