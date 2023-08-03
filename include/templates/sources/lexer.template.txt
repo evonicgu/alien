@@ -1,0 +1,245 @@
+{% if not is_header_only %}#include "{{path_to_header}}"{% endif %}
+
+{% if not is_header_only %}namespace {{ bytes(lexer_namespace) }} {#{}#{% endif %}
+
+#define LEXEME_SIZE {{ lexeme_size }}{% if no_utf8 %}{% set char_type = "char" %}{% else %}{% set char_type = "int" %}{% endif %}
+{% if length(contexts) > 1 %}
+#define BEGIN(ctx) current_context = BEGIN_##ctx
+{% for ctx, index in contexts %}#define BEGIN_{{ ctx }} {{ index }}
+{% endfor %}{% endif %}
+{% if macros %}{% for symbol in symbols %}{% if is_default_token_type(loop.index) %}#define _{{ symbol }} new token_t(token_type::{{ symbol }}{% if track_lines %}, start, curr{% endif %})
+{% else %}{% endif %}{% endfor %}{% endif %}
+    {% for code in code_impl %}{{ bytes(code) }}{% endfor %}
+    {% for code in code_content_impl %}{{ bytes(code) }}{% endfor %}
+    {% if not monomorphic %}template<typename Stream>
+    {% endif %}void {% if not monomorphic %}lexer<Stream>{% else %}lexer{% endif %}::init_buffers() {
+        buffer = new {{ char_type }}[BUF_SIZE + 1];
+        lexeme = new {{ char_type }}[LEXEME_SIZE];
+    }
+
+    {% if track_lines %}
+    {% if not monomorphic %}template<typename Stream>
+    {% endif %}pos_t {% if not monomorphic %}lexer<Stream>{% else %}lexer{% endif %}::get_pos() const {
+        return curr;
+    }{% endif %}
+
+    {% if not monomorphic %}template<typename Stream>
+    {% endif %}token_t* {% if not monomorphic %}lexer<Stream>{% else %}lexer{% endif %}::lex() {
+        {{ char_type }} c;{% if not no_utf8 %}
+        {{ char_type }} c_class;
+        {% endif %}{% if has_any_start_transitions %}
+        bool first = true;{% endif %}
+        goto start_resolution;
+{% set current_max_state = 0 %}{% for automata in automations %}{% for state in automata.states %}{% if automata.null_state_used or loop.index != 0 %}
+        S{{ loop.index + current_max_state}}:{% if loop.index != automata.start_state or automata.transitions_to_start %}
+        if (unread > 0{% if loop.index == automata.start_state %} && !first{% endif %}) {
+            {% if track_lines %}{% if no_utf8 %}curr.line += c == '\n';
+            curr.column = (c != '\n') * curr.column + 1;
+            {% else %}curr.line += (c_class == -5 || c_class == -31 || c_class == -32);
+            curr.column = (c_class != -5 && c_class != -31 && c_class != -32) * curr.column + 1;
+            {% endif %}
+            {% endif %}++lexemepos;
+            --unread;
+        } else{% if loop.index == automata.start_state %} if (!first){% endif %} {
+            if (lexemepos == LEXEME_SIZE) {
+                throw std::runtime_error("Lexeme is too long");
+            }
+            {% if track_lines %}{% if no_utf8 %}curr.line += c == '\n';
+            curr.column = (c != '\n') * curr.column + 1;
+            {% else %}curr.line += (c_class == -5 || c_class == -31 || c_class == -32);
+            curr.column = (c_class != -5 && c_class != -31 && c_class != -32) * curr.column + 1;
+            {% endif %}
+            {% endif %}++bufpos;
+            lexeme[lexemepos++] = c;
+        }
+{% endif %}
+        {% if not state.accepting %}{% if loop.index == automata.start_state and automata.transitions_to_start %}if (!first) {
+            ++chars_since_last_rule;
+        }{% else %}++chars_since_last_rule;{% endif %}{% else %}chars_since_last_rule = 0;
+        last_rule_number = {{ state.rule_number }};{% if track_lines %}
+        last_rule = curr;{% endif %}{% endif %}{% set read_first = true %}
+{% set collection = lexer_collect(state, automata) %}
+{% for symbols in collection %}{% if length(symbols) > 0 %}{% if read_first %}{% set read_first = false %}        if (unread > 0) {
+            c = lexeme[lexemepos];{% if not no_utf8 %}
+            c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
+            first = false;{% endif %}
+        } else {
+            if (bufpos == max) {
+                bufpos = 0;
+                fill();
+            }
+
+            c = buffer[bufpos];{% if not no_utf8 %}
+            c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
+            first = false;{% endif %}
+        }{% endif %}{% set first = true %}{% set first_symbol = true %}{% set start = symbols.0 %}{% set prev = symbols.0 %}{% for symbol in symbols %}{% if symbol >= 0 %}{% if first_symbol %}
+
+        if ({% set first_symbol = false %}{% set start = symbol %}{% set prev = symbol %}{% endif %}{% if symbol != start %}{% if symbol != prev + 1 %}{% if not first %} || {% endif %}{% set first = false %}{{ create_lexer_range(start, prev) }}{% set start = symbol %}{% set prev = symbol %}{% else %}{% set prev = symbol %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not first_symbol %}{% if not first %} || {% endif %}{{ create_lexer_range(start, prev) }}) {
+            goto S{{ loop.index + current_max_state }};
+        }{% endif %}{% endif %}{% endfor %}
+{% for symbols in collection %}{% if length(symbols) > 0 %}{% if read_first %}{% set read_first = false %}        if (unread > 0) {
+            c = lexeme[lexemepos];{% if not no_utf8 %}
+            c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
+            first = false;{% endif %}
+        } else {
+            if (bufpos == max) {
+                bufpos = 0;
+                fill();
+            }
+
+            c = buffer[bufpos];{% if not no_utf8 %}
+            c_class = get_class(c);{% endif %}{% if loop.parent.index == automata.start_state and automata.transitions_to_start %}
+            first = false;{% endif %}
+        }{% endif %}{% set first = true %}{% set first_symbol = true %}{% set start = symbols.0 %}{% set prev = symbols.0 %}{% for symbol in symbols %}{% if symbol < 0 %}{% if first_symbol %}
+
+        if ({% set first_symbol = false %}{% set start = symbol %}{% set prev = symbol %}{% endif %}{% if symbol != start %}{% if symbol != prev + 1 %}{% if not first %} || {% endif %}{% set first = false %}{{ create_lexer_range(start, prev) }}{% set start = symbol %}{% set prev = symbol %}{% else %}{% set prev = symbol %}{% endif %}{% endif %}{% endif %}{% endfor %}{% if not first_symbol %}{% if not first %} || {% endif %}{{ create_lexer_range(start, prev) }}) {
+            goto S{{ loop.index + current_max_state }};
+        }{% endif %}{% endif %}{% endfor %}
+
+        goto resolution;
+        {% endif %}{% endfor %}{% set current_max_state = current_max_state + length(automata.states) %}{% endfor %}
+        resolution:
+        if (c == -2 && last_rule_number == -1) {
+            // execute eof action
+            {% if length(on_eof.code) > 0 %}{{ on_eof.code }}{% else %}return nullptr;{% endif %}
+        }
+
+        if (last_rule_number == -1) {
+            error(c);
+        }
+
+        unread += chars_since_last_rule;{% if track_lines %}
+        curr = last_rule;{% endif %}
+
+        switch (last_rule_number) {
+{% for action in actions %}            case {{ loop.index }}: {
+                {{ action.code }}
+{% if length(action.symbol) > 0 %}
+                return new token_t(token_type::{{ action.symbol }}{% if track_lines %}, start, curr{% endif %});{% else %}
+                break;{% endif %}
+            }
+{% endfor %}        }
+        start_resolution:
+        if (last_rule_number != -1) {
+            last_rule_number = -1;
+
+            for (unsigned int i = 0; i < unread; ++i) {
+                lexeme[i] = lexeme[lexemepos - chars_since_last_rule + i];
+            }
+
+            lexemepos = 0;{% if track_lines %}
+            start = curr;{% endif %}
+            chars_since_last_rule = 0;
+        }
+{% if has_any_start_transitions %}
+            first = true;{% endif %}
+        switch (current_context) { {% for start_state in ctx_start_states %}
+            case {{ loop.index }}: goto S{{ start_state }};{% endfor %}
+        }
+    }
+{% if not custom_error %}
+    {% if not monomorphic %}template<typename Stream>
+    {% endif %}void {% if not monomorphic %}lexer<Stream>{% else %}lexer{% endif %}::error(int) {
+        throw std::runtime_error("Unable to tokenize input{% if track_lines %} at " + (std::string) curr{% else %}"{% endif %});
+    }{% endif %}
+    {% if not monomorphic %}template<typename Stream>
+    {% endif %}void {% if not monomorphic %}lexer<Stream>{% else %}lexer{% endif %}::fill() {
+        stream.read(buffer, BUF_SIZE);
+        max = stream.gcount();
+
+        if (stream.eof()) {
+            buffer[max] = -2;
+            ++max;
+        }
+    }
+{% if not no_utf8 %}
+    {% if not monomorphic %}template<typename Stream>
+    {% endif %}int {% if not monomorphic %}lexer<Stream>{% else %}lexer{% endif %}::get_class(int c) {
+        if (c < 0) {
+            return c;
+        }
+
+        switch (utf8proc_category(c)) {
+            case UTF8PROC_CATEGORY_LU:
+                return -12;
+            case UTF8PROC_CATEGORY_LL:
+                return -8;
+            case UTF8PROC_CATEGORY_LT:
+                return -11;
+            case UTF8PROC_CATEGORY_LM:
+                return -9;
+            case UTF8PROC_CATEGORY_LO:
+                return -10;
+            case UTF8PROC_CATEGORY_MN:
+                return -15;
+            case UTF8PROC_CATEGORY_MC:
+                return -13;
+            case UTF8PROC_CATEGORY_ME:
+                return -14;
+            case UTF8PROC_CATEGORY_ND:
+                return -16;
+            case UTF8PROC_CATEGORY_NL:
+                return -17;
+            case UTF8PROC_CATEGORY_NO:
+                return -18;
+            case UTF8PROC_CATEGORY_PC:
+                if (c == '_') {
+                    return -20;
+                }
+
+                return -19;
+            case UTF8PROC_CATEGORY_PD:
+                return -21;
+            case UTF8PROC_CATEGORY_PS:
+                return -26;
+            case UTF8PROC_CATEGORY_PE:
+                return -22;
+            case UTF8PROC_CATEGORY_PI:
+                return -24;
+            case UTF8PROC_CATEGORY_PF:
+                return -23;
+            case UTF8PROC_CATEGORY_PO:
+                return -25;
+            case UTF8PROC_CATEGORY_SM:
+                return -29;
+            case UTF8PROC_CATEGORY_SC:
+                return -27;
+            case UTF8PROC_CATEGORY_SK:
+                return -28;
+            case UTF8PROC_CATEGORY_SO:
+                return -30;
+            case UTF8PROC_CATEGORY_ZS:
+                return -33;
+            case UTF8PROC_CATEGORY_ZL:
+                return -31;
+            case UTF8PROC_CATEGORY_ZP:
+                return -32;
+            case UTF8PROC_CATEGORY_CC:
+                if (c == '\t' || c == '\r') {
+                    return -4;
+                }
+
+                if (c == '\n' || c == '\v' || c == '\f' || c == 133) { // 133 - u+85, NEL
+                    return -5;
+                }
+
+                return -3;
+            case UTF8PROC_CATEGORY_CF:
+                if (c == 6158) { // 6158 - u+180e, Mongolian Vowel Separator (MVS)
+                    return -7;
+                }
+
+                return -6;
+            case UTF8PROC_CATEGORY_CN:
+            case UTF8PROC_CATEGORY_CS:
+            case UTF8PROC_CATEGORY_CO:
+                throw std::invalid_argument("Invalid character category");
+        }
+    }{% endif %}
+
+    {% if not monomorphic %}template<typename Stream>
+    {% endif %}{% if no_utf8 %}std::string{% else %}std::basic_string<{{ char_type }}>{% endif %} {% if not monomorphic %}lexer<Stream>{% else %}lexer{% endif %}::gettext() {
+        return {lexeme, lexeme + lexemepos - chars_since_last_rule};
+    }
+}
+
