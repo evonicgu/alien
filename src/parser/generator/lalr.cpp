@@ -98,8 +98,6 @@ namespace alien::parser::generator {
         util::vecset<std::set<clr::item>> lalr_items;
 
         for (std::size_t i = 0; i < slr_items.size(); ++i) {
-            lalr_items.push_back({});
-
             const auto& state = slr_items[i];
             std::set<clr::item> clr_state;
 
@@ -115,7 +113,7 @@ namespace alien::parser::generator {
                 }
             }
 
-            lalr_items[i] = canonical_helper.clr_closure(clr_state);
+            lalr_items.push_back(canonical_helper.clr_closure(clr_state));
         }
 
         return lalr_items;
