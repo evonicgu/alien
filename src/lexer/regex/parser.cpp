@@ -183,7 +183,7 @@ namespace alien::lexer::regex {
             match(type::T_NEGATIVE_CLASS);
         }
 
-        std::set<util::u8char> characters = class_characters();
+        std::unordered_set<util::u8char> characters = class_characters();
 
         match(type::T_SQUARE_BRACKET_CLOSE);
 
@@ -194,10 +194,10 @@ namespace alien::lexer::regex {
         return ast_from_set(characters);
     }
 
-    std::set<util::u8char> parser::class_characters() {
+    std::unordered_set<util::u8char> parser::class_characters() {
         using namespace util::literals;
 
-        std::set<util::u8char> characters;
+        std::unordered_set<util::u8char> characters;
 
         while (lookahead->type != type::T_SQUARE_BRACKET_CLOSE) {
             switch (lookahead->type) {
@@ -374,9 +374,9 @@ namespace alien::lexer::regex {
         return tree;
     }
 
-    std::set<util::u8char> parser::symbol_class(const util::u8string& classname) {
+    std::unordered_set<util::u8char> parser::symbol_class(const util::u8string& classname) {
         util::pos pos = lookahead->start;
-        std::set<util::u8char> characters;
+        std::unordered_set<util::u8char> characters;
 
         if (classname.size() == 1) {
             characters = simple_symbol_class(classname);
@@ -393,7 +393,7 @@ namespace alien::lexer::regex {
         return characters;
     }
 
-    std::set<util::u8char> parser::simple_symbol_class(const util::u8string& classname) {
+    std::unordered_set<util::u8char> parser::simple_symbol_class(const util::u8string& classname) {
         switch (classname[0]) {
             case 'c':
                 return {-3, -4, -5, -6, -7};
@@ -414,7 +414,7 @@ namespace alien::lexer::regex {
         return {};
     }
 
-    std::set<util::u8char> parser::composed_symbol_class(const util::u8string& classname) {
+    std::unordered_set<util::u8char> parser::composed_symbol_class(const util::u8string& classname) {
         switch (classname[0]) {
             case 'c':
                 switch (classname[1]) {
@@ -574,7 +574,7 @@ namespace alien::lexer::regex {
         return number;
     }
 
-    ast::node_ptr parser::ast_from_set(const std::set<util::u8char>& charset) {
+    ast::node_ptr parser::ast_from_set(const std::unordered_set<util::u8char>& charset) {
         if (charset.empty()) {
             return std::make_shared<ast::leaf>(-1);
         }

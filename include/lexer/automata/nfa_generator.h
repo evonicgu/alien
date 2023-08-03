@@ -21,7 +21,7 @@ namespace alien::lexer::automata {
         explicit nfa_generator(std::vector<nfa::state*>& nfa_states)
             : nfa_states(nfa_states) {}
 
-        std::pair<nfa::state*, std::set<util::u8char>> nfa_from_ast(
+        std::pair<nfa::state*, std::unordered_set<util::u8char>> nfa_from_ast(
                 const regex::ast::node_ptr& ast,
                 std::ptrdiff_t rule_number,
                 bool no_utf8);

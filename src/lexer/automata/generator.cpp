@@ -4,7 +4,7 @@ namespace alien::lexer::automata {
 
     dfa::dfa generator::generate_automata(std::vector<rules::rule>& rules) {
         auto* start_state = new nfa::state{{}, false, -1};
-        std::set<util::u8char> automata_alphabet;
+        std::unordered_set<util::u8char> automata_alphabet;
 
         nfa_generator nfa_gen(nfa_states);
 

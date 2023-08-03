@@ -2,7 +2,7 @@
 #define ALIEN_REGEX_AST_H
 
 #include <memory>
-#include <set>
+#include <unordered_set>
 
 #include "util/u8string.h"
 
@@ -63,9 +63,9 @@ namespace alien::lexer::regex::ast {
     };
 
     struct negative_class : public node {
-        std::set<util::u8char> negative_chars;
+        std::unordered_set<util::u8char> negative_chars;
 
-        explicit negative_class(std::set<util::u8char>&& negative_chars)
+        explicit negative_class(std::unordered_set<util::u8char>&& negative_chars)
             : negative_chars(std::move(negative_chars)) {
             type = node_type::NEGATIVE_CLASS;
         }

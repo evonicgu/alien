@@ -7,7 +7,7 @@ namespace alien::lexer::automata {
         bool accepting;
         std::ptrdiff_t rule_number;
 
-        std::map<std::size_t, std::set<util::u8char>> transitions;
+        std::map<std::size_t, std::unordered_set<util::u8char>> transitions;
     };
 
     struct transition_table {

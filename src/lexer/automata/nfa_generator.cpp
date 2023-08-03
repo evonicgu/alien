@@ -2,7 +2,7 @@
 
 namespace alien::lexer::automata {
 
-    std::pair<nfa::state*, std::set<util::u8char>>
+    std::pair<nfa::state*, std::unordered_set<util::u8char>>
     nfa_generator::nfa_from_ast(const regex::ast::node_ptr& ast, std::ptrdiff_t rule_number, bool no_utf8) {
         using stack_element = std::tuple<regex::ast::node_ptr, nfa::simple_nfa, bool, bool, std::size_t>;
 
@@ -11,7 +11,7 @@ namespace alien::lexer::automata {
                 {ast, {}, false, false, 0}
         };
 
-        std::set<util::u8char> alphabet;
+        std::unordered_set<util::u8char> alphabet;
         std::size_t current = 1;
 
         while (current != 0) {

@@ -3,7 +3,7 @@
 
 #include <array>
 #include <queue>
-#include <set>
+#include <unordered_set>
 #include <stack>
 
 #include "dfa.h"
@@ -16,11 +16,11 @@
 namespace alien::lexer::automata {
 
     class dfa_generator {
-        std::set<util::u8char> alphabet;
+        std::unordered_set<util::u8char> alphabet;
         std::map<dfa::nfa_set, dfa::nfa_set> cache;
 
     public:
-        explicit dfa_generator(std::set<util::u8char>&& alphabet)
+        explicit dfa_generator(std::unordered_set<util::u8char>&& alphabet)
             : alphabet(std::move(alphabet)) {}
 
         dfa::dfa get_minimized_dfa(nfa::state* start_state) {

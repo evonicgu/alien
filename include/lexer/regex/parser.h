@@ -45,21 +45,21 @@ namespace alien::lexer::regex {
 
         ast::node_ptr char_class();
 
-        std::set<util::u8char> class_characters();
+        std::unordered_set<util::u8char> class_characters();
 
         ast::node_ptr shortcut();
 
-        std::set<util::u8char> symbol_class(const util::u8string& classname);
+        std::unordered_set<util::u8char> symbol_class(const util::u8string& classname);
 
-        static std::set<util::u8char> simple_symbol_class(const util::u8string& classname);
+        static std::unordered_set<util::u8char> simple_symbol_class(const util::u8string& classname);
 
-        static std::set<util::u8char> composed_symbol_class(const util::u8string& classname);
+        static std::unordered_set<util::u8char> composed_symbol_class(const util::u8string& classname);
 
         util::u8char get_char();
 
         std::size_t get_number();
 
-        static ast::node_ptr ast_from_set(const std::set<util::u8char>& charset);
+        static ast::node_ptr ast_from_set(const std::unordered_set<util::u8char>& charset);
     };
 
 }
