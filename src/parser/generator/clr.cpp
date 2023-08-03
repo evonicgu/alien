@@ -2,14 +2,14 @@
 
 namespace alien::parser::generator {
 
-    std::set<clr::item> clr_helper::clr_closure(const std::set<clr::item>& items) {
+    std::vector<clr::item> clr_helper::clr_closure(const std::vector<clr::item>& items) {
         auto it = cache.find(items);
 
         if (it != cache.end()) {
             return it->second;
         }
 
-        util::vecset<clr::item> closure{items};
+        util::hash_vecset<clr::item, boost::hash<clr::item>> closure{items};
 
         for (std::size_t i = 0; i < closure.size(); ++i) {
             auto [rule, production, pos, lookahead] = closure[i];
@@ -38,11 +38,11 @@ namespace alien::parser::generator {
             }
         }
 
-        return cache.insert({items, (std::set<clr::item>) closure}).first->second;
+        return cache.insert({items, (std::vector<clr::item>) closure}).first->second;
     }
 
-    std::set<clr::item> clr_helper::clr_move(const std::set<clr::item>& items, const rules::grammar_symbol& symbol) {
-        std::set<clr::item> moved;
+    std::vector<clr::item> clr_helper::clr_move(const std::vector<clr::item>& items, const rules::grammar_symbol& symbol) {
+        std::vector<clr::item> moved;
 
         for (const clr::item& item : items) {
             auto [rule, production, pos, lookahead] = item;
@@ -50,7 +50,7 @@ namespace alien::parser::generator {
             const rules::production& prod = rules.ruleset[rule][production];
 
             if (pos < prod.symbols.size() && prod.symbols[pos] == symbol) {
-                moved.emplace(rule, production, pos + 1, lookahead);
+                moved.emplace_back(rule, production, pos + 1, lookahead);
             }
         }
 
@@ -58,7 +58,7 @@ namespace alien::parser::generator {
     }
 
     parsing_table clr_generator::generate_table() {
-        util::vecset<std::set<clr::item>> states{helper.clr_closure({{0, 0, 0, -2}})};
+        util::vecset<std::vector<clr::item>> states{helper.clr_closure({{0, 0, 0, -2}})};
 
         table.resize(1);
 
@@ -109,7 +109,7 @@ namespace alien::parser::generator {
         return table;
     }
 
-    std::size_t clr_generator::clr_transition(util::vecset<std::set<clr::item>>& states, std::set<clr::item>& next) {
+    std::size_t clr_generator::clr_transition(util::vecset<std::vector<clr::item>>& states, std::vector<clr::item>& next) {
         std::size_t to_state = states.push_back(std::move(next));
 
         if (to_state >= table.size()) {

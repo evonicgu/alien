@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 project(alien)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
 include(cmake/get_cpm.cmake)
@@ -26,6 +26,7 @@ target_include_directories(alien_lib PUBLIC include)
 
 target_include_directories(alien_lib PUBLIC deps)
 target_link_libraries(alien_lib PUBLIC utf8proc)
+target_link_libraries(alien_lib PUBLIC Boost::container_hash)
 
 
 add_executable(alien bin/alien.cpp)

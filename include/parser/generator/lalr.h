@@ -8,7 +8,7 @@
 #include "base_table_generator.h"
 #include "parser/config/rules/rules.h"
 #include "slr.h"
-#include "util/vecset.h"
+#include "util/hash_vecset.h"
 
 namespace alien::parser::generator {
 
@@ -37,7 +37,7 @@ namespace alien::parser::generator {
     private:
         void generate_lookahead(const util::vecset<std::vector<slr::item>>& slr_items);
 
-        util::vecset<std::set<clr::item>> build_lalr_items(const util::vecset<std::vector<slr::item>>& slr_items);
+        util::vecset<std::vector<clr::item>> build_lalr_items(const util::vecset<std::vector<slr::item>>& slr_items);
     };
 
 }

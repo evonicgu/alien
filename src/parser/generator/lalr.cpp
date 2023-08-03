@@ -21,7 +21,7 @@ namespace alien::parser::generator {
             }
         }
 
-        util::vecset<std::set<clr::item>> lalr_items = build_lalr_items(slr_items);
+        util::vecset<std::vector<clr::item>> lalr_items = build_lalr_items(slr_items);
 
         table.resize(lalr_items.size());
 
@@ -94,12 +94,12 @@ namespace alien::parser::generator {
         }
     }
 
-    util::vecset<std::set<clr::item>> lalr_generator::build_lalr_items(const util::vecset<std::vector<slr::item>>& slr_items) {
-        util::vecset<std::set<clr::item>> lalr_items;
+    util::vecset<std::vector<clr::item>> lalr_generator::build_lalr_items(const util::vecset<std::vector<slr::item>>& slr_items) {
+        util::vecset<std::vector<clr::item>> lalr_items;
 
         for (std::size_t i = 0; i < slr_items.size(); ++i) {
             const auto& state = slr_items[i];
-            std::set<clr::item> clr_state;
+            std::vector<clr::item> clr_state;
 
             for (auto it = state.begin(); it != state.end(); ++it) {
                 auto& [rule, production, pos] = *it;
@@ -109,7 +109,7 @@ namespace alien::parser::generator {
                 }
 
                 for (std::ptrdiff_t symbol : lookahead[it]) {
-                    clr_state.emplace(rule, production, pos, symbol);
+                    clr_state.emplace_back(rule, production, pos, symbol);
                 }
             }
 

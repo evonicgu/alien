@@ -7,7 +7,8 @@
 
 #include "base_table_generator.h"
 #include "parser/config/rules/rules.h"
-#include "util/vecset.h"
+#include "util/hash_vecset.h"
+#include "boost/container_hash/hash.hpp"
 
 namespace alien::parser::generator {
 
@@ -18,15 +19,15 @@ namespace alien::parser::generator {
     }
 
     class clr_helper : public base_helper {
-        std::map<std::set<clr::item>, std::set<clr::item>> cache;
+        std::map<std::vector<clr::item>, std::vector<clr::item>> cache;
 
     public:
         clr_helper(symbol_props& first, const rules::rules& rules)
             : base_helper(first, rules) {}
 
-        std::set<clr::item> clr_closure(const std::set<clr::item>& items);
+        std::vector<clr::item> clr_closure(const std::vector<clr::item>& items);
 
-        std::set<clr::item> clr_move(const std::set<clr::item>& items, const rules::grammar_symbol& symbol);
+        std::vector<clr::item> clr_move(const std::vector<clr::item>& items, const rules::grammar_symbol& symbol);
     };
 
     class clr_generator : public base_table_generator {
@@ -39,7 +40,7 @@ namespace alien::parser::generator {
 
         parsing_table generate_table() override;
 
-        std::size_t clr_transition(util::vecset<std::set<clr::item>>& states, std::set<clr::item>& next);
+        std::size_t clr_transition(util::vecset<std::vector<clr::item>>& states, std::vector<clr::item>& next);
     };
 
 }
