@@ -4,37 +4,59 @@ namespace alien::util {
 
     std::pair<u8string, bool> get_code_block(input::input& i) {
         std::size_t fold_level = 0;
-        bool in_string = false, in_character = false;
+        bool in_string = false, in_character = false, in_comment = false, in_multiline_comment = false;
 
         u8string code;
 
         u8char c = i.get();
 
-        while (c != '}' || in_string || fold_level > 0) {
+        while (c != '}' || in_string || in_character || in_comment || in_multiline_comment || fold_level > 0) {
             if (c == -2) {
                 break;
             }
 
-            if (!in_character && c == '"') {
-                in_string = !in_string;
-            }
+            if (in_comment) {
+                if (c == '\n') {
+                    in_comment = false;
+                }
+            } else if (in_multiline_comment) {
+                if (c == '*') {
+                    code += '*';
 
-            if (!in_string && c == '\'') {
-                in_character = !in_character;
-            }
+                    c = i.get();
 
-            if (!in_string && !in_character) {
-                if (c == '{') {
-                    ++fold_level;
+                    if (c == '/') {
+                        in_multiline_comment = false;
+                    }
+                }
+            } else {
+                if (!in_character && c == '"') {
+                    in_string = !in_string;
                 }
 
-                if (c == '}') {
-                    --fold_level;
+                if (!in_string && c == '\'') {
+                    in_character = !in_character;
                 }
-            } else if (c == '\\') {
-                c = i.get();
 
-                code += '\\';
+                if (!in_string && !in_character) {
+                    if (c == '{') {
+                        ++fold_level;
+                    } else if (c == '}') {
+                        --fold_level;
+                    } else if (c == '/') {
+                        code += '/';
+                        c = i.get();
+
+                        if (c == '/') {
+                            in_comment = true;
+                        } else if (c == '*') {
+                            in_multiline_comment = true;
+                        }
+                    }
+                } else if (c == '\\') {
+                    code += '\\';
+                    c = i.get();
+                }
             }
 
             code += c;
