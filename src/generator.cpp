@@ -60,8 +60,6 @@ namespace alien {
             auto& state = *args.at(0);
             auto& automata = *args.at(1);
 
-            inja::json json;
-
             std::vector<std::vector<util::u8char>> symbols(automata["states"].size());
             for (const auto& transition_index : state["transitions"]) {
                 auto& transition = automata["transitions"][transition_index.get<std::size_t>()];
