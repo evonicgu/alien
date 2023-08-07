@@ -2,6 +2,7 @@
 #define ALIEN_SETTINGS_H
 
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <vector>
 
@@ -48,13 +49,15 @@ namespace alien::config::settings {
               value(value_type::BOOL) {}
     };
 
+    using config_map = std::map<util::u8string, std::unique_ptr<value>>;
+
     template<typename T>
     struct settings {
-        std::map<util::u8string, std::unique_ptr<value>> config;
+        config_map config;
 
         util::vecset<T> symbols;
 
-        std::map<code_token::location, std::vector<util::u8string>> code_declarations;
+        std::unordered_map<code_token::location, std::vector<util::u8string>> code_declarations;
     };
 
 
