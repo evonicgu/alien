@@ -24,15 +24,15 @@ int main(int argc, char** argv) {
                 ("t,time", "Print elapsed time after generation", cxxopts::value(time))
                 ("q,quiet", "Quiet mode (no warnings, not recommended)", cxxopts::value(quiet))
                 ("lexer_source_template", "Lexer source/header-only template file", cxxopts::value<std::string>()
-                        ->default_value("templates/sources/lexer.template.txt"))
+                        ->default_value("resources/templates/cpp/sources/lexer.template.txt"))
                 ("lexer_header_template", "Lexer header (non header-only) template file", cxxopts::value<std::string>()
-                        ->default_value("templates/headers/lexer.template.txt"))
+                        ->default_value("resources/templates/cpp/headers/lexer.template.txt"))
                 ("tokens_template", "Tokens template file", cxxopts::value<std::string>()
-                        ->default_value("templates/sources/token.template.txt"))
+                        ->default_value("resources/templates/cpp/sources/token.template.txt"))
                 ("parser_source_template", "Parser source/header-only template file", cxxopts::value<std::string>()
-                        ->default_value("templates/sources/parser.template.txt"))
+                        ->default_value("resources/templates/cpp/sources/parser.template.txt"))
                 ("parser_header_template", "parser header (non header-only) template file", cxxopts::value<std::string>()
-                        ->default_value("templates/headers/parser.template.txt"));
+                        ->default_value("resources/templates/cpp/headers/parser.template.txt"));
 
         options.parse_positional({"input"});
 

@@ -7,11 +7,11 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 include(cmake/get_cpm.cmake)
 include(cmake/install.cmake)
 
-configure_file(include/templates/sources/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/sources/lexer.template.txt COPYONLY)
-configure_file(include/templates/sources/token.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/sources/token.template.txt COPYONLY)
-configure_file(include/templates/sources/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/sources/parser.template.txt COPYONLY)
-configure_file(include/templates/headers/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/headers/lexer.template.txt COPYONLY)
-configure_file(include/templates/headers/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/templates/headers/parser.template.txt COPYONLY)
+configure_file(resources/templates/cpp/sources/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/sources/lexer.template.txt COPYONLY)
+configure_file(resources/templates/cpp/sources/token.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/sources/token.template.txt COPYONLY)
+configure_file(resources/templates/cpp/sources/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/sources/parser.template.txt COPYONLY)
+configure_file(resources/templates/cpp/headers/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/headers/lexer.template.txt COPYONLY)
+configure_file(resources/templates/cpp/headers/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/headers/parser.template.txt COPYONLY)
 
 target_compile_definitions(cxxopts INTERFACE CXXOPTS_NO_RTTI)
 
