@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
                 ("output", "Source file output directory", cxxopts::value<std::string>()->default_value(""))
                 ("header_output", "Header file output directory", cxxopts::value<std::string>())
                 ("v,verbose", "Verbose error output", cxxopts::value(verbose))
-                ("header_only", "Generates header_only-only code", cxxopts::value(header_only))
+                ("header_only", "Generates header-only code", cxxopts::value(header_only))
                 ("h,help", "Prints the help message")
                 ("t,time", "Print elapsed time after generation", cxxopts::value(time))
                 ("q,quiet", "Quiet mode (no warnings, not recommended)", cxxopts::value(quiet))
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
         auto header_output = result["header_output"].as<std::string>();
 
         if (header_only && !output.empty()) {
-            std::cerr << "Cannot specify source file output directory in header_only-only mode\n"
+            std::cerr << "Cannot specify source file output directory in header-only mode\n"
                          "You may need to turn off the \"header_only\" option\n";
             return 1;
         }
