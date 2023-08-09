@@ -107,7 +107,7 @@ namespace alien::lexer {
         )->str);
 
         std::string path_to_header = util::u8string_to_bytes(util::check<config::settings::string_value>(
-                lexer_settings.config.at("generation.path_to_header"_u8).get()
+                lexer_settings.config.at("generation.cpp.path_to_header"_u8).get()
         )->str);
 
         if (path_to_header.empty() && !generator_config.header_only) {
@@ -126,14 +126,14 @@ namespace alien::lexer {
                 {"code_content_decl_public",  std::move(lexer_settings.code_declarations[config::settings::code_token::location::CONTENT_DECL_PUBLIC])},
                 {"code_content_impl",         std::move(lexer_settings.code_declarations[config::settings::code_token::location::CONTENT_IMPL])},
                 {"contexts",                  util::to_json(lexer_rules.ctx)},
-                {"macros",                    get_value(lexer_settings.config["generation.macros"_u8])},
+                {"macros",                    get_value(lexer_settings.config["generation.cpp.macros"_u8])},
                 {"emit_stream",               !no_utf8 &&
                                               get_value(lexer_settings.config["generation.emit_stream"_u8])},
                 {"token_default",             token_type_default},
                 {"position_default",          position_type_default},
                 {"token_type",                std::move(token_type)},
                 {"position_type",             std::move(position_type)},
-                {"use_enum_class",            get_value(lexer_settings.config["generation.enum_class"_u8])},
+                {"use_enum_class",            get_value(lexer_settings.config["generation.cpp.enum_class"_u8])},
                 {"ctx_start_states",          std::move(ctx_start_states)},
                 {"has_any_start_transitions", has_any_start_transitions},
                 {"symbols",                   util::to_json(alphabet.terminals,
@@ -154,7 +154,7 @@ namespace alien::lexer {
                 {"is_header_only",            generator_config.header_only},
                 {"path_to_header",            path_to_header},
                 {"no_default_constructor",    get_value(
-                        lexer_settings.config["generation.no_default_constructor"_u8])}
+                        lexer_settings.config["generation.cpp.no_default_constructor"_u8])}
         };
 
         inja::Template token_tmpl = env.parse_file(generator_config.token_template);
@@ -192,7 +192,7 @@ namespace alien::lexer {
         }
 
         auto& path_to_header = util::check<config::settings::string_value>(
-                lexer_settings.config.at("generation.path_to_header"_u8).get()
+                lexer_settings.config.at("generation.cpp.path_to_header"_u8).get()
         )->str;
 
         if (header_only && !path_to_header.empty()) {

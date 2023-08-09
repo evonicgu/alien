@@ -133,7 +133,7 @@ namespace alien::parser {
                                                             })},
                 {"track_lines",               track_lines},
                 {"parser_namespace",          std::move(parser_namespace)},
-                {"no_default_constructor",    get_value(parser_settings.config["generation.no_default_constructor"_u8])},
+                {"no_default_constructor",    get_value(parser_settings.config["generation.cpp.no_default_constructor"_u8])},
                 {"lexer_relative_namespace",  lexer_relative_namespace}
         };
 

@@ -18,7 +18,7 @@ namespace alien {
         )->str;
 
         util::u8string guard_prefix = std::move(util::check<config::settings::string_value>(
-                lexer_gen.get_param("general.guard_prefix"_u8).get()
+                lexer_gen.get_param("general.cpp.guard_prefix"_u8).get()
         )->str);
 
         bool track_lines = util::check<config::settings::bool_value>(
