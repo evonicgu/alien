@@ -77,7 +77,7 @@ namespace alien::parser::settings {
                 {"generation.symbol_type"_u8, std::make_unique<config::settings::string_value>(""_u8)},
                 {"symbol.namespace"_u8, std::make_unique<config::settings::string_value>(""_u8)},
                 {"generation.namespace"_u8, std::make_unique<config::settings::string_value>("parser"_u8)},
-                {"generation.no_default_constructor"_u8, std::make_unique<config::settings::bool_value>(false)},
+                {"generation.cpp.no_default_constructor"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.custom_error"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.use_token_to_str"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.default_token_to_str"_u8, std::make_unique<config::settings::bool_value>(false)}

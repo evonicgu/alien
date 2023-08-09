@@ -12,8 +12,8 @@ namespace alien::lexer::settings {
         std::pair<util::u8string, std::unique_ptr<config::settings::value>> values[] = {
                 {"generation.token_type"_u8, std::make_unique<config::settings::string_value>("default"_u8)},
                 {"generation.position_type"_u8, std::make_unique<config::settings::string_value>("default"_u8)},
-                {"generation.macros"_u8, std::make_unique<config::settings::bool_value>(false)},
-                {"generation.enum_class"_u8, std::make_unique<config::settings::bool_value>(true)},
+                {"generation.cpp.macros"_u8, std::make_unique<config::settings::bool_value>(false)},
+                {"generation.cpp.enum_class"_u8, std::make_unique<config::settings::bool_value>(true)},
                 {"generation.custom_error"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.noutf8"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.track_lines"_u8, std::make_unique<config::settings::bool_value>(true)},
@@ -21,12 +21,12 @@ namespace alien::lexer::settings {
                 {"generation.lexeme_size"_u8, std::make_unique<config::settings::number_value>(32768)},
                 {"generation.emit_stream"_u8, std::make_unique<config::settings::bool_value>(true)},
                 {"generation.namespace"_u8, std::make_unique<config::settings::string_value>("lexer"_u8)},
-                {"generation.no_default_constructor"_u8, std::make_unique<config::settings::bool_value>(false)},
+                {"generation.cpp.no_default_constructor"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.monomorphic"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.stream_type"_u8, std::make_unique<config::settings::string_value>(""_u8)},
-                {"general.guard_prefix"_u8, std::make_unique<config::settings::string_value>(""_u8)},
+                {"general.cpp.guard_prefix"_u8, std::make_unique<config::settings::string_value>(""_u8)},
                 {"token.namespace"_u8, std::make_unique<config::settings::string_value>(""_u8)},
-                {"generation.path_to_header"_u8, std::make_unique<config::settings::string_value>(""_u8)}
+                {"generation.cpp.path_to_header"_u8, std::make_unique<config::settings::string_value>(""_u8)}
         };
 
         for (auto& value : values) {
