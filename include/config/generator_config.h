@@ -10,11 +10,17 @@
 
 namespace alien::config {
 
+    enum class language {
+        CPP
+    };
+
     struct generator_config {
         // IO
         std::string input;
         std::optional<std::string> output_directory;
-        std::string header_output_directory;
+        std::optional<std::string> header_output_directory;
+
+        language lang;
 
         // Settings
         bool verbose = false;
@@ -22,10 +28,12 @@ namespace alien::config {
         bool header_only = false;
 
         // Generation templates
-        std::string token_template;
-        std::string lexer_template, lexer_header_template;
-        std::string parser_template, parser_header_template;
+        std::optional<std::string> token_template;
+        std::optional<std::string> lexer_template, lexer_header_template;
+        std::optional<std::string> parser_template, parser_header_template;
     };
+
+    language language_from_string(const std::string& str);
 
     struct generator_streams {
         input::stream_input in;

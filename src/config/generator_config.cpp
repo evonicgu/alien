@@ -16,4 +16,11 @@ namespace alien::config {
         }
     }
 
+    language language_from_string(const std::string& str) {
+        if (str == "c++") {
+            return language::CPP;
+        }
+
+        throw std::runtime_error("Unexpected language value");
+    }
 }
