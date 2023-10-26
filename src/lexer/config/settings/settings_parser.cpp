@@ -1,4 +1,4 @@
-#include "lexer/config/settings/settings.h"
+#include "lexer/config/settings/parser.h"
 
 namespace alien::lexer::settings {
 
@@ -10,23 +10,16 @@ namespace alien::lexer::settings {
         using namespace util::literals;
 
         std::pair<util::u8string, std::unique_ptr<config::settings::value>> values[] = {
-                {"generation.token_type"_u8, std::make_unique<config::settings::string_value>("default"_u8)},
-                {"generation.position_type"_u8, std::make_unique<config::settings::string_value>("default"_u8)},
-                {"generation.cpp.macros"_u8, std::make_unique<config::settings::bool_value>(false)},
-                {"generation.cpp.enum_class"_u8, std::make_unique<config::settings::bool_value>(true)},
+                {"generation.token_type"_u8, std::make_unique<config::settings::string_value>(config::settings::default_t)},
+                {"generation.position_type"_u8, std::make_unique<config::settings::string_value>(config::settings::default_t)},
                 {"generation.custom_error"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.noutf8"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.track_lines"_u8, std::make_unique<config::settings::bool_value>(true)},
                 {"generation.buffer_size"_u8, std::make_unique<config::settings::number_value>(131072)},
                 {"generation.lexeme_size"_u8, std::make_unique<config::settings::number_value>(32768)},
                 {"generation.emit_stream"_u8, std::make_unique<config::settings::bool_value>(true)},
-                {"generation.namespace"_u8, std::make_unique<config::settings::string_value>("lexer"_u8)},
-                {"generation.cpp.no_default_constructor"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.monomorphic"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.stream_type"_u8, std::make_unique<config::settings::string_value>(""_u8)},
-                {"general.cpp.guard_prefix"_u8, std::make_unique<config::settings::string_value>(""_u8)},
-                {"token.namespace"_u8, std::make_unique<config::settings::string_value>(""_u8)},
-                {"generation.cpp.path_to_header"_u8, std::make_unique<config::settings::string_value>(""_u8)}
         };
 
         for (auto& value : values) {
@@ -34,44 +27,48 @@ namespace alien::lexer::settings {
         }
     }
 
+    void settings_parser::add_language_settings(const std::unique_ptr<languages::base_language>& language) {
+        language->register_lexer_settings(configuration);
+    }
+
     void settings_parser::add_types() {
         using namespace util::literals;
 
-        util::u8string& token_type = util::check<config::settings::string_value>(
-                configuration.config["generation.token_type"_u8].get()
-        )->str;
+//        util::u8string& token_type = util::check<config::settings::string_value>(
+//                configuration.config["generation.token_type"_u8].get()
+//        )->str;
+//
+//        util::u8string& symbol_namespace = util::check<config::settings::string_value>(
+//                configuration.config["token.namespace"_u8].get()
+//        )->str;
 
-        util::u8string& symbol_namespace = util::check<config::settings::string_value>(
-                configuration.config["token.namespace"_u8].get()
-        )->str;
+//        util::u8string& position_type = util::check<config::settings::string_value>(
+//                configuration.config["generation.position_type"_u8].get()
+//        )->str;
 
-        util::u8string& position_type = util::check<config::settings::string_value>(
-                configuration.config["generation.position_type"_u8].get()
-        )->str;
+//        if (token_type == config::settings::default_t) {
+//            token_default = true;
+//            token_type = "token"_u8;
+//        } else if (!symbol_namespace.empty()) {
+//            token_type = symbol_namespace + "::"_u8 + token_type;
+//        }
+//        if (position_type == config::settings::default_t) {
+//            position_default = true;
+//            position_type = "position"_u8;
+//        } else if (!symbol_namespace.empty()) {
+//            position_type = symbol_namespace + "::"_u8 + position_type;
+//        }
 
-        if (token_type == "default"_u8) {
-            token_default = true;
-            token_type = "token"_u8;
-        } else if (!symbol_namespace.empty()) {
-            token_type = symbol_namespace + "::"_u8 + token_type;
-        }
 
-        if (position_type == "default"_u8) {
-            position_default = true;
-            position_type = "position"_u8;
-        } else if (!symbol_namespace.empty()) {
-            position_type = symbol_namespace + "::"_u8 + position_type;
-        }
-
-        for (std::size_t i = 0; i < configuration.symbols.size(); ++i) {
-            auto& symbol = configuration.symbols[i];
+        for (std::size_t i = 0; i < symbols.terminals.size(); ++i) {
+            auto& symbol = symbols.terminals[i];
 
             if (symbol.type.empty()) {
                 symbol.type = default_token_typename;
                 symbol.default_type = true;
-            } else if (!symbol_namespace.empty()) {
+            }/* else if (!symbol_namespace.empty()) {
                 symbol.type = symbol_namespace + "::"_u8 + configuration.symbols[i].type;
-            }
+            }*/
         }
     }
 
@@ -114,9 +111,9 @@ namespace alien::lexer::settings {
             };
 
             util::u8string s_pos = (util::u8string) lookahead->start;
-            auto it = configuration.symbols.find(symbol);
+            auto it = symbols.terminals.find(symbol);
 
-            if (it == configuration.symbols.vend()) {
+            if (it == symbols.terminals.vend()) {
                 err.push_back("Unknown symbol '"_u8 + symbol.name + "' at "_u8 + s_pos);
                 match(type::T_IDENTIFIER);
                 continue;

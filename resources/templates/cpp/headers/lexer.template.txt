@@ -1,20 +1,20 @@
-{% set prefix = bytes(guard_prefix) %}{% if length(prefix) != 0 %}#ifndef {{ prefix }}_GEN_PARSER
+{% set prefix = options.guard_prefix %}{% if length(prefix) != 0 %}#ifndef {{ prefix }}_GEN_PARSER
 #define {{ prefix }}_GEN_PARSER
 
 {% endif %}#include <stdexcept>
 #include <string>
 #include <type_traits>
-{% if not no_utf8 %}
+{% if not options.no_utf8 %}
 #include "utf8proc.h"
 #include <fstream>
-{% endif %}{% for code in code_headers %}{{ bytes(code) }}{% endfor %}
+{% endif %}{% for code in options.code_headers %}{{ bytes(code) }}{% endfor %}
 #include "token.gen.h"
 
-namespace {{ bytes(lexer_namespace) }} {
+namespace {{ options.lexer_namespace }} {
 
-#define BUF_SIZE {{ buffer_size }}{% if no_utf8 %}{% set char_type = "char" %}{% else %}{% set char_type = "int" %}{% endif %}
+#define BUF_SIZE {{ options.buffer_size }}{% if options.no_utf8 %}{% set char_type = "char" %}{% else %}{% set char_type = "int" %}{% endif %}
 
-{% if emit_stream %}    static const unsigned char first_unit_mapping[256]{
+{% if options.emit_stream %}    static const unsigned char first_unit_mapping[256]{
             0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0xf, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0x7, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7
     };
 
@@ -122,14 +122,14 @@ namespace {{ bytes(lexer_namespace) }} {
     };
 
     using u8_stream = base_u8_stream<>;{% endif %}
-    {% for code in code_decl %}{{ bytes(code) }}{% endfor %}
-    using token_t = {{ bytes(token_type) }};{% if track_lines %}
-    using pos_t = {{ bytes(position_type) }};{% endif %}
+    {% for code in options.code_decl %}{{ bytes(code) }}{% endfor %}
+    using token_t = {{ bytes(options.token_type) }};{% if options.track_lines %}
+    using pos_t = {{ bytes(options.position_type) }};{% endif %}
 
-{% if not monomorphic %}    template<typename Stream>
+{% if not options.monomorphic %}    template<typename Stream>
 {% endif %}    class lexer {
-        using char_type = {{ char_type }};{% if monomorphic %}
-        using Stream = {{ bytes(stream_type) }};{% endif %}
+        using char_type = {{ char_type }};{% if options.monomorphic %}
+        using Stream = {{ bytes(options.stream_type) }};{% endif %}
 
         char_type* buffer;
         char_type* lexeme;
@@ -139,15 +139,15 @@ namespace {{ bytes(lexer_namespace) }} {
 
         Stream stream;
 
-        void init_buffers();{% if track_lines %}
+        void init_buffers();{% if options.track_lines %}
 
         pos_t start{1, 1}, last_rule{1, 1}, curr{1, 1};{% endif %}
 
         unsigned int current_context = 0;
 
-    private:{% for code in code_content_decl_private %}{{ bytes(code) }}{% endfor %}
-    public:{% for code in code_content_decl_public %}{{ bytes(code) }}{% endfor %}
-    public:{% if not no_default_constructor %}
+    private:{% for code in options.code_content_decl_private %}{{ bytes(code) }}{% endfor %}
+    public:{% for code in options.code_content_decl_public %}{{ bytes(code) }}{% endfor %}
+    public:{% if not options.no_default_constructor %}
         explicit lexer(const Stream& stream)
             : stream(stream) {
             init_buffers();
@@ -160,19 +160,19 @@ namespace {{ bytes(lexer_namespace) }} {
             init_buffers();
             fill();
         }
-{% endif %}{% if track_lines %}
+{% endif %}{% if options.track_lines %}
         pos_t get_pos() const;{% endif %}
 
         token_t* lex();
 
-    private:{% if not custom_error %}
+    private:{% if not options.custom_error %}
         void error(int);
         {% endif %}
-        void fill();{% if not no_utf8 %}
+        void fill();{% if not options.no_utf8 %}
 
         static int get_class(int c);{% endif %}
 
-        {% if no_utf8 %}std::string{% else %}std::basic_string<char_type>{% endif %} gettext();
+        {% if options.no_utf8 %}std::string{% else %}std::basic_string<char_type>{% endif %} gettext();
     };
-{% if not is_header_only %}}{% endif %}
+{% if not options.is_header_only %}}{% endif %}
 

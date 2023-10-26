@@ -31,6 +31,10 @@ namespace alien::config::settings {
         explicit string_value(util::u8string&& str)
             : str(std::move(str)),
               value(value_type::STRING) {}
+
+        explicit string_value(const util::u8string& str)
+            : str(str),
+              value(value_type::STRING) {}
     };
 
     struct number_value : public value {
@@ -55,11 +59,10 @@ namespace alien::config::settings {
     struct settings {
         config_map config;
 
-        util::vecset<T> symbols;
-
         std::unordered_map<code_token::location, std::vector<util::u8string>> code_declarations;
     };
 
+    const util::u8string default_t = util::ascii_to_u8string("@default");
 
 }
 

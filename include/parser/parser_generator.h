@@ -16,42 +16,37 @@
 #include "generator/slr.h"
 #include "generator/clr.h"
 #include "generator/lalr.h"
+#include "languages/base_language.h"
+#include "parser/config/settings/parser.h"
 #include "util/to_json.h"
 
 namespace alien::parser {
 
     class parser_generator {
-        using settings_t = config::settings::settings<settings::parser_symbol>;
-
         rules::rules parser_rules;
 
         std::list<util::u8string>& err;
         alphabet::alphabet& alphabet;
 
-        const config::generator_config& generator_config;
-
-        config::generator_streams& generator_streams;
+        input::stream_input& input_stream;
 
         std::unique_ptr<generator::base_table_generator> table_generator;
 
-        settings_t parser_settings;
+        const std::unique_ptr<languages::base_language>& language;
 
     public:
-        parser_generator(const config::generator_config& generator_config,
-                        config::generator_streams& generator_streams,
-                        alphabet::alphabet& alphabet,
-                        std::list<util::u8string>& err)
-                : generator_config(generator_config),
-                  generator_streams(generator_streams),
+        parser_generator(input::stream_input& input_stream,
+                         const std::unique_ptr<languages::base_language>& language,
+                         alphabet::alphabet& alphabet,
+                         std::list<util::u8string>& err)
+                : input_stream(input_stream),
+                  language(language),
                   alphabet(alphabet),
                   err(err) {}
 
-        const std::unique_ptr<config::settings::value>& get_param(const util::u8string& param) const;
+        settings::settings_t parse_parser_config();
 
-        void parse_parser_config();
-
-        void generate_parser(inja::Environment& env, const util::u8string& guard_prefix, bool track_lines,
-                             util::u8string&& lexer_relative_namespace, bool monomorphic);
+        std::optional<inja::json> generate_parser();
 
     private:
         template<typename Generator>
@@ -59,16 +54,12 @@ namespace alien::parser {
             return std::make_unique<Generator>(alphabet, parser_rules);
         }
 
-        static bool get_value(const std::unique_ptr<config::settings::value>& ptr);
-
     private:
         std::vector<std::vector<std::vector<std::ptrdiff_t>>> get_parser_rules();
 
-        std::vector<util::u8string> get_parser_types();
-
         std::vector<std::vector<std::size_t>> get_parser_lengths();
 
-        std::vector<std::vector<util::u8string>> get_parser_actions();
+        std::vector<std::vector<std::string>> get_parser_actions();
     };
 
 }

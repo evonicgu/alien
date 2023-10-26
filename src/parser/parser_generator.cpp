@@ -2,28 +2,24 @@
 
 namespace alien::parser {
 
-    const std::unique_ptr<config::settings::value>& parser_generator::get_param(const util::u8string& param) const {
-        return parser_settings.config.at(param);
-    }
-
-    void parser_generator::parse_parser_config() {
+    settings::settings_t parser_generator::parse_parser_config() {
         using namespace util::literals;
 
-        config::settings::lexer settings_lexer(generator_streams.in, err);
-        parser::settings::settings_parser settings_parser(settings_lexer, err);
+        settings::settings_t parser_settings;
+
+        config::settings::lexer settings_lexer(input_stream, err);
+        parser::settings::settings_parser settings_parser(settings_lexer, err, alphabet);
+
+        alphabet.non_terminals.push_back({
+                                                 "@$S"_u8,
+                                                 settings::void_type
+                                         });
+
+        settings_parser.add_language_settings(language);
 
         settings_parser.parse();
 
         parser_settings = settings_parser.get_settings();
-
-        alphabet.non_terminals.push_back({
-                                                 "@$S"_u8,
-                                                 "void"_u8
-                                         });
-
-        for (std::size_t i = 0; i < parser_settings.symbols.size(); ++i) {
-            alphabet.non_terminals.push_back(std::move(parser_settings.symbols[i]));
-        }
 
         const auto& parser_type = util::check<config::settings::string_value>(
                 parser_settings.config["generation.type"_u8].get()
@@ -33,7 +29,7 @@ namespace alien::parser {
                 parser_settings.config["general.start"_u8].get()
         )->str;
 
-        parser::rules::lexer rules_lexer(generator_streams.in, err);
+        parser::rules::lexer rules_lexer(input_stream, err);
         parser::rules::parser rules_parser(rules_lexer, err, alphabet, first_symbol);
 
         rules_parser.parse();
@@ -49,21 +45,22 @@ namespace alien::parser {
         } else {
             err.push_back("Invalid parser type: "_u8 + parser_type);
         }
+
+        return std::move(parser_settings);
     }
 
-    void parser_generator::generate_parser(inja::Environment& env, const util::u8string& guard_prefix, bool track_lines,
-                                           util::u8string&& lexer_relative_namespace, bool monomorphic) {
+    std::optional<inja::json> parser_generator::generate_parser() {
         using namespace util::literals;
 
         if (alphabet.non_terminals.size() == 1) {
             err.push_back("Cannot create parser: no symbols are defined"_u8);
-            return;
+            return {};
         }
 
         for (std::size_t i = 0; i < alphabet.non_terminals.size(); ++i) {
             if (parser_rules.ruleset[i].empty()) {
                 err.push_back("No productions are defined for symbol "_u8 + alphabet.non_terminals[i].name);
-                return;
+                return {};
             }
         }
 
@@ -91,67 +88,63 @@ namespace alien::parser {
         }
 
         if (!err.empty()) {
-            return;
+            return {};
         }
 
-        util::u8string symbol_type = std::move(util::check<config::settings::string_value>(
-                parser_settings.config["generation.symbol_type"_u8].get()
-        )->str);
+//        util::u8string symbol_type = std::move(util::check<config::settings::string_value>(
+//                parser_settings.config["generation.symbol_type"_u8].get()
+//        )->str);
+//
+//        util::u8string parser_namespace = std::move(util::check<config::settings::string_value>(
+//                parser_settings.config["generation.namespace"_u8].get()
+//        )->str);
 
-        util::u8string parser_namespace = std::move(util::check<config::settings::string_value>(
-                parser_settings.config["generation.namespace"_u8].get()
-        )->str);
-
-        inja::json data{
-                {"code_headers",              std::move(parser_settings.code_declarations[config::settings::code_token::location::HEADERS])},
-                {"code_decl",                 std::move(parser_settings.code_declarations[config::settings::code_token::location::DECL])},
-                {"code_impl",                 std::move(parser_settings.code_declarations[config::settings::code_token::location::IMPL])},
-                {"code_content_decl_private", std::move(parser_settings.code_declarations[config::settings::code_token::location::CONTENT_DECL_PRIVATE])},
-                {"code_content_decl_public",  std::move(parser_settings.code_declarations[config::settings::code_token::location::CONTENT_DECL_PUBLIC])},
-                {"code_content_impl",         std::move(parser_settings.code_declarations[config::settings::code_token::location::CONTENT_IMPL])},
+        return {{
+////                {"code_headers",              std::move(parser_settings.code_declarations[config::settings::code_token::location::HEADERS])},
+////                {"code_decl",                 std::move(parser_settings.code_declarations[config::settings::code_token::location::DECL])},
+////                {"code_impl",                 std::move(parser_settings.code_declarations[config::settings::code_token::location::IMPL])},
+////                {"code_content_decl_private", std::move(parser_settings.code_declarations[config::settings::code_token::location::CONTENT_DECL_PRIVATE])},
+////                {"code_content_decl_public",  std::move(parser_settings.code_declarations[config::settings::code_token::location::CONTENT_DECL_PUBLIC])},
+////                {"code_content_impl",         std::move(parser_settings.code_declarations[config::settings::code_token::location::CONTENT_IMPL])},
                 {"table",                     parser::generator::transform_table(table, (std::ptrdiff_t) alphabet.terminals.size())},
                 {"terminals",                 alphabet.terminals.size()},
-                {"symbol_type",               std::move(symbol_type)},
+//                {"symbol_type",               std::move(symbol_type)},
                 {"lengths",                   get_parser_lengths()},
-                {"types",                     get_parser_types()},
+//                {"types",                     get_parser_types()},
                 {"rules",                     get_parser_rules()},
-                {"guard_prefix",              guard_prefix},
+//                {"guard_prefix",              guard_prefix},
                 {"start_rule",                parser_rules.start + alphabet.terminals.size()},
                 {"actions",                   get_parser_actions()},
-                {"custom_error",              get_value(parser_settings.config["generation.custom_error"_u8])},
-                {"use_token_to_str",          get_value(parser_settings.config["generation.use_token_to_str"_u8])},
-                {"default_token_to_str",      get_value(parser_settings.config["generation.default_token_to_str"_u8])},
+////                {"custom_error",              get_value(parser_settings.config["generation.custom_error"_u8])},
+////                {"use_token_to_str",          get_value(parser_settings.config["generation.use_token_to_str"_u8])},
+////                {"default_token_to_str",      get_value(parser_settings.config["generation.default_token_to_str"_u8])},
                 {"shift_err_states",          std::move(shift_err_states)},
                 {"reduce_err_states",         std::move(reduce_err_states)},
                 {"reduce_err_actions",        std::move(reduce_err_actions)},
                 {"has_error_productions",     has_error_productions},
-                {"is_header_only",            generator_config.header_only},
-                {"monomorphic",               monomorphic},
+//                {"is_header_only",            generator_config.header_only},
+////                {"monomorphic",               monomorphic},
                 {"tokens",                    util::to_json(alphabet.terminals,
                                                             [](const lexer::settings::lexer_symbol& symbol) {
                                                                 return util::u8string_to_bytes(symbol.name);
                                                             })},
-                {"track_lines",               track_lines},
-                {"parser_namespace",          std::move(parser_namespace)},
-                {"no_default_constructor",    get_value(parser_settings.config["generation.cpp.no_default_constructor"_u8])},
-                {"lexer_relative_namespace",  lexer_relative_namespace}
-        };
+////                {"track_lines",               track_lines},
+//                {"parser_namespace",          std::move(parser_namespace)},
+//                {"no_default_constructor",    get_value(parser_settings.config["generation.cpp.no_default_constructor"_u8])},
+//                {"lexer_relative_namespace",  lexer_relative_namespace}
+        }};
 
-        inja::Template header_tmpl = env.parse_file(generator_config.parser_header_template);
-
-        env.render_to(generator_streams.parser_header_out, header_tmpl, data);
-
-        inja::Template source_tmpl = env.parse_file(generator_config.parser_template);
-
-        auto& out_stream = generator_config.header_only ?
-                           generator_streams.parser_header_out :
-                           generator_streams.parser_source_out.value();
-
-        env.render_to(out_stream, source_tmpl, data);
-    }
-
-    bool parser_generator::get_value(const std::unique_ptr<config::settings::value>& ptr) {
-        return util::check<config::settings::bool_value>(ptr.get())->val;
+//        inja::Template header_tmpl = env.parse_file(generator_config.parser_header_template);
+//
+//        env.render_to(generator_streams.parser_header_out, header_tmpl, data);
+//
+//        inja::Template source_tmpl = env.parse_file(generator_config.parser_template);
+//
+//        auto& out_stream = generator_config.header_only ?
+//                           generator_streams.parser_header_out :
+//                           generator_streams.parser_source_out.value();
+//
+//        env.render_to(out_stream, source_tmpl, data);
     }
 
     std::vector<std::vector<std::vector<std::ptrdiff_t>>> parser_generator::get_parser_rules() {
@@ -188,20 +181,6 @@ namespace alien::parser {
         return json_rules;
     }
 
-    std::vector<util::u8string> parser_generator::get_parser_types() {
-        std::vector<util::u8string> types;
-
-        for (std::size_t i = 0; i < alphabet.terminals.size(); ++i) {
-            types.push_back(std::move(alphabet.terminals[i].type));
-        }
-
-        for (std::size_t i = 0; i < alphabet.non_terminals.size(); ++i) {
-            types.push_back(std::move(alphabet.non_terminals[i].type));
-        }
-
-        return types;
-    }
-
     std::vector<std::vector<std::size_t>> parser_generator::get_parser_lengths() {
         std::vector<std::vector<std::size_t>> lengths{parser_rules.ruleset.size()};
 
@@ -214,12 +193,12 @@ namespace alien::parser {
         return lengths;
     }
 
-    std::vector<std::vector<util::u8string>> parser_generator::get_parser_actions() {
-        std::vector<std::vector<util::u8string>> actions{parser_rules.ruleset.size()};
+    std::vector<std::vector<std::string>> parser_generator::get_parser_actions() {
+        std::vector<std::vector<std::string>> actions{parser_rules.ruleset.size()};
 
         for (std::size_t i = 0; i < parser_rules.ruleset.size(); ++i) {
             for (auto& prod : parser_rules.ruleset[i]) {
-                actions[i].push_back(std::move(prod.action));
+                actions[i].push_back(util::u8string_to_bytes(prod.action));
             }
         }
 

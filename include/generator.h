@@ -11,6 +11,7 @@
 #include "inja/inja.hpp"
 
 #include "alphabet.h"
+#include "renderer/base_renderer.h"
 #include "config/generator_config.h"
 #include "fwd/lexer_fwd.h"
 #include "fwd/parser_fwd.h"
@@ -20,29 +21,31 @@
 #include "util/u8string.h"
 #include "lexer/lexer_generator.h"
 #include "parser/parser_generator.h"
+#include "renderer/cpp_renderer.h"
+#include "languages/base_language.h"
+#include "languages/cpp_language.h"
 
 namespace alien {
 
     class generator {
         config::generator_config config;
 
-        config::generator_streams streams;
         std::list<util::u8string> err;
 
-        lexer::lexer_generator lexer_gen;
-        parser::parser_generator parser_gen;
-
-        alphabet::alphabet alphabet;
         inja::Environment env;
+
+        std::map<std::string, std::unique_ptr<languages::base_language>> languages;
 
     public:
         explicit generator(config::generator_config&& configuration)
-            : config(std::move(configuration)),
-              streams(config),
-              lexer_gen(config, streams, alphabet, err),
-              parser_gen(config,streams, alphabet, err) {
+            : config(std::move(configuration)) {
             setup_inja_env();
+            setup_default_languages();
         }
+
+        void add_language(const std::string& name, std::unique_ptr<languages::base_language>&& language);
+
+        std::unique_ptr<languages::base_language>& find_language(const std::string& name);
 
         void generate();
 
@@ -51,8 +54,7 @@ namespace alien {
     private:
         void setup_inja_env();
 
-        util::u8string get_lexer_relative_namespace(const util::u8string& lexer_namespace,
-                                                     const util::u8string& parser_namespace);
+        void setup_default_languages();
 
     private:
         static std::string create_range(std::string_view var, std::ptrdiff_t start, std::ptrdiff_t end);

@@ -1,10 +1,10 @@
-{% set prefix = bytes(guard_prefix) %}{% if length(prefix) != 0 %}#ifndef {{ bytes(guard_prefix) }}_GEN_TOKEN
-#define {{ bytes(guard_prefix) }}_GEN_TOKEN
+{% set prefix = options.guard_prefix %}{% if length(prefix) != 0 %}#ifndef {{ options.guard_prefix }}_GEN_TOKEN
+#define {{ options.guard_prefix }}_GEN_TOKEN
 
 {% endif %}#include <string>
 #include <type_traits>
 
-namespace {{ bytes(lexer_namespace) }} {#{}#{% if track_lines and position_default %}
+namespace {{ options.lexer_namespace }} {#{}#{% if options.track_lines and options.position_default %}
 
     struct position {
         std::size_t line, column;
@@ -12,27 +12,27 @@ namespace {{ bytes(lexer_namespace) }} {#{}#{% if track_lines and position_defau
         explicit operator std::string() const {
             return std::to_string(line) + ':' + std::to_string(column);
         }
-    };{% endif %}{% if token_default %}
+    };{% endif %}{% if options.token_default %}
 
     template<typename T>
     struct token {
         static_assert(std::is_enum_v<T>, "Template argument must be an enum");
 
-        T type;{% if track_lines %}
-        {{ bytes(position_type) }} start, end;{% endif %}
+        T type;{% if options.track_lines %}
+        {{ bytes(options.position_type) }} start, end;{% endif %}
 
-        token(T type{% if track_lines %}, {{ bytes(position_type) }} start, {{ bytes(position_type) }} end{% endif %})
-            : type(type){% if track_lines %},
+        token(T type{% if options.track_lines %}, {{ bytes(options.position_type) }} start, {{ bytes(options.position_type) }} end{% endif %})
+            : type(type){% if options.track_lines %},
               start(start),
               end(end){% endif %} {}
 
         virtual ~token() = default;
     };{% endif %}
 
-    enum {% if use_enum_class %}class {% endif %}token_type {
-{% for symbol in symbols %}        {{ symbol }},
+    enum {% if options.use_enum_class %}class {% endif %}token_type {
+{% for symbol in data.symbols %}        {{ symbol }},
 {% endfor %}    };
 
-}{% set prefix = bytes(guard_prefix) %}{% if length(prefix) != 0%}
+}{% set prefix = options.guard_prefix %}{% if length(prefix) != 0%}
 
-#endif // {{ bytes(guard_prefix) }}_GEN_TOKEN{% endif %}
+#endif // {{ options.guard_prefix }}_GEN_TOKEN{% endif %}
