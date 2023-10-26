@@ -1,5 +1,5 @@
-#ifndef ALIEN_PARSER_H
-#define ALIEN_PARSER_H
+#ifndef ALIEN_SETTINGS_PARSER_H
+#define ALIEN_SETTINGS_PARSER_H
 
 #include <list>
 #include <memory>
@@ -11,8 +11,11 @@
 #include "util/parser.h"
 #include "util/typeutils.h"
 #include "util/u8string.h"
+#include "parser/config/rules/lexer.h"
 
 namespace alien::config::settings {
+
+    const util::u8string error_t = util::ascii_to_u8string("error");
 
     template<typename T>
     class parser : public util::parser<token_type> {
@@ -20,10 +23,12 @@ namespace alien::config::settings {
 
     protected:
         settings<T> configuration;
+        util::vecset<T>& store;
 
     public:
-        explicit parser(lexer_t& l, std::list<util::u8string>& err)
-            : util::parser<token_type>(l, err) {}
+        explicit parser(lexer_t& l, std::list<util::u8string>& err, util::vecset<T>& store)
+            : util::parser<token_type>(l, err),
+              store(store) {}
 
         void parse() override {
             while (lookahead->type != type::T_END) {
@@ -182,7 +187,7 @@ namespace alien::config::settings {
 
                 util::u8string name = std::move(check<identifier_token>()->name);
 
-                if (name == "error"_u8) {
+                if (name == error_t) {
                     throw std::runtime_error("Cannot use predefined name 'error' at pos " + (std::string) pos);
                 }
 
@@ -192,9 +197,9 @@ namespace alien::config::settings {
 
                 match(type::T_IDENTIFIER);
 
-                auto it = configuration.symbols.find(symbol);
+                auto it = store.find(symbol);
 
-                if (it != configuration.symbols.vend()) {
+                if (it != store.vend()) {
                     err.push_back("Redefinition of symbol '"_u8 + it->name + "' at "_u8 + (util::u8string) pos);
                 }
 
@@ -205,7 +210,7 @@ namespace alien::config::settings {
                     match(type::T_IDENTIFIER);
                 }
 
-                configuration.symbols.push_back(symbol);
+                store.push_back(symbol);
 
                 if (lookahead->type == type::T_COMMA) {
                     match(type::T_COMMA);
@@ -226,4 +231,4 @@ namespace alien::config::settings {
 
 }
 
-#endif //ALIEN_PARSER_H
+#endif //ALIEN_SETTINGS_PARSER_H

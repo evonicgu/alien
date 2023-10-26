@@ -6,37 +6,39 @@
 #include "generator.h"
 #include "util/u8string.h"
 
-auto create_empty_value() {
-    return cxxopts::value<std::optional<std::string>>()->default_value("");
+template<typename T>
+auto create_value(std::optional<T>& t) {
+    return cxxopts::value(t);
 }
 
 int main(int argc, char** argv) {
     using namespace alien::util::literals;
 
-    bool verbose = false, quiet = false, header_only = false, time = false;
+    bool verbose = false, quiet = false, time = false;
 
     try {
+        alien::config::generator_config config;
+
         cxxopts::Options options("Alien", "Alien - front-end compiler library");
 
         options.show_positional_help().add_options()
-                ("i,input", "Input file location", cxxopts::value<std::string>())
-                ("output", "Source file output directory", create_empty_value())
-                ("header_output", "Header file output directory", create_empty_value())
+                ("i,input", "Input file location", cxxopts::value(config.input))
+                ("output", "Source file output directory", create_value(config.output_directory))
+                ("header_output", "Header file output directory", create_value(config.header_output_directory))
                 ("v,verbose", "Verbose error output", cxxopts::value(verbose))
-                ("header_only", "Generates header-only code", cxxopts::value(header_only))
                 ("h,help", "Prints the help message")
-                ("l,lang", "Generated parser language", cxxopts::value<std::string>()->default_value("c++"))
+                ("l,lang", "Generated parser language", cxxopts::value(config.lang)->default_value("c++"))
                 ("t,time", "Print elapsed time after generation", cxxopts::value(time))
                 ("q,quiet", "Quiet mode (no warnings, not recommended)", cxxopts::value(quiet))
-                ("lexer_source_template", "Lexer source/header-only template file", create_empty_value())
+                ("lexer_source_template", "Lexer source template file", create_value(config.lexer_template))
 //                        ->default_value("resources/templates/cpp/sources/lexer.template.txt"))
-                ("lexer_header_template", "Lexer header (non header-only) template file", create_empty_value())
+                ("lexer_header_template", "Lexer header template file", create_value(config.lexer_header_template))
 //                        ->default_value("resources/templates/cpp/headers/lexer.template.txt"))
-                ("tokens_template", "Tokens template file", create_empty_value())
+                ("tokens_template", "Tokens template file", create_value(config.token_template))
 //                        ->default_value("resources/templates/cpp/sources/token.template.txt"))
-                ("parser_source_template", "Parser source/header-only template file", create_empty_value())
+                ("parser_source_template", "Parser source template file", create_value(config.parser_template))
 //                        ->default_value("resources/templates/cpp/sources/parser.template.txt"))
-                ("parser_header_template", "parser header (non header-only) template file", create_empty_value());
+                ("parser_header_template", "parser header template file", create_value(config.parser_header_template));
 //                        ->default_value("resources/templates/cpp/headers/parser.template.txt"));
 
         options.parse_positional({"input"});
@@ -52,24 +54,6 @@ int main(int argc, char** argv) {
             std::cerr << "No input file\n";
             return 1;
         }
-
-        alien::config::generator_config config{
-                result["input"].as<std::string>(),
-                result["output"].as<std::optional<std::string>>(),
-                result["header_output"].as<std::optional<std::string>>(),
-
-                alien::config::language_from_string(result["lang"].as<std::string>()),
-
-                verbose,
-                quiet,
-                header_only,
-
-                result["tokens_template"].as<std::optional<std::string>>(),
-                result["lexer_source_template"].as<std::optional<std::string>>(),
-                result["lexer_header_template"].as<std::optional<std::string>>(),
-                result["parser_source_template"].as<std::optional<std::string>>(),
-                result["parser_header_template"].as<std::optional<std::string>>()
-        };
 
         auto start = std::chrono::high_resolution_clock::now();
 

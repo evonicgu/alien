@@ -1,5 +1,5 @@
-#ifndef ALIEN_LEXER_H
-#define ALIEN_LEXER_H
+#ifndef ALIEN_SETTINGS_LEXER_H
+#define ALIEN_SETTINGS_LEXER_H
 
 #include <list>
 
@@ -25,4 +25,4 @@ namespace alien::config::settings {
 
 }
 
-#endif //ALIEN_LEXER_H
+#endif //ALIEN_SETTINGS_LEXER_H

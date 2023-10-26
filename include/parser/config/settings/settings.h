@@ -21,22 +21,9 @@ namespace alien::parser::settings {
         friend bool operator<(const util::u8string& lhs, const parser_symbol& rhs);
     };
 
-    class settings_parser : public config::settings::parser<parser_symbol> {
-    public:
-        settings_parser(lexer_t& l, std::list<util::u8string>& err)
-            : config::settings::parser<parser_symbol>(l, err) {
-            setup_settings();
-        }
+    const util::u8string void_type = util::ascii_to_u8string("void@default");
 
-    private:
-        void setup_settings();
-
-        void specifier() override;
-
-        void add_types() override;
-
-        void error(type expected, type got) override;
-    };
+    using settings_t = config::settings::settings<settings::parser_symbol>;
 
 }
 

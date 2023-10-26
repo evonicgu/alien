@@ -1,4 +1,4 @@
-#include "parser/config/rules/lexer.h"
+#include "config/settings/parser.h"
 
 namespace alien::parser::rules {
 
@@ -106,7 +106,7 @@ namespace alien::parser::rules {
                 if (util::is_start_identifier_char(c)) {
                     util::u8string identifier = util::get_identifier(i, c);
 
-                    if (identifier == "error"_u8) {
+                    if (identifier == config::settings::error_t) {
                         return new token_t(token_type::T_ERROR, start, i.get_pos());
                     }
 

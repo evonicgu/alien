@@ -1,4 +1,6 @@
 #include "parser/config/settings/settings.h"
+#include "parser/config/settings/parser.h"
+
 
 namespace alien::parser::settings {
 
@@ -12,6 +14,10 @@ namespace alien::parser::settings {
 
     bool operator<(const util::u8string& lhs, const parser_symbol& rhs) {
         return lhs < rhs.name;
+    }
+
+    void settings_parser::add_language_settings(const std::unique_ptr<languages::base_language>& language) {
+        language->register_parser_settings(configuration);
     }
 
     void settings_parser::specifier() {
@@ -32,21 +38,19 @@ namespace alien::parser::settings {
             err.push_back("Symbol type, a common type for all symbols, must be defined"_u8);
         }
 
-        util::u8string& symbol_namespace = util::check<config::settings::string_value>(
-                configuration.config["symbol.namespace"_u8].get()
-        )->str;
+//        util::u8string& symbol_namespace = util::check<config::settings::string_value>(
+//                configuration.config["symbol.namespace"_u8].get()
+//        )->str;
+//
+//        if (!symbol_namespace.empty()) {
+//            symbol_type = symbol_namespace + "::"_u8 + symbol_type;
+//        }
 
-        if (!symbol_namespace.empty()) {
-            symbol_type = symbol_namespace + "::"_u8 + symbol_type;
-        }
-
-        for (std::size_t i = 0; i < configuration.symbols.size(); ++i) {
-            auto& symbol = configuration.symbols[i];
+        for (std::size_t i = 0; i < symbols.non_terminals.size(); ++i) {
+            auto& symbol = symbols.non_terminals[i];
 
             if (symbol.type.empty()) {
-                symbol.type = "void"_u8;
-            } else if (!symbol_namespace.empty()) {
-                symbol.type = symbol_namespace + "::"_u8 + symbol.type;
+                symbol.type = void_type;
             }
         }
     }
@@ -75,9 +79,6 @@ namespace alien::parser::settings {
                 {"generation.type"_u8, std::make_unique<config::settings::string_value>("lalr"_u8)},
                 {"general.start"_u8, std::make_unique<config::settings::string_value>(""_u8)},
                 {"generation.symbol_type"_u8, std::make_unique<config::settings::string_value>(""_u8)},
-                {"symbol.namespace"_u8, std::make_unique<config::settings::string_value>(""_u8)},
-                {"generation.namespace"_u8, std::make_unique<config::settings::string_value>("parser"_u8)},
-                {"generation.cpp.no_default_constructor"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.custom_error"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.use_token_to_str"_u8, std::make_unique<config::settings::bool_value>(false)},
                 {"generation.default_token_to_str"_u8, std::make_unique<config::settings::bool_value>(false)}

@@ -12,6 +12,8 @@
 
 namespace alien::lexer::rules {
 
+    const util::u8string ctx_initial = util::ascii_to_u8string("initial");
+
     class parser : public util::parser<token_type> {
         std::size_t current_context = 0;
         std::ptrdiff_t rule_number = 0;
@@ -25,7 +27,7 @@ namespace alien::lexer::rules {
             : alphabet(alphabet),
               util::parser<token_type>(l, err) {
             using namespace util::literals;
-            ruleset.ctx["initial"_u8] = 0;
+            ruleset.ctx[ctx_initial] = 0;
             ruleset.ruleset.resize(1);
         }
 

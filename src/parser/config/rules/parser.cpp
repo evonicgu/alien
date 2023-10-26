@@ -137,7 +137,7 @@ namespace alien::parser::rules {
                 case type::T_MIDRULE_ACTION: {
                     auto* token = check<midrule_action_token>();
 
-                    util::u8string name{'@', 'e', 'r', '$'};
+                    util::u8string name = util::ascii_to_u8string("@er$");
                     name.push_back(auxiliary_rules++);
 
                     symbol.type = symbol_type::NON_TERMINAL;
@@ -296,14 +296,14 @@ namespace alien::parser::rules {
                     continue;
                 }
 
-                if (alphabet.non_terminals[prod.symbols[number].index].type == "void"_u8) {
+                if (alphabet.non_terminals[prod.symbols[number].index].type == settings::void_type) {
                     err.push_back("Illegal symbol used in action at "_u8 + (util::u8string) lookahead->start);
                 }
             } else if (cleaned[i] == '$' && isdigit(cleaned[i + 1])) {
                 number = 0;
                 state = true;
             } else if (cleaned[i] == '$' && cleaned[i + 1] == '$') {
-                if (alphabet.non_terminals[rule].type == "void"_u8) {
+                if (alphabet.non_terminals[rule].type == settings::void_type) {
                     err.push_back("Cannot use $$ if rule type is void"_u8);
                 }
 

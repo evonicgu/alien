@@ -14,46 +14,38 @@
 #include "lexer/config/rules/parser.h"
 #include "lexer/automata/dfa.h"
 #include "lexer/automata/generator.h"
-#include <filesystem>
+#include "languages/base_language.h"
+#include "lexer/config/settings/parser.h"
 
 namespace alien::lexer {
 
     class lexer_generator {
-        using settings_t = config::settings::settings<lexer::settings::lexer_symbol>;
-
         lexer::rules::rules lexer_rules;
-
-        bool token_type_default = false, position_type_default = false;
 
         std::list<util::u8string>& err;
         alphabet::alphabet& alphabet;
 
-        const config::generator_config& generator_config;
+        std::unique_ptr<languages::base_language>& language;
 
-        config::generator_streams& generator_streams;
+        input::stream_input& input_stream;
 
-        settings_t lexer_settings;
+        bool no_utf8;
 
     public:
-        lexer_generator(const config::generator_config& generator_config,
-                        config::generator_streams& generator_streams,
+        lexer_generator(input::stream_input& input_stream,
+                        std::unique_ptr<languages::base_language>& language,
                         alphabet::alphabet& alphabet,
                         std::list<util::u8string>& err)
-                : generator_config(generator_config),
-                  generator_streams(generator_streams),
+                : input_stream(input_stream),
+                  language(language),
                   alphabet(alphabet),
                   err(err) {}
 
-        const std::unique_ptr<config::settings::value>& get_param(const util::u8string& param) const;
+        settings::settings_t parse_lexer_config();
 
-        void parse_lexer_config();
+        std::optional<inja::json> generate_lexer();
 
-        void generate_lexer(inja::Environment& env, const util::u8string& guard_prefix);
-
-    private:
-        static bool get_value(const std::unique_ptr<config::settings::value>& ptr);
-
-        void check_monomorphization_config() const;
+        std::vector<bool> get_default_token_type_info() const;
     };
 
 }
