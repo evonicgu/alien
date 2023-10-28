@@ -45,3 +45,9 @@ CPMAddPackage(
         GITHUB_REPOSITORY boostorg/static_assert
         GIT_TAG boost-1.82.0
 )
+
+CPMAddPackage(
+        Name GTest
+        GITHUB_REPOSITORY google/googletest
+        VERSION 1.14.0
+)
