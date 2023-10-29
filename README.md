@@ -259,7 +259,7 @@ _You shouldn't install any of the dependencies yourself since CPM handles the on
 - [ ] Parser documentation
 - [ ] Proper error messages
 - [ ] GLR Parsing
-- [ ] Parser generation for other languages 
+- [x] Parser generation for other languages 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
