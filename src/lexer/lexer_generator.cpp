@@ -56,7 +56,7 @@ namespace alien::lexer {
                 continue;
             }
 
-            lexer::automata::generator gen(err, no_utf8);
+            automata::generator gen(err, no_utf8);
 
             if (rules[0].rule_number >= actions.size()) {
                 actions.resize(rules.back().rule_number + 1);

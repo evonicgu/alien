@@ -22,6 +22,8 @@ namespace alien::util {
         pos forwards(std::size_t lines, std::size_t columns) const;
 
         pos backwards(std::size_t lines, std::size_t columns) const;
+
+        friend bool operator==(const pos& lhs, const pos& rhs);
     };
 
     template<typename Ts>

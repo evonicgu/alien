@@ -26,9 +26,11 @@ namespace alien::lexer::automata {
             automata_alphabet.merge(alphabet);
         }
 
-        dfa_generator dfa_gen(std::move(automata_alphabet));
+        auto result = get_minimized_dfa(start_state, std::move(automata_alphabet));
 
-        return dfa_gen.get_minimized_dfa(start_state);
+        delete start_state;
+
+        return result;
     }
 
 }

@@ -45,4 +45,9 @@ namespace alien::lexer::automata::dfa {
 
         return label < other.label;
     }
+
+    bool transition::operator==(const transition& other) const {
+        return tail == other.tail && head == other.head && label == other.label;
+    }
+
 }

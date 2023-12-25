@@ -8,7 +8,6 @@
 #include "base_table_generator.h"
 #include "parser/config/rules/rules.h"
 #include "slr.h"
-#include "util/hash_vecset.h"
 
 namespace alien::parser::generator {
 
@@ -30,7 +29,7 @@ namespace alien::parser::generator {
         lalr_generator(alphabet::alphabet& alphabet, rules::rules& rules)
             : base_table_generator(alphabet, rules),
               simple_helper(first, rules, alphabet),
-              canonical_helper(first, rules) {}
+              canonical_helper(first, rules, alphabet) {}
 
         parsing_table generate_table() override;
 

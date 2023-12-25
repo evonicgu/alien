@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 
         options.parse_positional({"input"});
 
-        auto result = options.parse(argc, argv);
+        const auto result = options.parse(argc, argv);
 
         if (result.count("help") > 0) {
             std::cout << options.help() << '\n';
@@ -55,13 +55,13 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        auto start = std::chrono::high_resolution_clock::now();
+        const auto start = std::chrono::high_resolution_clock::now();
 
         alien::generator gen(std::move(config));
 
         gen.generate();
 
-        auto end = std::chrono::high_resolution_clock::now();
+        const auto end = std::chrono::high_resolution_clock::now();
 
         if (time) {
             std::cout << "Time spent generating frontend: ";

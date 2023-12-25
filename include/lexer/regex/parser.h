@@ -3,6 +3,7 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 
 #include "ast.h"
 #include "charclasses.h"
@@ -57,7 +58,7 @@ namespace alien::lexer::regex {
 
         util::u8char get_char();
 
-        std::size_t get_number();
+        std::optional<std::size_t> get_number();
 
         static ast::node_ptr ast_from_set(const std::unordered_set<util::u8char>& charset);
     };

@@ -37,7 +37,7 @@ namespace alien::parser::generator {
             return it->second;
         }
 
-        memset(non_terminal_productions, 0, rules.ruleset.size());
+        std::fill(non_terminal_productions.begin(), non_terminal_productions.end(), false);
 
         std::vector<slr::item> closure = items;
 
@@ -76,6 +76,7 @@ namespace alien::parser::generator {
 
     std::vector<slr::item> slr_helper::slr_move(const std::vector<slr::item>& items, const rules::grammar_symbol& symbol) const {
         std::vector<slr::item> moved;
+        moved.reserve(items.size());
 
         for (const slr::item& item : items) {
             auto [rule, production, pos] = item;

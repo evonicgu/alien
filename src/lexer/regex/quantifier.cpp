@@ -3,9 +3,17 @@
 namespace alien::lexer::regex {
 
     ast::node_ptr quantifier::range_quantifier::traverse(const ast::node_ptr& tree) {
+        // handle {,}
+        if (!start_opt && !end_opt) {
+            return std::make_shared<ast::leaf>(-1);
+        }
+
         ast::node_ptr modified = nullptr;
 
-        if (start == 0 && end == 0) {
+        std::size_t start = start_opt.value_or(0), end = end_opt.value_or(0);
+
+        // handle {start, end} & end < start
+        if (start_opt && end_opt && (end < start || (start == 0 && end == 0))) {
             return std::make_shared<ast::leaf>(-1);
         }
 
@@ -17,11 +25,21 @@ namespace alien::lexer::regex {
             }
         }
 
-        for (std::size_t i = 0; i < end - start; ++i) {
-            ast::node_ptr tmp = std::make_shared<ast::or_node>(
-                    std::make_shared<ast::leaf>(-1),
-                    tree
-            );
+        if (end_opt) {
+            for (std::size_t i = 0; i < end - start; ++i) {
+                ast::node_ptr tmp = std::make_shared<ast::or_node>(
+                    tree,
+                    std::make_shared<ast::leaf>(-1)
+                );
+
+                if (modified == nullptr) {
+                    modified = tmp;
+                } else {
+                    modified = std::make_shared<ast::concat_node>(modified, tmp);
+                }
+            }
+        } else {
+            ast::node_ptr tmp = std::make_shared<ast::star_node>(tree);
 
             if (modified == nullptr) {
                 modified = tmp;

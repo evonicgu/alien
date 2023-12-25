@@ -30,6 +30,8 @@ namespace alien::lexer::automata::dfa {
         util::u8char label;
 
         bool operator<(const transition& other) const;
+
+        bool operator==(const transition& other) const;
     };
 
     struct dfa {

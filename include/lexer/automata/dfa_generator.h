@@ -23,11 +23,6 @@ namespace alien::lexer::automata {
         explicit dfa_generator(std::unordered_set<util::u8char>&& alphabet)
             : alphabet(std::move(alphabet)) {}
 
-        dfa::dfa get_minimized_dfa(nfa::state* start_state) {
-            return minimize(convert_automata(start_state));
-        }
-
-    private:
         const dfa::nfa_set& closure(const dfa::nfa_set& states);
 
         static dfa::nfa_set move(const dfa::nfa_set& states, util::u8char c);
@@ -40,6 +35,14 @@ namespace alien::lexer::automata {
 
         static dfa::dfa minimize(const dfa::dfa& automata);
     };
+
+    inline dfa::dfa get_minimized_dfa(nfa::state* start_state, std::unordered_set<util::u8char>&& alphabet) {
+        dfa_generator gen(std::move(alphabet));
+
+        auto not_minimized_automata = gen.convert_automata(start_state);
+
+        return dfa_generator::minimize(not_minimized_automata);
+    }
 
 }
 

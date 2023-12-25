@@ -15,10 +15,10 @@
 namespace alien::lexer::automata {
 
     class nfa_generator {
-        std::vector<nfa::state*>& nfa_states;
+        std::vector<std::unique_ptr<nfa::state>>& nfa_states;
 
     public:
-        explicit nfa_generator(std::vector<nfa::state*>& nfa_states)
+        explicit nfa_generator(std::vector<std::unique_ptr<nfa::state>>& nfa_states)
             : nfa_states(nfa_states) {}
 
         std::pair<nfa::state*, std::unordered_set<util::u8char>> nfa_from_ast(

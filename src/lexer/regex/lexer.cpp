@@ -61,7 +61,7 @@ namespace alien::lexer::regex {
                             class_c = get_class_char();
 
                             name += class_c;
-                        }else {
+                        } else {
                             throw std::runtime_error("Expected a valid unicode property name after \\p");
                         }
 

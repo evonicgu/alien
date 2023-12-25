@@ -92,41 +92,75 @@ namespace alien::lexer::automata {
         dfa::state state;
         state.nfa_states = states;
 
-        for (auto nfa_state : state.nfa_states) {
-            if (nfa_state == nullptr || !nfa_state->accepting) {
-                continue;
-            }
+        if (!state.nfa_states.empty()) {
+            auto& first = *state.nfa_states.begin();
 
-            state.accepting = true;
-            state.rule_number = nfa_state->rule_number;
-            break;
+            if (first != nullptr && first->accepting) {
+                state.accepting = true;
+                state.rule_number = first->rule_number;
+            }
         }
+
+        // for (auto nfa_state : state.nfa_states) {
+        //     if (nfa_state == nullptr || !nfa_state->accepting) {
+        //         continue;
+        //     }
+        //
+        //     state.accepting = true;
+        //     state.rule_number = nfa_state->rule_number;
+        //     break;
+        // }
 
         return state;
     }
 
+    /**
+     * Converts NFA to DFA using Powerset Construction Algorithm
+     * extended to handle large character classes based on unicode
+     * properties efficiently.
+     *
+     * Character classes based on unicode properties are implemented
+     * as negative integers in the range [-33; -3] (the appropriate properties.
+     * are listed in the src/lexer/regex/parser.cpp file). So, special handling
+     * needs to be done with them and corresponding real characters to
+     * construct DFAs equivalent to DFAs that would be hypothetically
+     * constructed if each character class was represented as an alternation
+     * of its characters.
+     */
     dfa::dfa dfa_generator::convert_automata(nfa::state* start_state) {
         dfa::dfa automata;
         automata.start_state = 1;
 
+        // initial states - null state, closure of start state
         util::vecset<dfa::state> states{{}, make_state(closure({start_state}))};
+
+        // partition the unordered alphabet, so that negative characters representing unicode property
+        // char classes would be processed first
+        std::vector<util::u8char> sorted_alphabet{alphabet.begin(), alphabet.end()};
+
+        std::partition(sorted_alphabet.begin(), sorted_alphabet.end(), [](util::u8char c) {
+            return c < 0;
+        });
 
         static const dfa::nfa_set null_state = {nullptr};
 
         for (std::size_t i = 1; i < states.size(); ++i) {
+            // construct the final states array
             if (states[i].accepting) {
                 automata.fstates.push_back(i);
                 automata.rulemap[states[i].rule_number].push_back(i);
             }
 
+            // track present char classes
             std::array<bool, 31> classes{};
             classes.fill(false);
 
-            for (util::u8char c : alphabet) {
+            for (util::u8char c : sorted_alphabet) {
                 if (c == -1) {
                     continue;
                 }
 
+                // transition into new state
                 dfa::state new_state = make_state(closure(move(states[i].nfa_states, c)));
 
                 if (new_state.nfa_states.empty()) {
@@ -138,6 +172,15 @@ namespace alien::lexer::automata {
                 } else {
                     util::u8char char_class = util::get_class(c);
 
+                    /**
+                     * If there is a transition from current state labeled by unicode property
+                     * char class that includes current character, than add closure of move from
+                     * current state with the char class, but exclude states that have transitions
+                     * with the character (they may have different transitions with the char class,
+                     * thus, they are unwanted, and are unreachable since the matching process
+                     * firstly checks for transitions with the specific character, then the char
+                     * class
+                     */
                     if (classes[char_class + sizeof classes + 2]) {
                         dfa::nfa_set class_states = closure(cmove(states[i].nfa_states, char_class, c));
                         class_states.merge(new_state.nfa_states);
@@ -222,16 +265,16 @@ namespace alien::lexer::automata {
         };
 
         auto it = automata.transitions.sbegin();
-        util::u8char lchar = automata.transitions[*it].label;
+        util::u8char lchar = automata.transitions[it->index].label;
 
         while (it != automata.transitions.send()) {
-            if (automata.transitions[*it].label != lchar) {
+            if (automata.transitions[it->index].label != lchar) {
                 splitters.split(0);
                 unready_splitters.push(unready_splitters.top() + 1);
-                lchar = automata.transitions[*it].label;
+                lchar = automata.transitions[it->index].label;
             }
 
-            splitters.mark(*it);
+            splitters.mark(it->index);
             ++it;
         }
 

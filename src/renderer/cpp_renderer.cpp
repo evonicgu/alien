@@ -224,7 +224,7 @@ namespace alien::renderer {
 
         util::u8string_view relative_namespace = util::u8string_view(lexer_namespace).substr(last_common_ns_point_pos);
 
-        if (relative_namespace.starts_with("::"_u8)) {
+        if (relative_namespace.find("::"_u8) == 0) {
             relative_namespace = relative_namespace.substr(2);
         }
 
@@ -243,7 +243,7 @@ namespace alien::renderer {
 
         for (std::size_t i = 0; i < symbols.terminals.size(); ++i) {
             if (symbols.terminals[i].type == lexer::settings::default_token_typename) {
-                types.push_back(relative_ns + "token_t"_u8);
+                types.push_back("token_t"_u8);
             } else {
                 types.push_back(token_namespace_continuation + symbols.terminals[i].type);
             }

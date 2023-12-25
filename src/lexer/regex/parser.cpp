@@ -18,8 +18,6 @@ namespace alien::lexer::regex {
         util::pos err_pos = lookahead->start;
 
         switch (expected) {
-            case type::T_END:
-                throw std::runtime_error("End of the regex expected");
             case type::T_PARENTHESIS_CLOSE:
                 err.push_back("Expected ')' at "_u8 + (util::u8string) err_pos);
                 break;
@@ -90,6 +88,7 @@ namespace alien::lexer::regex {
             case type::T_OR:
                 match(type::T_OR);
                 err.push_back("Unexpected '|' at "_u8 + (util::u8string) pos);
+                return std::make_shared<ast::leaf>(-1);
             case type::T_END:
                 throw std::runtime_error("Unexpected End of regular expression at " + (std::string) pos);
             default: {
@@ -111,7 +110,7 @@ namespace alien::lexer::regex {
                         match(type::T_QUESTION_MARK);
                         break;
                     case type::T_BRACE_OPEN: {
-                        std::size_t start, end;
+                        std::optional<std::size_t> start, end;
 
                         match(type::T_BRACE_OPEN);
                         start = get_number();
@@ -144,6 +143,7 @@ namespace alien::lexer::regex {
                 match(type::T_PARENTHESIS_OPEN);
 
                 if (lookahead->type == type::T_PARENTHESIS_CLOSE) {
+                    match(type::T_PARENTHESIS_CLOSE);
                     err.push_back("Empty group at "_u8 + (util::u8string) start);
 
                     return std::make_shared<ast::leaf>(-1);
@@ -239,12 +239,13 @@ namespace alien::lexer::regex {
                 case type::T_HYPHEN: {
                     if (characters.empty()) {
                         characters.insert('-');
-                        match(type::T_HYPHEN);
                     } else {
                         util::pos err_pos = lookahead->start;
 
                         err.push_back("Unexpected - in character class at "_u8 + (util::u8string) err_pos);
                     }
+
+                    match(type::T_HYPHEN);
                     break;
                 }
                 default: {
@@ -562,12 +563,16 @@ namespace alien::lexer::regex {
         return c;
     }
 
-    std::size_t parser::get_number() {
-        std::size_t number = 0;
+    std::optional<std::size_t> parser::get_number() {
+        std::optional<std::size_t> number = std::nullopt;
 
         while (lookahead->type == type::T_NUMBER) {
+            if (!number) {
+                number = 0;
+            }
+
             auto* token = check<number_token>();
-            number = number * 10 + token->number;
+            number = number.value() * 10 + token->number;
             match(type::T_NUMBER);
         }
 
