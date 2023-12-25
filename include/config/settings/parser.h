@@ -191,9 +191,8 @@ namespace alien::config::settings {
                     throw std::runtime_error("Cannot use predefined name 'error' at pos " + (std::string) pos);
                 }
 
-                T symbol{
-                    .name = std::move(name)
-                };
+                T symbol;
+                symbol.name = std::move(name);
 
                 match(type::T_IDENTIFIER);
 

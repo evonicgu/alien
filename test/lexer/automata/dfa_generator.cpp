@@ -131,8 +131,8 @@ namespace alien::test {
 
         std::vector<lexer::rules::rule> rules(2);
 
-        rules[0] = {.regex = "c"_u8, .rule_number = 1};
-        rules[1] = {.regex = "\\p{Ll}*"_u8, .rule_number = 0};
+        rules[0] = {false, "c"_u8, {}, {}, 1};
+        rules[1] = {false, "\\p{Ll}*"_u8, {}, {}, 0};
 
         auto result = gen.generate_automata(rules);
 
