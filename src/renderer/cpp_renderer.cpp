@@ -127,7 +127,7 @@ namespace alien::renderer {
         std::ofstream source_out;
 
         if (is_header_only) {
-            source_out = std::move(header_output_dir);
+            source_out = std::ofstream(header_output_dir);
         } else {
             std::filesystem::path source_output_dir = config.output_directory.value();
 
