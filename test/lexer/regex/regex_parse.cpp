@@ -1,3 +1,5 @@
+#include <unordered_map>
+
 #include "gtest/gtest.h"
 
 #include "lexer/regex/parser.h"
