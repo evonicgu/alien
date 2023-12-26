@@ -1,5 +1,9 @@
 #include "generator.h"
 
+#include "lexer/lexer_generator.h"
+#include "parser/parser_generator.h"
+#include "languages/cpp_language.h"
+
 namespace alien {
 
     void generator::generate() {
