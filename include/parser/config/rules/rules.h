@@ -1,7 +1,6 @@
 #ifndef ALIEN_PARSER_RULES_H
 #define ALIEN_PARSER_RULES_H
 
-#include <map>
 #include <vector>
 
 #include "nlohmann/json.hpp"

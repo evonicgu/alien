@@ -1,6 +1,6 @@
 #include "parser/generator/base_helper.h"
 
-#include <optional>
+#include <stdexcept>
 
 namespace alien::parser::generator {
 
@@ -70,7 +70,10 @@ namespace alien::parser::generator {
         return first[symbol];
     }
 
-    std::unordered_set<std::ptrdiff_t> base_helper::get_first(const std::vector<rules::grammar_symbol>& str, std::size_t start_index, std::optional<rules::grammar_symbol> ending) {
+    std::unordered_set<std::ptrdiff_t> base_helper::get_first(
+        const std::vector<rules::grammar_symbol>& str,
+        std::size_t start_index,
+        std::optional<rules::grammar_symbol> ending) {
         std::unordered_set<std::ptrdiff_t> first_set;
 
         if (str.empty()) {

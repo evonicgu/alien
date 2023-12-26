@@ -1,7 +1,6 @@
 #ifndef ALIEN_REGEX_QUANTIFIER_H
 #define ALIEN_REGEX_QUANTIFIER_H
 
-#include <memory>
 #include <optional>
 
 #include "ast.h"

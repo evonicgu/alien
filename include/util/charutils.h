@@ -1,10 +1,7 @@
 #ifndef ALIEN_CHARUTILS_H
 #define ALIEN_CHARUTILS_H
 
-#include <stdexcept>
-
 #include "u8string.h"
-#include "utf8proc.h"
 
 namespace alien::util {
 

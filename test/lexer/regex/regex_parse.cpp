@@ -1,8 +1,16 @@
 #include <unordered_map>
+#include <list>
+#include <unordered_set>
+#include <stdexcept>
+#include <utility>
 
 #include "gtest/gtest.h"
 
+#include "input/input.h"
 #include "lexer/regex/parser.h"
+#include "lexer/regex/lexer.h"
+#include "util/typeutils.h"
+#include "util/u8string.h"
 
 namespace alien::test {
 
@@ -959,7 +967,7 @@ namespace alien::test {
         }
 
         {
-            input::string_input regex("\\p{"_u8 + value + (int) '}');
+            input::string_input regex("\\p{"_u8 + value + (util::u8char) '}');
 
             BASE_REGEX(false);
 

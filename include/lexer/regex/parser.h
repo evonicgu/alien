@@ -2,13 +2,10 @@
 #define ALIEN_REGEX_PARSER_H
 
 #include <list>
-#include <memory>
 #include <optional>
+#include <unordered_set>
 
 #include "ast.h"
-#include "charclasses.h"
-#include "lexer.h"
-#include "quantifier.h"
 #include "token.h"
 #include "util/parser.h"
 #include "util/u8string.h"

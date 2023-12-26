@@ -1,13 +1,12 @@
 #ifndef ALIEN_CLR_H
 #define ALIEN_CLR_H
 
-#include <map>
-#include <set>
+#include <vector>
 #include <tuple>
 
+#include "alphabet.h"
 #include "base_table_generator.h"
 #include "parser/config/rules/rules.h"
-#include "boost/container_hash/hash.hpp"
 
 namespace alien::parser::generator {
 
@@ -29,9 +28,8 @@ namespace alien::parser::generator {
         }
 
         std::vector<clr::item> clr_closure(const std::vector<clr::item>& items);
-        // std::vector<clr::item> test_clr_closure(const std::vector<clr::item>& items);
 
-        std::vector<clr::item> clr_move(const std::vector<clr::item>& items, const rules::grammar_symbol& symbol);
+        std::vector<clr::item> clr_move(const std::vector<clr::item>& items, const rules::grammar_symbol& symbol) const;
     };
 
     class clr_generator : public base_table_generator {

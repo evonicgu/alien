@@ -1,5 +1,8 @@
 #include "util/u8string.h"
 
+#include <stdexcept>
+#include <array>
+
 namespace alien::util {
 
     u8string ascii_to_u8string(const std::string& str) {

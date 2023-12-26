@@ -1,3 +1,7 @@
+#include <vector>
+#include <set>
+#include <stdexcept>
+
 #include "gtest/gtest.h"
 
 #include "util/vecset.h"

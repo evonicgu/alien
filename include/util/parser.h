@@ -2,7 +2,6 @@
 #define ALIEN_UTIL_PARSER_H
 
 #include <list>
-#include <stdexcept>
 
 #include "lexer.h"
 #include "token.h"
@@ -25,10 +24,10 @@ namespace alien::util {
         lexer_t& l;
         token_t* lookahead;
 
-        std::list<util::u8string>& err;
+        std::list<u8string>& err;
 
     public:
-        explicit parser(lexer_t& l, std::list<util::u8string>& err)
+        explicit parser(lexer_t& l, std::list<u8string>& err)
             : l(l),
               err(err) {
             initialize();

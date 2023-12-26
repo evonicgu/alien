@@ -1,3 +1,7 @@
+#include <string>
+#include <numeric>
+#include <stdexcept>
+
 #include "gtest/gtest.h"
 
 #include "util/u8string.h"

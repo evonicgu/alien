@@ -1,5 +1,7 @@
 #include "lexer/automata/dfa.h"
 
+#include "util/to_json.h"
+
 namespace alien::lexer::automata::dfa {
 
     void to_json(nlohmann::json& json, const dfa& automata) {

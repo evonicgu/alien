@@ -1,4 +1,10 @@
+#include "parser/config/rules/lexer.h"
+
+#include <stdexcept>
+
 #include "config/settings/parser.h"
+#include "util/charutils.h"
+#include "util/lexing.h"
 
 namespace alien::parser::rules {
 

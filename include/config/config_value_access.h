@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "config/settings/settings.h"
-#include "util/typeutils.h"
 
 namespace alien::config {
 

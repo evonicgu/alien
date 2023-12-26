@@ -1,7 +1,17 @@
 #ifndef ALIEN_CPP_LANGUAGE_H
 #define ALIEN_CPP_LANGUAGE_H
 
+#include <list>
+#include <optional>
+#include <memory>
+
 #include "base_language.h"
+#include "config/generator_config.h"
+#include "lexer/config/settings/settings.h"
+#include "parser/config/settings/settings.h"
+#include "renderer/base_renderer.h"
+#include "alphabet.h"
+#include "util/u8string.h"
 
 namespace alien::languages {
 

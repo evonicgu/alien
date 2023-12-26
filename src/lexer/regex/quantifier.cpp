@@ -1,5 +1,7 @@
 #include "lexer/regex/quantifier.h"
 
+#include <memory>
+
 namespace alien::lexer::regex {
 
     ast::node_ptr quantifier::range_quantifier::traverse(const ast::node_ptr& tree) {

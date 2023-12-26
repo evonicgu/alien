@@ -1,7 +1,6 @@
 #ifndef ALIEN_LEXING_H
 #define ALIEN_LEXING_H
 
-#include <stdexcept>
 #include <utility>
 
 #include "input/input.h"

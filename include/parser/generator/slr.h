@@ -1,12 +1,12 @@
-#ifndef ALIEN_SLR_H_VEC_OLD
-#define ALIEN_SLR_H_VEC_OLD
+#ifndef ALIEN_SLR_H_VEC
+#define ALIEN_SLR_H_VEC
 
 #include <map>
-#include <set>
+#include <vector>
 #include <tuple>
-#include <iostream>
 
 #include "base_table_generator.h"
+#include "alphabet.h"
 #include "parser/config/rules/rules.h"
 #include "util/vecset.h"
 
@@ -54,4 +54,4 @@ namespace alien::parser::generator {
 
 }
 
-#endif //ALIEN_SLR_H_VEC_OLD
+#endif //ALIEN_SLR_H_VEC

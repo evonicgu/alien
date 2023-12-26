@@ -1,8 +1,8 @@
+#include <unordered_set>
+
 #include "gtest/gtest.h"
 
 #include "lexer/automata/partition.h"
-
-#include <unordered_set>
 
 namespace alien::test {
 

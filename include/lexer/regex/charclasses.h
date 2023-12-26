@@ -1,7 +1,7 @@
 #ifndef ALIEN_CHARCLASSES_H
 #define ALIEN_CHARCLASSES_H
 
-#include <set>
+#include <unordered_set>
 
 #include "util/u8string.h"
 

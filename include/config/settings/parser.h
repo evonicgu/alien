@@ -5,13 +5,12 @@
 #include <memory>
 #include <utility>
 
-#include "lexer.h"
 #include "settings.h"
 #include "token.h"
 #include "util/parser.h"
+#include "util/vecset.h"
 #include "util/typeutils.h"
 #include "util/u8string.h"
-#include "parser/config/rules/lexer.h"
 
 namespace alien::config::settings {
 
@@ -69,6 +68,8 @@ namespace alien::config::settings {
 
     private:
         std::pair<util::u8string, util::pos> dot_identifier() {
+            using namespace util::literals;
+
             auto* token = check<identifier_token>();
             util::pos start = token->start;
 
@@ -94,6 +95,8 @@ namespace alien::config::settings {
         }
 
         void setting() {
+            using namespace util::literals;
+
             match(type::T_HASHTAG);
 
             auto [name, pos] = dot_identifier();
@@ -123,6 +126,8 @@ namespace alien::config::settings {
         }
 
         void set_value(const util::u8string& name, std::unique_ptr<value>& set_value) {
+            using namespace util::literals;
+
             bool type_error = false;
 
             util::pos pos = lookahead->start;
@@ -180,6 +185,8 @@ namespace alien::config::settings {
         }
 
         void definition() {
+            using namespace util::literals;
+
             match(type::T_OPEN_BRACE);
 
             while (lookahead->type == type::T_IDENTIFIER) {

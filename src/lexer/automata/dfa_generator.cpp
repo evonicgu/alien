@@ -1,5 +1,15 @@
 #include "lexer/automata/dfa_generator.h"
 
+#include <algorithm>
+#include <array>
+#include <queue>
+#include <stack>
+#include <vector>
+
+#include "util/vecset.h"
+#include "lexer/automata/partition.h"
+#include "util/charutils.h"
+
 namespace alien::lexer::automata {
 
     const dfa::nfa_set& dfa_generator::closure(const dfa::nfa_set& states) {
@@ -100,16 +110,6 @@ namespace alien::lexer::automata {
                 state.rule_number = first->rule_number;
             }
         }
-
-        // for (auto nfa_state : state.nfa_states) {
-        //     if (nfa_state == nullptr || !nfa_state->accepting) {
-        //         continue;
-        //     }
-        //
-        //     state.accepting = true;
-        //     state.rule_number = nfa_state->rule_number;
-        //     break;
-        // }
 
         return state;
     }

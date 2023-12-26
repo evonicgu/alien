@@ -1,8 +1,6 @@
 #ifndef ALIEN_U8STRING_H
 #define ALIEN_U8STRING_H
 
-#include <array>
-#include <stdexcept>
 #include <string>
 
 #include "utf8proc.h"
@@ -27,7 +25,7 @@ namespace alien::util {
 
     long long u8_stoi(const u8string& str);
 
-    util::u8string to_u8string(unsigned long long number);
+    u8string to_u8string(unsigned long long number);
 
 }
 

@@ -1,9 +1,13 @@
 #ifndef ALIEN_LEXER_SETTINGS_PARSER_H
 #define ALIEN_LEXER_SETTINGS_PARSER_H
 
+#include <list>
+#include <memory>
+
+#include "alphabet.h"
 #include "config/settings/parser.h"
-#include "config/settings/settings.h"
 #include "util/u8string.h"
+#include "lexer/config/settings/settings.h"
 #include "languages/base_language.h"
 
 namespace alien::lexer::settings {

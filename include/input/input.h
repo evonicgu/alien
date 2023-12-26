@@ -5,22 +5,19 @@
 #include <stdexcept>
 #include <memory>
 
-#include "util/charutils.h"
 #include "util/u8string.h"
 #include "util/token.h"
 
 namespace alien::input {
-
-    using namespace util;
 
     class input {
     protected:
         util::pos position{1, 1};
 
     public:
-        virtual u8char get() = 0;
+        virtual util::u8char get() = 0;
 
-        virtual u8char peek() = 0;
+        virtual util::u8char peek() = 0;
 
         util::pos get_pos() const;
 

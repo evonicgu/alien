@@ -1,5 +1,13 @@
 #include "lexer/automata/generator.h"
 
+#include <unordered_set>
+
+#include "lexer/automata/nfa_generator.h"
+#include "input/input.h"
+#include "lexer/regex/lexer.h"
+#include "lexer/regex/parser.h"
+#include "lexer/automata/dfa_generator.h"
+
 namespace alien::lexer::automata {
 
     dfa::dfa generator::generate_automata(std::vector<rules::rule>& rules) {

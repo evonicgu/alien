@@ -1,12 +1,18 @@
-#ifndef ALIEN_LALR_H_VEC_OLD
-#define ALIEN_LALR_H_VEC_OLD
+#ifndef ALIEN_LALR_H_VEC
+#define ALIEN_LALR_H_VEC
 
 #include <set>
 #include <tuple>
+#include <vector>
+#include <unordered_set>
+#include <map>
 
 #include "clr.h"
+#include "util/comparators.h"
 #include "base_table_generator.h"
+#include "alphabet.h"
 #include "parser/config/rules/rules.h"
+#include "util/vecset.h"
 #include "slr.h"
 
 namespace alien::parser::generator {
@@ -41,4 +47,4 @@ namespace alien::parser::generator {
 
 }
 
-#endif //ALIEN_LALR_H_VEC_OLD
+#endif //ALIEN_LALR_H_VEC

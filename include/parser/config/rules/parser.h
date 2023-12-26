@@ -2,12 +2,14 @@
 #define ALIEN_PARSER_RULES_PARSER_H
 
 #include <list>
+#include <vector>
 
 #include "alphabet.h"
-#include "lexer.h"
 #include "rules.h"
 #include "token.h"
 #include "util/parser.h"
+#include "lexer/config/settings/settings.h"
+#include "parser/config/settings/settings.h"
 #include "util/u8string.h"
 
 namespace alien::parser::rules {

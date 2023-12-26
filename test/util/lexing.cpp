@@ -1,6 +1,10 @@
+#include <utility>
+
 #include "gtest/gtest.h"
 
+#include "input/input.h"
 #include "util/lexing.h"
+#include "util/u8string.h"
 
 namespace alien::test {
 
@@ -90,8 +94,8 @@ namespace alien::test {
     }
 
     std::tuple<util::u8string, input::string_input, util::u8char> test_get_identifier_first_values[] = {
-            {{},               input::string_input{"valid"_u8}, '0'},
-            {"$123valid_0"_u8, input::string_input{"123valid_0 other"_u8}, '$'}
+            {{},              input::string_input{"valid"_u8}, '0'},
+            {"$123valid_0"_u8,  input::string_input{"123valid_0 other"_u8}, '$'}
     };
 
     INSTANTIATE_TEST_SUITE_P(lexing_utils_get_identifier_first_values,
@@ -108,8 +112,8 @@ namespace alien::test {
     }
 
     std::pair<util::u8string, input::string_input> test_get_identifier_values[] = {
-            {{},               input::string_input{"0valid"_u8}},
-            {"$123valid_0"_u8, input::string_input{"$123valid_0 other"_u8}}
+            {{},           input::string_input{"0valid"_u8}},
+            {"$123valid_0"_u8,  input::string_input{"$123valid_0 other"_u8}}
     };
 
     INSTANTIATE_TEST_SUITE_P(lexing_utils_get_identifier_values,

@@ -1,6 +1,8 @@
 #include "config/config_value_access.h"
 #include "config/settings/settings.h"
 
+#include "util/typeutils.h"
+
 namespace alien::config {
 
     template<typename T>

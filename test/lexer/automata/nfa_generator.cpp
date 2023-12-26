@@ -1,7 +1,14 @@
+#include <vector>
+#include <memory>
+#include <unordered_set>
+#include <list>
+#include <stdexcept>
+
 #include "gtest/gtest.h"
 
+#include "input/input.h"
 #include "lexer/regex/parser.h"
-
+#include "lexer/regex/lexer.h"
 #include "lexer/automata/nfa_generator.h"
 
 namespace alien::test {

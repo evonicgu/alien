@@ -1,6 +1,10 @@
+#include <utility>
+#include <stdexcept>
+
 #include "gtest/gtest.h"
 
 #include "util/charutils.h"
+#include "util/u8string.h"
 
 namespace alien::test {
 
@@ -64,9 +68,9 @@ namespace alien::test {
             // Space Separator
             {-33, 0x20},   // ' '
             // Line Separator
-            {-31, 0x2028}, // ' '
+            {-31, 0x2028}, // 'LSEP'
             // Paragraph Separator
-            {-32, 0x2029}, // ' '
+            {-32, 0x2029}, // 'PSEP'
             // Tab
             {-4, '\t'},
             // Carriage Return

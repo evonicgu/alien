@@ -1,3 +1,6 @@
+#include <memory>
+#include <stdexcept>
+
 #include "gtest/gtest.h"
 
 #include "util/typeutils.h"

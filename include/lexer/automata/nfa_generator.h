@@ -2,15 +2,13 @@
 #define ALIEN_NFA_GENERATOR_H
 
 #include <memory>
-#include <set>
-#include <tuple>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 
-#include "lexer/automata/nfa.h"
+#include "nfa.h"
 #include "lexer/regex/ast.h"
 #include "util/u8string.h"
-#include "util/typeutils.h"
 
 namespace alien::lexer::automata {
 

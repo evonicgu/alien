@@ -8,7 +8,6 @@
 
 #include "config/settings/token.h"
 #include "util/u8string.h"
-#include "util/vecset.h"
 
 namespace alien::config::settings {
 

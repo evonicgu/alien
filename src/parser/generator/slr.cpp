@@ -1,5 +1,7 @@
 #include "parser/generator/slr.h"
 
+#include <algorithm>
+
 namespace alien::parser::generator {
 
     util::vecset<std::vector<slr::item>> slr_helper::generate_slr_items() {

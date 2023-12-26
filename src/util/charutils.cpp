@@ -1,5 +1,9 @@
 #include "util/charutils.h"
 
+#include <stdexcept>
+
+#include "utf8proc.h"
+
 namespace alien::util {
 
     u8char get_class(u8char c) {

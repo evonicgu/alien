@@ -1,4 +1,5 @@
 #include "lexer/config/settings/parser.h"
+#include "lexer/config/settings/settings.h"
 
 namespace alien::lexer::settings {
 

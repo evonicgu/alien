@@ -3,12 +3,14 @@
 
 #include <set>
 #include <unordered_map>
+#include <vector>
 
 #include "nlohmann/json.hpp"
 
 #include "nfa.h"
-#include "util/to_json.h"
 #include "util/u8string.h"
+#include "util/vecset.h"
+#include "util/comparators.h"
 
 namespace alien::lexer::automata::dfa {
 

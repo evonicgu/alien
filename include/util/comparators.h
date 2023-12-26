@@ -2,6 +2,7 @@
 #define ALIEN_COMPARATORS_H
 
 #include <vector>
+#include <type_traits>
 
 namespace alien::util::comparators {
 

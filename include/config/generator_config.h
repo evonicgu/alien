@@ -1,12 +1,8 @@
 #ifndef ALIEN_GENERATOR_CONFIG_H
 #define ALIEN_GENERATOR_CONFIG_H
 
-#include <filesystem>
 #include <string>
 #include <optional>
-#include <fstream>
-
-#include "input/input.h"
 
 namespace alien::config {
 

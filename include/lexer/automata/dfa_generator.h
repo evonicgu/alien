@@ -1,17 +1,12 @@
 #ifndef ALIEN_DFA_GENERATOR_H
 #define ALIEN_DFA_GENERATOR_H
 
-#include <array>
-#include <queue>
+#include <map>
 #include <unordered_set>
-#include <stack>
 
 #include "dfa.h"
 #include "nfa.h"
-#include "partition.h"
 #include "util/u8string.h"
-#include "util/vecset.h"
-#include "util/charutils.h"
 
 namespace alien::lexer::automata {
 

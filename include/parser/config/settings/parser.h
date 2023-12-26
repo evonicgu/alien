@@ -1,9 +1,13 @@
 #ifndef ALIEN_PARSER_H
 #define ALIEN_PARSER_H
 
+#include <list>
+#include <memory>
+
 #include "config/settings/parser.h"
 #include "settings.h"
 #include "languages/base_language.h"
+#include "util/u8string.h"
 
 namespace alien::parser::settings {
 

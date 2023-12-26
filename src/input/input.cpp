@@ -1,5 +1,7 @@
 #include "input/input.h"
 
+#include "util/charutils.h"
+
 namespace alien::input {
 
     util::u8char string_input::get() {
@@ -7,7 +9,7 @@ namespace alien::input {
             return -2;
         }
 
-        u8char c = str[pos++], c_class = util::get_class(c);
+        util::u8char c = str[pos++], c_class = util::get_class(c);
 
         if (c_class == -5 || c_class == -31 || c_class == -32) {
             ++position.line;
@@ -32,7 +34,7 @@ namespace alien::input {
             return -2;
         }
 
-        u8char c = buffer[pos++], c_class = get_class(c);
+        util::u8char c = buffer[pos++], c_class = util::get_class(c);
 
         if (c_class == -5 || c_class == -31 || c_class == -32) {
             ++position.line;

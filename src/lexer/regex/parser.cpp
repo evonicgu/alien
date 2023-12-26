@@ -1,5 +1,11 @@
 #include "lexer/regex/parser.h"
 
+#include <memory>
+#include <stdexcept>
+
+#include "lexer/regex/quantifier.h"
+#include "lexer/regex/charclasses.h"
+
 namespace alien::lexer::regex {
 
     void parser::parse() {
@@ -40,7 +46,7 @@ namespace alien::lexer::regex {
         return tree;
     }
 
-    bool parser::check_lookahead(parser::type t) {
+    bool parser::check_lookahead(type t) {
         return t != type::T_OR && t != type::T_END && t != type::T_PARENTHESIS_CLOSE;
     }
 

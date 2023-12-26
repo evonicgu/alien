@@ -1,26 +1,23 @@
 #ifndef ALIEN_LEXER_GENERATOR_H
 #define ALIEN_LEXER_GENERATOR_H
 
-#include "config/settings/settings.h"
-#include "config/settings/token.h"
-#include "config/generator_config.h"
-#include "util/typeutils.h"
-#include "util/u8string.h"
-#include "config/settings/lexer.h"
+#include <list>
+#include <memory>
+#include <optional>
+#include <vector>
+
+#include "input/input.h"
+#include "alphabet.h"
 #include "lexer/config/settings/settings.h"
-#include "inja/inja.hpp"
+#include "util/u8string.h"
 #include "lexer/config/rules/rules.h"
-#include "lexer/config/rules/lexer.h"
-#include "lexer/config/rules/parser.h"
-#include "lexer/automata/dfa.h"
-#include "lexer/automata/generator.h"
+#include "nlohmann/json.hpp"
 #include "languages/base_language.h"
-#include "lexer/config/settings/parser.h"
 
 namespace alien::lexer {
 
     class lexer_generator {
-        lexer::rules::rules lexer_rules;
+        rules::rules lexer_rules;
 
         std::list<util::u8string>& err;
         alphabet::alphabet& alphabet;
@@ -43,7 +40,7 @@ namespace alien::lexer {
 
         settings::settings_t parse_lexer_config();
 
-        std::optional<inja::json> generate_lexer();
+        std::optional<nlohmann::json> generate_lexer();
 
         std::vector<bool> get_default_token_type_info() const;
     };

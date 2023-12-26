@@ -4,8 +4,7 @@
 #include <list>
 
 #include "token.h"
-#include "util/charutils.h"
-#include "util/lexing.h"
+#include "input/input.h"
 #include "util/lexer.h"
 #include "util/u8string.h"
 

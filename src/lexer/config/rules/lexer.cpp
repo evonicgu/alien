@@ -1,5 +1,10 @@
 #include "lexer/config/rules/lexer.h"
 
+#include <stdexcept>
+
+#include "util/charutils.h"
+#include "util/lexing.h"
+
 namespace alien::lexer::rules {
 
     lexer::token_t* lexer::lex() {

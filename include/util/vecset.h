@@ -2,7 +2,9 @@
 #define ALIEN_VECSET_H
 
 #include <set>
-#include <type_traits>
+#include <initializer_list>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "comparators.h"

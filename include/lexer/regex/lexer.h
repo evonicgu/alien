@@ -2,12 +2,11 @@
 #define ALIEN_REGEX_LEXER_H
 
 #include <list>
-#include <stdexcept>
 
 #include "token.h"
+#include "input/input.h"
 #include "util/lexer.h"
 #include "util/u8string.h"
-#include "util/lexing.h"
 
 namespace alien::lexer::regex {
 

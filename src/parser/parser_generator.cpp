@@ -1,5 +1,16 @@
 #include "parser/parser_generator.h"
 
+#include "config/settings/lexer.h"
+#include "parser/config/settings/parser.h"
+#include "parser/config/rules/lexer.h"
+#include "parser/config/rules/parser.h"
+#include "config/settings/settings.h"
+#include "util/typeutils.h"
+#include "util/to_json.h"
+#include "parser/generator/slr.h"
+#include "parser/generator/clr.h"
+#include "parser/generator/lalr.h"
+
 namespace alien::parser {
 
     settings::settings_t parser_generator::parse_parser_config() {
@@ -8,7 +19,7 @@ namespace alien::parser {
         settings::settings_t parser_settings;
 
         config::settings::lexer settings_lexer(input_stream, err);
-        parser::settings::settings_parser settings_parser(settings_lexer, err, alphabet);
+        settings::settings_parser settings_parser(settings_lexer, err, alphabet);
 
         alphabet.non_terminals.push_back({
                                                  "@$S"_u8,
@@ -29,19 +40,19 @@ namespace alien::parser {
                 parser_settings.config["general.start"_u8].get()
         )->str;
 
-        parser::rules::lexer rules_lexer(input_stream, err);
-        parser::rules::parser rules_parser(rules_lexer, err, alphabet, first_symbol);
+        rules::lexer rules_lexer(input_stream, err);
+        rules::parser rules_parser(rules_lexer, err, alphabet, first_symbol);
 
         rules_parser.parse();
 
         parser_rules = rules_parser.get_rules();
 
         if (parser_type == "lalr"_u8) {
-            table_generator = make_gen<parser::generator::lalr_generator>();
+            table_generator = make_gen<generator::lalr_generator>();
         } else if (parser_type == "slr"_u8) {
-            table_generator = make_gen<parser::generator::slr_generator>();
+            table_generator = make_gen<generator::slr_generator>();
         } else if (parser_type == "clr"_u8) {
-            table_generator = make_gen<parser::generator::clr_generator>();
+            table_generator = make_gen<generator::clr_generator>();
         } else {
             err.push_back("Invalid parser type: "_u8 + parser_type);
         }
@@ -49,7 +60,7 @@ namespace alien::parser {
         return std::move(parser_settings);
     }
 
-    std::optional<inja::json> parser_generator::generate_parser() {
+    std::optional<nlohmann::json> parser_generator::generate_parser() {
         using namespace util::literals;
 
         if (alphabet.non_terminals.size() == 1) {
@@ -64,20 +75,20 @@ namespace alien::parser {
             }
         }
 
-        parser::generator::parsing_table table = table_generator->generate_table();
+        generator::parsing_table table = table_generator->generate_table();
 
         std::vector<bool> shift_err_states(table.size(), false),
                 reduce_err_states(table.size(), false);
 
-        std::vector<parser::generator::parsing_action> reduce_err_actions(table.size());
+        std::vector<generator::parsing_action> reduce_err_actions(table.size());
 
         bool has_error_productions = false;
 
         for (std::size_t i = 0; i < table.size(); ++i) {
-            auto it = table[i].find({parser::rules::symbol_type::TERMINAL, 0});
+            auto it = table[i].find({rules::symbol_type::TERMINAL, 0});
 
             if (it != table[i].end()) {
-                if (it->second.type == parser::generator::action_type::SHIFT) {
+                if (it->second.type == generator::action_type::SHIFT) {
                     shift_err_states[i] = true;
                 } else {
                     reduce_err_states[i] = true;

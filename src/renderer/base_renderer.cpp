@@ -1,5 +1,8 @@
 #include "renderer/base_renderer.h"
 
+#include "config/config_value_access.h"
+#include "util/u8string.h"
+
 namespace alien::renderer {
 
     const lexer::settings::settings_t& base_renderer::get_lexer_config() const {
@@ -10,7 +13,7 @@ namespace alien::renderer {
         return parser_settings;
     }
 
-    inja::json base_renderer::base_lexer_config_to_json() {
+    nlohmann::json base_renderer::base_lexer_config_to_json() {
         using namespace util::literals;
 
         bool no_utf8 = config::get_bool_value(lexer_settings.config.at("generation.noutf8"_u8));
@@ -35,7 +38,7 @@ namespace alien::renderer {
         };
     }
 
-    inja::json base_renderer::base_parser_config_to_json() {
+    nlohmann::json base_renderer::base_parser_config_to_json() {
         using namespace util::literals;
 
         return {

@@ -2,15 +2,12 @@
 #define ALIEN_AUTOMATA_GENERATOR_H
 
 #include <list>
-#include <set>
 #include <vector>
+#include <memory>
 
 #include "dfa.h"
-#include "dfa_generator.h"
+#include "nfa.h"
 #include "lexer/config/rules/rules.h"
-#include "lexer/regex/parser.h"
-#include "nfa_generator.h"
-#include "transition_table.h"
 #include "util/u8string.h"
 
 namespace alien::lexer::automata {

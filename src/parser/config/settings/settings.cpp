@@ -1,6 +1,9 @@
 #include "parser/config/settings/settings.h"
 #include "parser/config/settings/parser.h"
 
+#include <stdexcept>
+
+#include "util/typeutils.h"
 
 namespace alien::parser::settings {
 

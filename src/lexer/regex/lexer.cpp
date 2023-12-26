@@ -1,5 +1,9 @@
 #include "lexer/regex/lexer.h"
 
+#include <stdexcept>
+
+#include "util/lexing.h"
+
 namespace alien::lexer::regex {
 
     lexer::token_t* lexer::lex() {

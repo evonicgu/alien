@@ -1,11 +1,9 @@
 #ifndef ALIEN_PARSER_TABLE_GENERATOR_H
 #define ALIEN_PARSER_TABLE_GENERATOR_H
 
-#include <cstdlib>
 #include <map>
-#include <set>
-#include <stdexcept>
 #include <vector>
+#include <utility>
 
 #include "nlohmann/json.hpp"
 
@@ -37,9 +35,9 @@ namespace alien::parser::generator {
 
     using parsing_table = std::vector<std::map<rules::grammar_symbol, parsing_action>>;
 
-    using table_transform_result = std::vector<std::vector<std::pair<parser::generator::parsing_action, std::vector<std::ptrdiff_t>>>>;
+    using table_transform_result = std::vector<std::vector<std::pair<parsing_action, std::vector<std::ptrdiff_t>>>>;
 
-    table_transform_result transform_table(const parser::generator::parsing_table& table, std::ptrdiff_t terminals);
+    table_transform_result transform_table(const parsing_table& table, std::ptrdiff_t terminals);
 
     class base_table_generator {
     protected:

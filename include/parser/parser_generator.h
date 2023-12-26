@@ -1,24 +1,19 @@
 #ifndef ALIEN_PARSER_GENERATOR_H
-
 #define ALIEN_PARSER_GENERATOR_H
 
+#include <list>
 #include <vector>
 #include <memory>
 
-#include "inja/inja.hpp"
+#include "nlohmann/json.hpp"
 
 #include "util/u8string.h"
-#include "util/typeutils.h"
-#include "config/settings/settings.h"
-#include "config/generator_config.h"
-#include "config/rules/lexer.h"
-#include "config/rules/parser.h"
-#include "generator/slr.h"
-#include "generator/clr.h"
-#include "generator/lalr.h"
+#include "alphabet.h"
+#include "input/input.h"
+#include "parser/generator/base_table_generator.h"
+#include "parser/config/rules/rules.h"
+#include "parser/config/settings/settings.h"
 #include "languages/base_language.h"
-#include "parser/config/settings/parser.h"
-#include "util/to_json.h"
 
 namespace alien::parser {
 
@@ -46,7 +41,7 @@ namespace alien::parser {
 
         settings::settings_t parse_parser_config();
 
-        std::optional<inja::json> generate_parser();
+        std::optional<nlohmann::json> generate_parser();
 
     private:
         template<typename Generator>

@@ -1,14 +1,11 @@
 #include <memory>
+#include <set>
 
 #include "gtest/gtest.h"
 
-#include "input/input.h"
 #include "lexer/automata/dfa_generator.h"
-
-#include <lexer/automata/generator.h>
-#include <lexer/automata/nfa_generator.h>
-#include <lexer/regex/lexer.h>
-#include <lexer/regex/parser.h>
+#include "lexer/automata/nfa.h"
+#include "lexer/automata/dfa.h"
 
 namespace alien::test {
 
@@ -120,23 +117,6 @@ namespace alien::test {
         EXPECT_NE(transitions.find({1, 2, 'a'}), transitions.end());
         EXPECT_NE(transitions.find({1, 0, 'b'}), transitions.end());
         EXPECT_NE(transitions.find({1, 0, -8}), transitions.end());
-    }
-
-    TEST(dfa_generator_tests, s) {
-        using namespace util::literals;
-
-        std::list<util::u8string> err;
-
-        lexer::automata::generator gen(err, false);
-
-        std::vector<lexer::rules::rule> rules(2);
-
-        rules[0] = {false, "c"_u8, {}, {}, 1};
-        rules[1] = {false, "\\p{Ll}*"_u8, {}, {}, 0};
-
-        auto result = gen.generate_automata(rules);
-
-        std::cout << "done";
     }
 
 }

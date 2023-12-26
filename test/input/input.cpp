@@ -1,6 +1,11 @@
 #include "gtest/gtest.h"
 
+#include <memory>
+#include <sstream>
+
 #include "input/input.h"
+#include "util/token.h"
+#include "util/u8string.h"
 
 namespace alien::test {
 
@@ -35,19 +40,19 @@ namespace alien::test {
 
         input::string_input in{"so\n"_u8};
 
-        EXPECT_EQ(in.get_pos(), (input::pos{1, 1}));
+        EXPECT_EQ(in.get_pos(), (util::pos{1, 1}));
 
         in.peek();
 
-        EXPECT_EQ(in.get_pos(), (input::pos{1, 1}));
+        EXPECT_EQ(in.get_pos(), (util::pos{1, 1}));
 
         in.get();
 
-        EXPECT_EQ(in.get_pos(), (input::pos{1, 2}));
+        EXPECT_EQ(in.get_pos(), (util::pos{1, 2}));
 
         in.get(), in.get();
 
-        EXPECT_EQ(in.get_pos(), (input::pos{2, 1}));
+        EXPECT_EQ(in.get_pos(), (util::pos{2, 1}));
     }
 
     TEST(input_tests, input_set_pos_test) {
@@ -60,7 +65,7 @@ namespace alien::test {
 
         in.get(), in.get();
 
-        EXPECT_EQ(in.get_pos(), (input::pos{5, 3}));
+        EXPECT_EQ(in.get_pos(), (util::pos{5, 3}));
     }
 
 

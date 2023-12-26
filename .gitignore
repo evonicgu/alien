@@ -4,3 +4,5 @@ cmake-build-release
 cmake-build-relwithdebinfo
 cmake-build-debug-coverage
 content
+out
+.vs

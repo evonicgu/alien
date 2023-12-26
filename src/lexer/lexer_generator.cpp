@@ -1,5 +1,15 @@
 #include "lexer/lexer_generator.h"
 
+#include "config/settings/settings.h"
+#include "config/settings/lexer.h"
+#include "lexer/config/settings/parser.h"
+#include "lexer/config/rules/lexer.h"
+#include "lexer/config/rules/parser.h"
+#include "lexer/automata/dfa.h"
+#include "util/to_json.h"
+#include "lexer/automata/generator.h"
+#include "util/typeutils.h"
+
 namespace alien::lexer {
 
     settings::settings_t lexer_generator::parse_lexer_config() {
@@ -8,7 +18,7 @@ namespace alien::lexer {
         settings::settings_t lexer_settings;
 
         config::settings::lexer settings_lexer(input_stream, err);
-        lexer::settings::settings_parser settings_parser(settings_lexer, err, alphabet);
+        settings::settings_parser settings_parser(settings_lexer, err, alphabet);
 
         alphabet.terminals.push_back({
                                              config::settings::error_t,
@@ -21,8 +31,8 @@ namespace alien::lexer {
 
         lexer_settings = settings_parser.get_settings();
 
-        lexer::rules::lexer rules_lexer(input_stream, err);
-        lexer::rules::parser rules_parser(rules_lexer, err, alphabet);
+        rules::lexer rules_lexer(input_stream, err);
+        rules::parser rules_parser(rules_lexer, err, alphabet);
 
         rules_parser.parse();
 
@@ -35,12 +45,12 @@ namespace alien::lexer {
         return std::move(lexer_settings);
     }
 
-    std::optional<inja::json> lexer_generator::generate_lexer() {
+    std::optional<nlohmann::json> lexer_generator::generate_lexer() {
         using namespace util::literals;
 
         std::vector<std::size_t> ctx_start_states;
-        std::vector<lexer::rules::action> actions;
-        std::vector<lexer::automata::dfa::dfa> automations;
+        std::vector<rules::action> actions;
+        std::vector<automata::dfa::dfa> automations;
 
         bool has_any_start_transitions = false;
         std::size_t current_states = 0;
@@ -78,7 +88,7 @@ namespace alien::lexer {
         }
 
 
-//        inja::json data{
+//        nlohmann::json data{
 ////                {"no_utf8",                   no_utf8},
 ////                {"code_headers",              std::move(lexer_settings.code_declarations[config::settings::code_token::location::HEADERS])},
 ////                {"code_decl",                 std::move(lexer_settings.code_declarations[config::settings::code_token::location::DECL])},
@@ -133,7 +143,7 @@ namespace alien::lexer {
                         {"ctx_start_states", std::move(ctx_start_states)},
                         {"has_any_start_transitions", has_any_start_transitions},
                         {"symbols", util::to_json(alphabet.terminals,
-                                                  [](const lexer::settings::lexer_symbol& symbol) {
+                                                  [](const settings::lexer_symbol& symbol) {
                                                       return util::u8string_to_bytes(symbol.name);
                                                   })},
 //                        {"track_lines", get_value(lexer_settings.config.at("generation.track_lines"_u8))},

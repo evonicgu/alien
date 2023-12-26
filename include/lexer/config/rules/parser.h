@@ -4,7 +4,6 @@
 #include <list>
 
 #include "alphabet.h"
-#include "lexer.h"
 #include "rules.h"
 #include "token.h"
 #include "util/parser.h"

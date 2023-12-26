@@ -1,5 +1,9 @@
 #include "lexer/automata/nfa_generator.h"
 
+#include <stdexcept>
+
+#include "util/typeutils.h"
+
 namespace alien::lexer::automata {
 
     struct stack_element {
