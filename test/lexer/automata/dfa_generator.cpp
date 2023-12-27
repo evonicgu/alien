@@ -119,4 +119,166 @@ namespace alien::test {
         EXPECT_NE(transitions.find({1, 0, -8}), transitions.end());
     }
 
+    TEST(dfa_generator_tests, simple_minimize_test) {
+        std::unique_ptr<lexer::automata::nfa::state> start(new lexer::automata::nfa::state({}, false, -1));
+        std::unique_ptr<lexer::automata::nfa::state> first(new lexer::automata::nfa::state({}, false, -1));
+        std::unique_ptr<lexer::automata::nfa::state> second(new lexer::automata::nfa::state({}, true, 0));
+
+        lexer::automata::dfa_generator gen({'a', 'b'});
+
+        start->accepting = true;
+        start->rule_number = 0;
+        start->transitions['a'] = {first.get()};
+        start->transitions['b'] = {first.get()};
+
+        first->accepting = true;
+        first->rule_number = 0;
+        first->transitions['a'] = {second.get()};
+        first->transitions['b'] = {second.get()};
+
+        second->accepting = true;
+        second->rule_number = 0;
+        second->transitions['a'] = {second.get()};
+        second->transitions['b'] = {second.get()};
+
+        auto result = gen.convert_automata(start.get());
+
+        auto minimized = gen.minimize(result);
+
+        ASSERT_EQ(minimized.states.size(), 2);
+        EXPECT_EQ(minimized.null_state_used, false);
+        EXPECT_EQ(minimized.start_state, 1);
+        EXPECT_EQ(minimized.transitions_to_start, true);
+        ASSERT_EQ(minimized.transitions.size(), 2);
+        EXPECT_EQ(minimized.transitions[1], (lexer::automata::dfa::transition{1, 1, 'a'}));
+        EXPECT_EQ(minimized.transitions[0], (lexer::automata::dfa::transition{1, 1, 'b'}));
+
+        auto null_state = minimized.states[0];
+
+        EXPECT_FALSE(null_state.accepting);
+        EXPECT_TRUE(null_state.in_transitions.empty());
+        EXPECT_TRUE(null_state.out_transitions.empty());
+        EXPECT_EQ(null_state.rule_number, -1);
+
+        auto start_state = minimized.states[1];
+
+        EXPECT_TRUE(start_state.accepting);
+        ASSERT_EQ(start_state.in_transitions.size(), 2);
+        ASSERT_EQ(start_state.out_transitions.size(), 2);
+        EXPECT_EQ(start_state.rule_number, 0);
+        EXPECT_EQ(start_state.in_transitions[0], 0);
+        EXPECT_EQ(start_state.in_transitions[1], 1);
+        EXPECT_EQ(start_state.out_transitions[0], 0);
+        EXPECT_EQ(start_state.out_transitions[1], 1);
+    }
+
+    TEST(dfa_generator_tests, minimize_test) {
+        lexer::automata::dfa::dfa automata;
+
+        automata.null_state_used = false;
+        automata.transitions_to_start = false;
+        automata.fstates = {5};
+        automata.rulemap = {{0, {5}}};
+        automata.start_state = 1;
+        automata.transitions = {
+            {1, 2, 'a'},
+            {1, 3, 'b'},
+            {2, 2, 'a'},
+            {2, 4, 'b'},
+            {3, 3, 'b'},
+            {3, 2, 'a'},
+            {4, 2, 'a'},
+            {4, 5, 'b'},
+            {5, 3, 'b'},
+            {5, 2, 'a'}
+        };
+        automata.states = {
+            {{}, {}, {}, false, -1},
+            {{}, {}, {0, 1}, false, 0},
+            {{}, {0, 2, 5, 6, 9}, {2, 3}, false, 0},
+            {{}, {0, 4, 8}, {4, 5}, false, 0},
+            {{}, {3}, {6, 7}, false, 0},
+            {{}, {7}, {8, 9}, true, 0}
+        };
+
+        lexer::automata::dfa_generator gen({'a', 'b'});
+
+        auto minimized = gen.minimize(automata);
+
+        ASSERT_EQ(minimized.states.size(), 5);
+        EXPECT_EQ(minimized.null_state_used, false);
+        EXPECT_EQ(minimized.transitions_to_start, true);
+        ASSERT_EQ(minimized.transitions.size(), 8);
+
+        auto null_state = minimized.states[0];
+
+        EXPECT_FALSE(null_state.accepting);
+        EXPECT_TRUE(null_state.in_transitions.empty());
+        EXPECT_TRUE(null_state.out_transitions.empty());
+        EXPECT_EQ(null_state.rule_number, -1);
+
+        auto start_state = minimized.states[minimized.start_state];
+
+        EXPECT_FALSE(start_state.accepting);
+        EXPECT_EQ(start_state.rule_number, -1);
+        ASSERT_EQ(start_state.in_transitions.size(), 2);
+        ASSERT_EQ(start_state.out_transitions.size(), 2);
+
+        auto first_transition = minimized.transitions[start_state.in_transitions[0]];
+        auto second_transition = minimized.transitions[start_state.in_transitions[1]];
+
+        if (first_transition.head != first_transition.tail) {
+            std::swap(first_transition, second_transition);
+        }
+
+        EXPECT_EQ(first_transition, (lexer::automata::dfa::transition{minimized.start_state, minimized.start_state, 'b'}));
+
+        auto final_state = minimized.states[second_transition.tail];
+
+        EXPECT_TRUE(final_state.accepting);
+        EXPECT_EQ(final_state.rule_number, 0);
+        ASSERT_EQ(final_state.out_transitions.size(), 2);
+        ASSERT_EQ(final_state.in_transitions.size(), 1);
+
+        auto final_first_out_transition = minimized.transitions[final_state.out_transitions[0]];
+        auto final_second_out_transition = minimized.transitions[final_state.out_transitions[1]];
+
+        if (final_second_out_transition.head == minimized.start_state) {
+            std::swap(final_first_out_transition, final_second_out_transition);
+        }
+
+        EXPECT_EQ(final_first_out_transition, second_transition);
+
+        auto second_out_transition = minimized.transitions[start_state.out_transitions[1]];
+
+        if (second_out_transition.head == second_out_transition.tail) {
+            second_out_transition = minimized.transitions[start_state.out_transitions[0]];
+        }
+
+        EXPECT_EQ(final_second_out_transition.head, second_out_transition.head);
+        EXPECT_EQ(final_second_out_transition.label, 'a');
+        EXPECT_EQ(second_out_transition.label, 'a');
+
+        EXPECT_NE(std::find(
+            minimized.transitions.vbegin(),
+            minimized.transitions.vend(),
+            lexer::automata::dfa::transition{second_out_transition.head, second_out_transition.head, 'a'}),
+            minimized.transitions.vend());
+
+        auto final_in_transition = minimized.transitions[final_state.in_transitions[0]];
+
+        EXPECT_EQ(final_in_transition.label, 'b');
+
+        EXPECT_NE(std::find(
+            minimized.transitions.vbegin(),
+            minimized.transitions.vend(),
+            lexer::automata::dfa::transition{second_out_transition.head, final_in_transition.tail, 'b'}),
+            minimized.transitions.vend());
+
+        EXPECT_NE(std::find(
+            minimized.transitions.vbegin(),
+            minimized.transitions.vend(),
+            lexer::automata::dfa::transition{final_in_transition.tail, second_out_transition.head, 'a'}),
+            minimized.transitions.vend());
+    }
 }
