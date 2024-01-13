@@ -150,8 +150,8 @@ namespace alien::test {
         EXPECT_EQ(minimized.start_state, 1);
         EXPECT_EQ(minimized.transitions_to_start, true);
         ASSERT_EQ(minimized.transitions.size(), 2);
-        EXPECT_EQ(minimized.transitions[1], (lexer::automata::dfa::transition{1, 1, 'a'}));
-        EXPECT_EQ(minimized.transitions[0], (lexer::automata::dfa::transition{1, 1, 'b'}));
+        EXPECT_NE(minimized.transitions.find(lexer::automata::dfa::transition{1, 1, 'a'}), minimized.transitions.vend());
+        EXPECT_NE(minimized.transitions.find(lexer::automata::dfa::transition{1, 1, 'b'}), minimized.transitions.vend());
 
         auto null_state = minimized.states[0];
 
