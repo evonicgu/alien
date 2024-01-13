@@ -1,5 +1,8 @@
 #include "util/u8string.h"
 
+#include <stdexcept>
+#include <array>
+
 namespace alien::util {
 
     u8string ascii_to_u8string(const std::string& str) {
@@ -7,7 +10,7 @@ namespace alien::util {
         out.reserve(str.size());
 
         for (std::size_t i = 0; i < str.size(); ++i) {
-            if (str[i] > 127) {
+            if (str[i] < 0) {
                 throw std::invalid_argument(std::string("Invalid ASCII char at index ") + std::to_string(i));
             }
             out.push_back(str[i]);
@@ -27,6 +30,11 @@ namespace alien::util {
         utf8proc_uint8_t buffer[5];
 
         for (std::size_t i = 0; i < str.size(); ++i) {
+            if (str[i] == -2) {
+                out += "EOF";
+                continue;
+            }
+
             if (!utf8proc_codepoint_valid(str[i])) {
                 throw std::invalid_argument(std::string("Invalid utf-8 codepoint at index ") + std::to_string(i));
             }

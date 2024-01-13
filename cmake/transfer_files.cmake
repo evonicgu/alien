@@ -1,0 +1,5 @@
+configure_file(resources/templates/cpp/sources/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/sources/lexer.template.txt COPYONLY)
+configure_file(resources/templates/cpp/sources/token.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/sources/token.template.txt COPYONLY)
+configure_file(resources/templates/cpp/sources/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/sources/parser.template.txt COPYONLY)
+configure_file(resources/templates/cpp/headers/lexer.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/headers/lexer.template.txt COPYONLY)
+configure_file(resources/templates/cpp/headers/parser.template.txt ${CMAKE_CURRENT_BINARY_DIR}/resources/templates/cpp/headers/parser.template.txt COPYONLY)

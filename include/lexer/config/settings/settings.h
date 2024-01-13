@@ -1,11 +1,6 @@
 #ifndef ALIEN_LEXER_SETTINGS_H
 #define ALIEN_LEXER_SETTINGS_H
 
-#include <list>
-#include <memory>
-#include <stdexcept>
-#include <string>
-
 #include "config/settings/settings.h"
 #include "util/u8string.h"
 
@@ -20,7 +15,7 @@ namespace alien::lexer::settings {
         bool operator<(const lexer_symbol& other) const;
     };
 
-    using settings_t = config::settings::settings<lexer::settings::lexer_symbol>;
+    using settings_t = config::settings::settings<lexer_symbol>;
 
     const util::u8string default_token_typename = util::ascii_to_u8string("token_t@default");
 

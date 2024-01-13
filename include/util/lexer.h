@@ -16,10 +16,10 @@ namespace alien::util {
         using token_t = token<T>;
         using type = T;
 
-        std::list<util::u8string>& err;
+        std::list<u8string>& err;
 
     public:
-        explicit lexer(input::input& i, std::list<util::u8string>& err)
+        explicit lexer(input::input& i, std::list<u8string>& err)
             : i(i), err(err) {}
 
         virtual token_t* lex() = 0;

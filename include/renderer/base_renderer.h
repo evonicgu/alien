@@ -1,13 +1,15 @@
 #ifndef ALIEN_RENDERER_H
 #define ALIEN_RENDERER_H
 
+#include <string>
+
 #include "inja/inja.hpp"
+#include "nlohmann/json.hpp"
 
 #include "config/generator_config.h"
 #include "config/settings/settings.h"
 #include "lexer/config/settings/settings.h"
 #include "parser/config/settings/settings.h"
-#include "config/config_value_access.h"
 
 namespace alien::renderer {
 
@@ -26,7 +28,7 @@ namespace alien::renderer {
               lexer_settings(std::move(lexer_settings)),
               parser_settings(std::move(parser_settings)) {}
 
-        virtual void render(inja::Environment& env, inja::json&& lexer_data, inja::json&& parser_data) = 0;
+        virtual void render(inja::Environment& env, nlohmann::json&& lexer_data, nlohmann::json&& parser_data) = 0;
 
         virtual ~base_renderer() = default;
 
@@ -35,9 +37,9 @@ namespace alien::renderer {
         const parser::settings::settings_t& get_parser_config() const;
 
     protected:
-        inja::json base_lexer_config_to_json();
+        nlohmann::json base_lexer_config_to_json();
 
-        inja::json base_parser_config_to_json();
+        nlohmann::json base_parser_config_to_json();
 
         static std::string error_message(const std::string& str, const std::string& display_name);
     };

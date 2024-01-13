@@ -10,4 +10,8 @@ namespace alien::util {
         return pos{lines >= line ? 0 : line - lines, columns >= column ? 0 : column - columns};
     }
 
+    bool operator==(const pos& lhs, const pos& rhs) {
+        return lhs.line == rhs.line && lhs.column == rhs.column;
+    }
+
 }

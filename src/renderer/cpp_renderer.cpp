@@ -1,5 +1,11 @@
 #include "renderer/cpp_renderer.h"
 
+#include <vector>
+#include <filesystem>
+#include <fstream>
+
+#include "config/config_value_access.h"
+
 namespace alien::renderer {
 
     const char* LEXER_HEADER_TEMPLATE = "resources/templates/cpp/headers/lexer.template.txt";
@@ -8,7 +14,7 @@ namespace alien::renderer {
     const char* PARSER_HEADER_TEMPLATE = "resources/templates/cpp/headers/parser.template.txt";
     const char* PARSER_SOURCE_TEMPLATE = "resources/templates/cpp/sources/parser.template.txt";
 
-    void merge_jsons_inplace(inja::json& first, const inja::json& second) {
+    void merge_jsons_inplace(nlohmann::json& first, const nlohmann::json& second) {
         first.insert(second.begin(), second.end());
     }
 
@@ -16,13 +22,15 @@ namespace alien::renderer {
         using namespace util::literals;
 
         if (ns.size() >= 2) {
-
+            if (ns[ns.size() - 1] == ':' && ns[ns.size() - 2] == ':') {
+                return ns;
+            }
         }
 
         return ns.empty() ? util::u8string{} : ns + "::"_u8;
     }
 
-    void cpp_renderer::render(inja::Environment& env, inja::json&& lexer_data, inja::json&& parser_data) {
+    void cpp_renderer::render(inja::Environment& env, nlohmann::json&& lexer_data, nlohmann::json&& parser_data) {
         setup_types();
 
         generate_lexer(env, std::move(lexer_data));
@@ -66,7 +74,7 @@ namespace alien::renderer {
         real_symbol_type += symbol_type;
     }
 
-    void cpp_renderer::generate_lexer(inja::Environment& env, inja::json&& lexer_data) {
+    void cpp_renderer::generate_lexer(inja::Environment& env, nlohmann::json&& lexer_data) {
         using namespace util::literals;
 
         auto lexer_options = lexer_config_to_json();
@@ -82,7 +90,7 @@ namespace alien::renderer {
         std::ofstream header_out(header_output_dir / "parser.gen.h");
         std::ofstream token_out(header_output_dir / "token.gen.h");
 
-        auto combined_json = inja::json{
+        auto combined_json = nlohmann::json{
                 {"data", std::move(lexer_data)},
                 {"options", std::move(lexer_options)}
         };
@@ -93,7 +101,7 @@ namespace alien::renderer {
         std::ofstream source_out;
 
         if (is_header_only) {
-            source_out = std::move(header_output_dir);
+            source_out = std::ofstream(header_output_dir);
         } else {
             std::filesystem::path source_output_dir = config.output_directory.value();
 
@@ -103,7 +111,7 @@ namespace alien::renderer {
         env.render_to(source_out, source_template, combined_json);
     }
 
-    void cpp_renderer::generate_parser(inja::Environment& env, inja::json&& parser_data) {
+    void cpp_renderer::generate_parser(inja::Environment& env, nlohmann::json&& parser_data) {
         using namespace util::literals;
 
         auto parser_options = parser_config_to_json();
@@ -117,7 +125,7 @@ namespace alien::renderer {
 
         std::ofstream header_out(header_output_dir / "parser.gen.h", std::ios_base::app);
 
-        auto combined_json = inja::json{
+        auto combined_json = nlohmann::json{
                 {"data", std::move(parser_data)},
                 {"options", std::move(parser_options)}
         };
@@ -127,7 +135,7 @@ namespace alien::renderer {
         std::ofstream source_out;
 
         if (is_header_only) {
-            source_out = std::move(header_output_dir);
+            source_out = std::ofstream(header_output_dir);
         } else {
             std::filesystem::path source_output_dir = config.output_directory.value();
 
@@ -137,12 +145,12 @@ namespace alien::renderer {
         env.render_to(source_out, source_template, combined_json);
     }
 
-    inja::json cpp_renderer::lexer_config_to_json() {
+    nlohmann::json cpp_renderer::lexer_config_to_json() {
         using namespace util::literals;
 
         auto base = base_lexer_config_to_json();
 
-        auto cpp = inja::json{
+        auto cpp = nlohmann::json{
                 {"macros",                 config::get_bool_value(lexer_settings.config.at("generation.cpp.macros"_u8))},
                 {"token_type",             real_token_type},
                 {"position_type",          real_position_type},
@@ -162,16 +170,16 @@ namespace alien::renderer {
         return base;
     }
 
-    inja::json cpp_renderer::parser_config_to_json() {
+    nlohmann::json cpp_renderer::parser_config_to_json() {
         using namespace util::literals;
 
         auto base = base_parser_config_to_json();
 
         auto relative_ns = get_lexer_relative_namespace();
 
-        auto cpp = inja::json{
+        auto cpp = nlohmann::json{
                 {"symbol_type",              util::u8string_to_bytes(real_symbol_type)},
-                {"types",                    get_parser_types(relative_ns)},
+                {"types",                    get_parser_types()},
                 {"guard_prefix",             util::u8string_to_bytes(
                         config::get_string_value(lexer_settings.config.at("general.cpp.guard_prefix"_u8)))},
                 {"is_header_only",           config::get_bool_value(lexer_settings.config.at("generation.cpp.header_only"_u8))},
@@ -224,14 +232,14 @@ namespace alien::renderer {
 
         util::u8string_view relative_namespace = util::u8string_view(lexer_namespace).substr(last_common_ns_point_pos);
 
-        if (relative_namespace.starts_with("::"_u8)) {
+        if (relative_namespace.find("::"_u8) == 0) {
             relative_namespace = relative_namespace.substr(2);
         }
 
         return ns_continuation((util::u8string) relative_namespace);
     }
 
-    std::vector<util::u8string> cpp_renderer::get_parser_types(const util::u8string& relative_ns) const {
+    std::vector<util::u8string> cpp_renderer::get_parser_types() const {
         using namespace util::literals;
 
         std::vector<util::u8string> types;
@@ -243,7 +251,7 @@ namespace alien::renderer {
 
         for (std::size_t i = 0; i < symbols.terminals.size(); ++i) {
             if (symbols.terminals[i].type == lexer::settings::default_token_typename) {
-                types.push_back(relative_ns + "token_t"_u8);
+                types.push_back("token_t"_u8);
             } else {
                 types.push_back(token_namespace_continuation + symbols.terminals[i].type);
             }

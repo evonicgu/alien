@@ -1,5 +1,7 @@
 #include "parser/config/rules/parser.h"
 
+#include <stdexcept>
+
 namespace alien::parser::rules {
 
     void parser::parse() {
@@ -176,10 +178,10 @@ namespace alien::parser::rules {
         }
     }
 
-    std::vector<alien::lexer::settings::lexer_symbol>::iterator parser::check_terminal(util::u8string&& name) {
+    std::vector<lexer::settings::lexer_symbol>::iterator parser::check_terminal(util::u8string&& name) {
         using namespace util::literals;
 
-        alien::lexer::settings::lexer_symbol symbol{
+        lexer::settings::lexer_symbol symbol{
                 std::move(name)
         };
 

@@ -1,11 +1,25 @@
 #include "lexer/automata/nfa_generator.h"
 
+#include <stdexcept>
+
+#include "util/typeutils.h"
+
 namespace alien::lexer::automata {
+
+    struct stack_element {
+        regex::ast::node_ptr tree;
+        nfa::simple_nfa curr_nfa;
+        bool traversed1, traversed2;
+        std::size_t ret_index;
+    };
+
+#define create_start_end nfa_states.push_back(std::unique_ptr<nfa::state>(new nfa::state{{}, false, rule_number})); \
+    nfa_states.push_back(std::unique_ptr<nfa::state>(new nfa::state{{}, true, rule_number})); \
+    auto* start = nfa_states[nfa_states.size() - 2].get(); \
+    auto* end = nfa_states[nfa_states.size() - 1].get()
 
     std::pair<nfa::state*, std::unordered_set<util::u8char>>
     nfa_generator::nfa_from_ast(const regex::ast::node_ptr& ast, std::ptrdiff_t rule_number, bool no_utf8) {
-        using stack_element = std::tuple<regex::ast::node_ptr, nfa::simple_nfa, bool, bool, std::size_t>;
-
         std::vector<stack_element> callstack{
                 {nullptr, {}, false, false, 0},
                 {ast, {}, false, false, 0}
@@ -15,21 +29,21 @@ namespace alien::lexer::automata {
         std::size_t current = 1;
 
         while (current != 0) {
-            auto& [tree, curr_nfa, traversed1, traversed2, ret_index] = callstack[current];
+            auto& elem = callstack[current];
 
-            if (!traversed1) {
-                traversed1 = true;
+            if (!elem.traversed1) {
+                elem.traversed1 = true;
 
-                switch (tree->type) {
+                switch (elem.tree->type) {
                     case regex::ast::node::node_type::CONCAT: {
-                        auto* node = util::check<regex::ast::concat_node>(tree.get());
+                        auto* node = util::check<regex::ast::concat_node>(elem.tree.get());
 
                         callstack.push_back({node->first, {}, false, false, current});
                         ++current;
                         break;
                     }
                     case regex::ast::node::node_type::OR: {
-                        auto* node = util::check<regex::ast::or_node>(tree.get());
+                        auto* node = util::check<regex::ast::or_node>(elem.tree.get());
 
                         callstack.push_back({node->first, {}, false, false, current});
 
@@ -37,19 +51,18 @@ namespace alien::lexer::automata {
                         break;
                     }
                     case regex::ast::node::node_type::STAR: {
-                        auto* node = util::check<regex::ast::star_node>(tree.get());
+                        auto* node = util::check<regex::ast::star_node>(elem.tree.get());
 
-                        traversed2 = true;
+                        elem.traversed2 = true;
                         callstack.push_back({node->first, {}, false, false, current});
 
                         ++current;
                         break;
                     }
                     case regex::ast::node::node_type::LEAF: {
-                        auto* node = util::check<regex::ast::leaf>(tree.get());
+                        auto* node = util::check<regex::ast::leaf>(elem.tree.get());
 
-                        auto* start = new nfa::state{{}, false, rule_number};
-                        auto* end = new nfa::state{{}, true, rule_number};
+                        create_start_end;
 
                         if (no_utf8 && node->symbol > 127) {
                             throw std::runtime_error("Unicode symbol used with 'noutf8' specified");
@@ -58,18 +71,14 @@ namespace alien::lexer::automata {
                         alphabet.insert(node->symbol);
                         start->transitions[node->symbol].insert(end);
 
-                        curr_nfa = {start, end};
-                        current = ret_index;
-
-                        nfa_states.push_back(start);
-                        nfa_states.push_back(end);
+                        elem.curr_nfa = {start, end};
+                        current = elem.ret_index;
                         break;
                     }
                     case regex::ast::node::node_type::NEGATIVE_CLASS: {
-                        auto* node = util::check<regex::ast::negative_class>(tree.get());
+                        auto* node = util::check<regex::ast::negative_class>(elem.tree.get());
 
-                        auto* start = new nfa::state{{}, false, rule_number};
-                        auto* end = new nfa::state{{}, true, rule_number};
+                        create_start_end;
 
                         if (no_utf8) {
                             for (util::u8char c = 0; c < 128; ++c) {
@@ -92,20 +101,17 @@ namespace alien::lexer::automata {
                             start->transitions[c].insert(nullptr);
                         }
 
-                        curr_nfa = {start, end};
-                        current = ret_index;
-
-                        nfa_states.push_back(start);
-                        nfa_states.push_back(end);
+                        elem.curr_nfa = {start, end};
+                        current = elem.ret_index;
                         break;
                     }
                 }
-            } else if (!traversed2) {
-                traversed2 = true;
+            } else if (!elem.traversed2) {
+                elem.traversed2 = true;
 
-                switch (tree->type) {
+                switch (elem.tree->type) {
                     case regex::ast::node::node_type::OR: {
-                        auto* node = util::check<regex::ast::or_node>(tree.get());
+                        auto* node = util::check<regex::ast::or_node>(elem.tree.get());
 
                         callstack.push_back({node->second, {}, false, false, current});
                         current += 2;
@@ -113,7 +119,7 @@ namespace alien::lexer::automata {
                         break;
                     }
                     case regex::ast::node::node_type::CONCAT: {
-                        auto* node = util::check<regex::ast::concat_node>(tree.get());
+                        auto* node = util::check<regex::ast::concat_node>(elem.tree.get());
 
                         callstack.push_back({node->second, {}, false, false, current});
                         current += 2;
@@ -122,13 +128,12 @@ namespace alien::lexer::automata {
                     }
                 }
             } else {
-                switch (tree->type) {
+                switch (elem.tree->type) {
                     case regex::ast::node::node_type::OR: {
-                        auto* start = new nfa::state{{}, false, rule_number};
-                        auto* end = new nfa::state{{}, true, rule_number};
+                        create_start_end;
 
-                        auto& lhs = std::get<1>(callstack[current + 1]);
-                        auto& rhs = std::get<1>(callstack[current + 2]);
+                        auto& lhs = callstack[current + 1].curr_nfa;
+                        auto& rhs = callstack[current + 2].curr_nfa;
 
                         lhs.end->accepting = false;
                         rhs.end->accepting = false;
@@ -137,50 +142,43 @@ namespace alien::lexer::automata {
                         lhs.end->transitions[-1] = {end};
                         rhs.end->transitions[-1] = {end};
 
-                        curr_nfa = {start, end};
+                        elem.curr_nfa = {start, end};
                         callstack.erase(callstack.begin() + current + 1, callstack.end());
-                        current = ret_index;
-
-                        nfa_states.push_back(start);
-                        nfa_states.push_back(end);
+                        current = elem.ret_index;
                         break;
                     }
                     case regex::ast::node::node_type::CONCAT: {
-                        auto& lhs = std::get<1>(callstack[current + 1]);
-                        auto& rhs = std::get<1>(callstack[current + 2]);
+                        auto& lhs = callstack[current + 1].curr_nfa;
+                        auto& rhs = callstack[current + 2].curr_nfa;
 
                         lhs.end->accepting = false;
                         lhs.end->transitions = std::move(rhs.start->transitions);
 
-                        curr_nfa = {lhs.start, rhs.end};
+                        elem.curr_nfa = {lhs.start, rhs.end};
                         callstack.erase(callstack.begin() + current + 1, callstack.end());
-                        current = ret_index;
+                        current = elem.ret_index;
 
                         break;
                     }
                     case regex::ast::node::node_type::STAR: {
-                        auto* start = new nfa::state{{}, false, rule_number};
-                        auto* end = new nfa::state{{}, true, rule_number};
+                        create_start_end;
 
-                        auto& quantified = std::get<1>(callstack[current + 1]);
+                        auto& quantified = callstack[current + 1].curr_nfa;
                         quantified.end->accepting = false;
                         quantified.end->transitions[-1] = {end, quantified.start};
 
                         start->transitions[-1] = {end, quantified.start};
 
-                        curr_nfa = {start, end};
+                        elem.curr_nfa = {start, end};
                         callstack.erase(callstack.begin() + current + 1, callstack.end());
-                        current = ret_index;
-
-                        nfa_states.push_back(start);
-                        nfa_states.push_back(end);
+                        current = elem.ret_index;
                         break;
                     }
                 }
             }
         }
 
-        return {std::get<1>(callstack[1]).start, alphabet};
+        return {callstack[1].curr_nfa.start, alphabet};
     }
 
 }

@@ -1,4 +1,5 @@
 #include "lexer/config/settings/parser.h"
+#include "lexer/config/settings/settings.h"
 
 namespace alien::lexer::settings {
 
@@ -106,9 +107,8 @@ namespace alien::lexer::settings {
         }
 
         while (lookahead->type == type::T_IDENTIFIER) {
-            lexer_symbol symbol{
-                    .name = std::move(check<config::settings::identifier_token>()->name)
-            };
+            lexer_symbol symbol;
+            symbol.name = std::move(check<config::settings::identifier_token>()->name);
 
             util::u8string s_pos = (util::u8string) lookahead->start;
             auto it = symbols.terminals.find(symbol);

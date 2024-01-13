@@ -2,15 +2,12 @@
 #define ALIEN_AUTOMATA_GENERATOR_H
 
 #include <list>
-#include <set>
 #include <vector>
+#include <memory>
 
 #include "dfa.h"
-#include "dfa_generator.h"
+#include "nfa.h"
 #include "lexer/config/rules/rules.h"
-#include "lexer/regex/parser.h"
-#include "nfa_generator.h"
-#include "transition_table.h"
 #include "util/u8string.h"
 
 namespace alien::lexer::automata {
@@ -18,7 +15,7 @@ namespace alien::lexer::automata {
     class generator {
         std::list<util::u8string>& err;
 
-        std::vector<nfa::state*> nfa_states;
+        std::vector<std::unique_ptr<nfa::state>> nfa_states;
 
         bool no_utf8;
 
@@ -28,12 +25,6 @@ namespace alien::lexer::automata {
               no_utf8(no_utf8) {}
 
         dfa::dfa generate_automata(std::vector<rules::rule>& rules);
-
-        ~generator() {
-            for (auto state : nfa_states) {
-                delete state;
-            }
-        }
     };
 
 }

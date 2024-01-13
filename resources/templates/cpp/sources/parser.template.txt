@@ -58,11 +58,11 @@
         void* $$$;
 
         switch (rule) {#{}#{% for rule in data.rules %}{% if loop.index != 0 %}
-            case {{ loop.index }}: {
+            case {{ loop.index }}: {#{}#{%if bytes(at(options.types, data.terminals + loop.index)) != "void@default" %}
                 {{ bytes(at(options.types, data.terminals + loop.index)) }}* $$ = nullptr;
-
+                {% endif %}
                 switch (prod) {#{}#{% for production in rule %}
-                    case {{ loop.index }}: {#{}#{% set listed = 0 %}{% for symbol in production %}{% if bytes(at(options.types, symbol)) != "void" %}{% set type = bytes(at(options.types, symbol)) %}
+                    case {{ loop.index }}: {#{}#{% set listed = 0 %}{% for symbol in production %}{% if bytes(at(options.types, symbol)) != "void@default" %}{% set type = bytes(at(options.types, symbol)) %}
                         auto* ${{ loop.index }}{% set listed = listed + 1 %} = static_cast<{% if symbol < data.terminals %}{{ options.lexer_relative_namespace }}{% endif %}{{ type }}*>(symbols[symbols.size() - {{ length(production) - loop.index }}].data);
 {% endif %}{% endfor %}{% set length = at(at(data.lengths, loop.parent.index), loop.index) %}{% if length > 0 %}
                         symbols.resize(symbols.size() - {{ at(at(data.lengths, loop.parent.index), loop.index) }});{% endif %}
@@ -72,8 +72,8 @@
 {% endif %}{% endif %}                            break;
                     }{% endfor %}
                 }
-
-                $$$ = $$;
+                {% if bytes(at(options.types, data.terminals + loop.index)) != "void@default" %}
+                $$$ = $$;{% endif %}
                 break;
             }{% endif %}{% endfor %}
         }

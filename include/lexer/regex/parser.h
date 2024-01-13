@@ -2,12 +2,10 @@
 #define ALIEN_REGEX_PARSER_H
 
 #include <list>
-#include <memory>
+#include <optional>
+#include <unordered_set>
 
 #include "ast.h"
-#include "charclasses.h"
-#include "lexer.h"
-#include "quantifier.h"
 #include "token.h"
 #include "util/parser.h"
 #include "util/u8string.h"
@@ -57,7 +55,7 @@ namespace alien::lexer::regex {
 
         util::u8char get_char();
 
-        std::size_t get_number();
+        std::optional<std::size_t> get_number();
 
         static ast::node_ptr ast_from_set(const std::unordered_set<util::u8char>& charset);
     };

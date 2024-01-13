@@ -1,5 +1,7 @@
 #include "input/input.h"
 
+#include "util/charutils.h"
+
 namespace alien::input {
 
     util::u8char string_input::get() {
@@ -7,7 +9,7 @@ namespace alien::input {
             return -2;
         }
 
-        u8char c = str[pos++], c_class = util::get_class(c);
+        util::u8char c = str[pos++], c_class = util::get_class(c);
 
         if (c_class == -5 || c_class == -31 || c_class == -32) {
             ++position.line;
@@ -32,7 +34,7 @@ namespace alien::input {
             return -2;
         }
 
-        u8char c = buffer[pos++], c_class = get_class(c);
+        util::u8char c = buffer[pos++], c_class = util::get_class(c);
 
         if (c_class == -5 || c_class == -31 || c_class == -32) {
             ++position.line;
@@ -45,8 +47,8 @@ namespace alien::input {
     }
 
     std::size_t stream_input::get_str_size() {
-        if (stream.eof()) {
-            return unread + stream.gcount();
+        if (stream->eof()) {
+            return unread + stream->gcount();
         }
 
         int str_size = sizeof cbuffer - 3;
@@ -63,30 +65,32 @@ namespace alien::input {
     }
 
     void stream_input::fill() {
-        if (stream.eof() && unread == 0) {
+        if (stream->eof() && unread == 0) {
             eof = true;
             return;
         }
 
-        stream.read((char*) cbuffer + unread, sizeof cbuffer - unread);
+        stream->read((char*) cbuffer + unread, sizeof cbuffer - unread);
 
         std::size_t str_size = get_str_size();
 
-        if (stream.eof()) {
+        if (stream->eof()) {
             unread = 0;
         } else {
             unread = sizeof cbuffer - str_size;
         }
 
         pos = 0;
-        max = utf8proc_decompose(cbuffer, str_size, buffer, sizeof buffer, utf8proc_option_t::UTF8PROC_REJECTNA);
+        auto signed_max = utf8proc_decompose(cbuffer, str_size, buffer, sizeof buffer, utf8proc_option_t::UTF8PROC_REJECTNA);
+
+        max = signed_max;
 
         for (int i = 0; i < unread; ++i) {
             cbuffer[unread - i - 1] = cbuffer[sizeof cbuffer - i - 1];
         }
 
-        if (max < 0) {
-            throw std::runtime_error(utf8proc_errmsg(max));
+        if (signed_max < 0) {
+            throw std::runtime_error(utf8proc_errmsg(signed_max));
         }
     }
 

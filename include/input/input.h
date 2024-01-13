@@ -3,23 +3,21 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <memory>
 
-#include "util/charutils.h"
 #include "util/u8string.h"
 #include "util/token.h"
 
 namespace alien::input {
-
-    using namespace util;
 
     class input {
     protected:
         util::pos position{1, 1};
 
     public:
-        virtual u8char get() = 0;
+        virtual util::u8char get() = 0;
 
-        virtual u8char peek() = 0;
+        virtual util::u8char peek() = 0;
 
         util::pos get_pos() const;
 
@@ -27,7 +25,7 @@ namespace alien::input {
     };
 
     class string_input : public input {
-        const util::u8string& str;
+        util::u8string str;
 
         std::size_t pos = 0, end;
 
@@ -40,10 +38,14 @@ namespace alien::input {
         util::u8char get() override;
 
         util::u8char peek() override;
+
+        string_input(const string_input& other) = default;
+
+        string_input(string_input&& other) = default;
     };
 
     class stream_input : public input {
-        std::ifstream stream;
+        std::unique_ptr<std::istream> stream;
         bool eof = false;
 
         utf8proc_uint8_t cbuffer[32771]{};
@@ -52,7 +54,7 @@ namespace alien::input {
         std::size_t unread = 0, max = 0, pos = 0;
 
     public:
-        explicit stream_input(std::ifstream&& opened_stream)
+        explicit stream_input(std::unique_ptr<std::istream>&& opened_stream)
             : stream(std::move(opened_stream)) {
             if (!stream) {
                 throw std::runtime_error("Unable to open input stream");
@@ -60,7 +62,7 @@ namespace alien::input {
         }
 
         explicit stream_input(const std::string& path)
-            : stream(std::ifstream(path)) {
+            : stream(std::make_unique<std::ifstream>(path)) {
             if (!stream) {
                 throw std::runtime_error("Unable to open input stream");
             }
@@ -69,6 +71,10 @@ namespace alien::input {
         util::u8char get() override;
 
         util::u8char peek() override;
+
+        stream_input(const stream_input&) = delete;
+
+        stream_input(stream_input&&) noexcept = default;
 
     private:
         void fill();

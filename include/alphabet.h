@@ -8,8 +8,8 @@
 namespace alien::alphabet {
 
     struct alphabet {
-        util::vecset<alien::lexer::settings::lexer_symbol> terminals;
-        util::vecset<alien::parser::settings::parser_symbol> non_terminals;
+        util::vecset<lexer::settings::lexer_symbol> terminals;
+        util::vecset<parser::settings::parser_symbol> non_terminals;
     };
 
 }

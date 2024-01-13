@@ -1,5 +1,13 @@
 #include "lexer/automata/generator.h"
 
+#include <unordered_set>
+
+#include "lexer/automata/nfa_generator.h"
+#include "input/input.h"
+#include "lexer/regex/lexer.h"
+#include "lexer/regex/parser.h"
+#include "lexer/automata/dfa_generator.h"
+
 namespace alien::lexer::automata {
 
     dfa::dfa generator::generate_automata(std::vector<rules::rule>& rules) {
@@ -26,9 +34,11 @@ namespace alien::lexer::automata {
             automata_alphabet.merge(alphabet);
         }
 
-        dfa_generator dfa_gen(std::move(automata_alphabet));
+        auto result = get_minimized_dfa(start_state, std::move(automata_alphabet));
 
-        return dfa_gen.get_minimized_dfa(start_state);
+        delete start_state;
+
+        return result;
     }
 
 }

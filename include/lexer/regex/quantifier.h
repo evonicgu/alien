@@ -1,7 +1,7 @@
 #ifndef ALIEN_REGEX_QUANTIFIER_H
 #define ALIEN_REGEX_QUANTIFIER_H
 
-#include <memory>
+#include <optional>
 
 #include "ast.h"
 
@@ -26,11 +26,11 @@ namespace alien::lexer::regex::quantifier {
     };
 
     struct range_quantifier : public quantifier {
-        std::size_t start, end;
+        std::optional<std::size_t> start_opt, end_opt;
 
-        range_quantifier(std::size_t start, std::size_t end)
-            : start(start),
-              end(end) {}
+        range_quantifier(std::optional<std::size_t> start, std::optional<std::size_t> end)
+            : start_opt(start),
+              end_opt(end) {}
 
         ast::node_ptr traverse(const ast::node_ptr& tree) override;
     };

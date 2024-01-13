@@ -1,5 +1,7 @@
 #include "parser/generator/base_helper.h"
 
+#include <stdexcept>
+
 namespace alien::parser::generator {
 
     const std::unordered_set<std::ptrdiff_t>& base_helper::get_first(std::size_t symbol) {
@@ -68,7 +70,10 @@ namespace alien::parser::generator {
         return first[symbol];
     }
 
-    std::unordered_set<std::ptrdiff_t> base_helper::get_first(const std::vector<rules::grammar_symbol>& str, std::size_t start_index) {
+    std::unordered_set<std::ptrdiff_t> base_helper::get_first(
+        const std::vector<rules::grammar_symbol>& str,
+        std::size_t start_index,
+        std::optional<rules::grammar_symbol> ending) {
         std::unordered_set<std::ptrdiff_t> first_set;
 
         if (str.empty()) {
@@ -78,8 +83,8 @@ namespace alien::parser::generator {
 
         bool nullable = true;
 
-        for (std::size_t i = start_index; i < str.size();  i++) {
-            const auto& symbol = str[i];
+        for (std::size_t i = start_index; i < str.size() + (int) ending.has_value();  i++) {
+            const auto& symbol = i < str.size() ? str[i] : ending.value();
 
             if (symbol.type == rules::symbol_type::TERMINAL) {
                 nullable = false;

@@ -1,8 +1,6 @@
 #ifndef ALIEN_PARSER_SETTING_H
 #define ALIEN_PARSER_SETTING_H
 
-#include <list>
-
 #include "config/settings/parser.h"
 #include "config/settings/settings.h"
 #include "util/u8string.h"
@@ -23,7 +21,7 @@ namespace alien::parser::settings {
 
     const util::u8string void_type = util::ascii_to_u8string("void@default");
 
-    using settings_t = config::settings::settings<settings::parser_symbol>;
+    using settings_t = config::settings::settings<parser_symbol>;
 
 }
 

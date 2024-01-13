@@ -3,12 +3,14 @@
 
 #include <set>
 #include <unordered_map>
+#include <vector>
 
 #include "nlohmann/json.hpp"
 
 #include "nfa.h"
-#include "util/to_json.h"
 #include "util/u8string.h"
+#include "util/vecset.h"
+#include "util/comparators.h"
 
 namespace alien::lexer::automata::dfa {
 
@@ -30,6 +32,8 @@ namespace alien::lexer::automata::dfa {
         util::u8char label;
 
         bool operator<(const transition& other) const;
+
+        bool operator==(const transition& other) const;
     };
 
     struct dfa {

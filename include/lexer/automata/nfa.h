@@ -15,6 +15,14 @@ namespace alien::lexer::automata::nfa {
 
         std::ptrdiff_t rule_number;
 
+        state(const std::unordered_map<util::u8char, std::set<state*>>& transitions,
+            bool accepting,
+            std::ptrdiff_t rule_number)
+            : transitions(transitions),
+              accepting(accepting),
+              rule_number(rule_number) {
+        }
+
         bool operator<(const state& other) const;
     };
 

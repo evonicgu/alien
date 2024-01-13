@@ -1,10 +1,16 @@
 #ifndef ALIEN_BASE_LANGUAGE_H
 #define ALIEN_BASE_LANGUAGE_H
 
+#include <list>
+#include <optional>
+#include <memory>
+
+#include "config/generator_config.h"
 #include "lexer/config/settings/settings.h"
 #include "parser/config/settings/settings.h"
 #include "renderer/base_renderer.h"
 #include "alphabet.h"
+#include "util/u8string.h"
 
 namespace alien::languages {
 

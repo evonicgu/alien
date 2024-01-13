@@ -1,5 +1,7 @@
 #include "parser/generator/base_table_generator.h"
 
+#include <stdexcept>
+
 namespace alien::parser::generator {
 
     bool parsing_action::operator==(const parsing_action& other) const {
@@ -29,17 +31,17 @@ namespace alien::parser::generator {
     }
 
     table_transform_result transform_table(const parsing_table& table, std::ptrdiff_t terminals) {
-        std::vector<std::vector<std::pair<parser::generator::parsing_action, std::vector<std::ptrdiff_t>>>> json;
+        std::vector<std::vector<std::pair<parsing_action, std::vector<std::ptrdiff_t>>>> json;
 
         json.resize(table.size());
 
         for (std::size_t i = 0; i < table.size(); ++i) {
-            std::map<parser::generator::parsing_action, std::vector<std::ptrdiff_t>> indices;
+            std::map<parsing_action, std::vector<std::ptrdiff_t>> indices;
 
             for (auto& transition: table[i]) {
                 auto& [symbol, action] = transition;
 
-                using t = parser::rules::symbol_type;
+                using t = rules::symbol_type;
 
                 std::ptrdiff_t index = symbol.index + (symbol.type == t::NON_TERMINAL) * terminals;
                 indices[action].push_back((std::ptrdiff_t) index);

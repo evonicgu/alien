@@ -11,11 +11,11 @@
 namespace alien::util {
 
     template<typename T>
-    std::map<std::string, T> to_json(const std::map<util::u8string, T>& data) {
+    std::map<std::string, T> to_json(const std::map<u8string, T>& data) {
         std::map<std::string, T> transformed;
 
-        std::for_each(data.cbegin(), data.cend(), [&](const std::pair<util::u8string, T>& p) {
-            transformed[util::u8string_to_bytes(p.first)] = p.second;
+        std::for_each(data.cbegin(), data.cend(), [&](const std::pair<u8string, T>& p) {
+            transformed[u8string_to_bytes(p.first)] = p.second;
         });
 
         return transformed;

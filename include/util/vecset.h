@@ -2,7 +2,9 @@
 #define ALIEN_VECSET_H
 
 #include <set>
-#include <type_traits>
+#include <initializer_list>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "comparators.h"
@@ -11,7 +13,7 @@ namespace alien::util {
 
     template<typename T>
     class vecset {
-        using set_type = std::set<std::size_t, comparators::access_less<T>>;
+        using set_type = std::set<comparators::index_storage, comparators::access_less<T>>;
 
         std::vector<T> vec;
         set_type set{comparators::access_less<T>(&vec)};
@@ -24,7 +26,7 @@ namespace alien::util {
 
             for (auto it : list) {
                 vec.push_back(std::move(it));
-                set.insert(vec.size() - 1);
+                set.insert(comparators::index_storage{vec.size() - 1});
             }
         }
 
@@ -33,7 +35,7 @@ namespace alien::util {
 
             for (const T& value : values) {
                 vec.push_back(value);
-                set.insert(vec.size() - 1);
+                set.insert(comparators::index_storage{vec.size() - 1});
             }
         }
 
@@ -42,7 +44,7 @@ namespace alien::util {
 
             for (T& value : values) {
                 vec.push_back(std::move(value));
-                set.insert(vec.size() - 1);
+                set.insert(comparators::index_storage{vec.size() - 1});
             }
         }
 
@@ -51,7 +53,7 @@ namespace alien::util {
 
             for (const T& value : values) {
                 vec.push_back(value);
-                set.insert(set.end(), vec.size() - 1);
+                set.insert(set.end(), comparators::index_storage{vec.size() - 1});
             }
         }
 
@@ -60,14 +62,14 @@ namespace alien::util {
 
             for (auto& value : values) {
                 vec.push_back(std::move(const_cast<T&&>(value)));
-                set.insert(set.end(), vec.size() - 1);
+                set.insert(set.end(), comparators::index_storage{vec.size() - 1});
             }
         }
 
         vecset(const vecset<T>& other) {
             vec = other.vec;
 
-            for (std::size_t i : other.set) {
+            for (auto i : other.set) {
                 set.insert(set.end(), i);
             }
         }
@@ -75,11 +77,11 @@ namespace alien::util {
         vecset(vecset<T>&& other) noexcept {
             vec = std::move(other.vec);
 
-            for (std::size_t i : other.set) {
+            for (auto i : other.set) {
                 set.insert(set.end(), i);
             }
 
-            other.set.clear();
+            other.clear();
         }
 
         vecset<T>& operator=(const vecset<T>& other) {
@@ -91,7 +93,7 @@ namespace alien::util {
             set.clear();
 
             vec = other.vec;
-            for (std::size_t i : other.set) {
+            for (auto i : other.set) {
                 set.insert(set.end(), i);
             }
 
@@ -107,7 +109,7 @@ namespace alien::util {
             set.clear();
 
             vec = std::move(other.vec);
-            for (std::size_t i : other.set) {
+            for (auto i : other.set) {
                 set.insert(set.end(), i);
             }
 
@@ -119,26 +121,26 @@ namespace alien::util {
         explicit operator std::set<T>() {
             std::set<T> out;
 
-            for (std::size_t index : set) {
-                out.insert(out.end(), std::move(vec[index]));
+            for (auto index : set) {
+                out.insert(out.end(), vec[index.index]);
             }
 
             return out;
         }
 
         explicit operator std::vector<T>() {
-            return std::move(this->vec);
+            return this->vec;
         }
 
         std::size_t push_back(const T& value) {
             auto it = set.find(value);
 
             if (it != set.end()) {
-                return *it;
+                return it->index;
             }
 
             vec.push_back(value);
-            set.insert(vec.size() - 1);
+            set.insert(comparators::index_storage{vec.size() - 1});
 
             return vec.size() - 1;
         }
@@ -147,11 +149,11 @@ namespace alien::util {
             auto it = set.find(value);
 
             if (it != set.end()) {
-                return *it;
+                return it->index;
             }
 
             vec.push_back(std::move(value));
-            set.insert(vec.size() - 1);
+            set.insert(comparators::index_storage{vec.size() - 1});
 
             return vec.size() - 1;
         }
@@ -160,11 +162,11 @@ namespace alien::util {
             auto it = set.find(value);
 
             if (it != set.end()) {
-                return *it;
+                return it->index;
             }
 
             vec.push_back(value);
-            set.insert(pos, vec.size() - 1);
+            set.insert(pos, comparators::index_storage{vec.size() - 1});
 
             return vec.size() - 1;
         }
@@ -173,11 +175,11 @@ namespace alien::util {
             auto it = set.find(value);
 
             if (it != set.end()) {
-                return *it;
+                return it->index;
             }
 
             vec.push_back(std::move(value));
-            set.insert(pos, vec.size() - 1);
+            set.insert(pos, comparators::index_storage{vec.size() - 1});
 
             return vec.size() - 1;
         }
@@ -189,7 +191,7 @@ namespace alien::util {
                 return vend();
             }
 
-            return vbegin() + *it;
+            return vbegin() + it->index;
         }
 
         typename std::vector<T>::const_iterator find(const T& value) const {
@@ -199,7 +201,7 @@ namespace alien::util {
                 return cvend();
             }
 
-            return cvbegin() + *it;
+            return cvbegin() + it->index;
         }
 
         template<typename V>
@@ -210,7 +212,7 @@ namespace alien::util {
                 return vend();
             }
 
-            return vbegin() + *it;
+            return vbegin() + it->index;
         }
 
         template<typename V>
@@ -221,7 +223,7 @@ namespace alien::util {
                 return cvend();
             }
 
-            return cvbegin() + *it;
+            return cvbegin() + it->index;
         }
 
         T& operator[](std::size_t index) {
@@ -256,12 +258,12 @@ namespace alien::util {
             return vec.cend();
         }
 
-        typename set_type::iterator sbegin() const {
-            return set.begin();
+        typename set_type::const_iterator sbegin() const {
+            return set.cbegin();
         }
 
-        typename set_type::iterator send() const {
-            return set.end();
+        typename set_type::const_iterator send() const {
+            return set.cend();
         }
 
         std::size_t size() const {
