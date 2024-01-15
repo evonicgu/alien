@@ -99,10 +99,6 @@ jobs:
         run: lcov --compat-libtool --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
         if: ${{ matrix.os == 'ubuntu-latest' }}
 
-      - name: TestLS
-        working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: ls -la
-
       - name: Coveralls Parallel
         uses: coverallsapp/github-action@v2
         with:
