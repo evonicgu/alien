@@ -96,7 +96,7 @@ jobs:
 
       - name: Create gcov for clang script
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: echo '#!/bin/bash' >> gcov_for_clang && echo "exec llvm-cov gcov \"\$@\"" >> gcov_for_clang && sudo cp gcov_for_clang /bin
+        run: echo '#!/bin/bash' >> gcov_for_clang && echo "exec llvm-cov gcov \"\$@\"" >> gcov_for_clang && sudo cp gcov_for_clang /usr/bin && sudo chmod 755 /usr/bin/gcov_for_clang
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang' }}
 
       - name: Gather coverage GCC
@@ -106,7 +106,7 @@ jobs:
 
       - name: Gather coverage Clang
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: lcov --gcov-tool gcov_for_clang --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
+        run: sudo lcov --gcov-tool gcov_for_clang --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang' }}
 
       - name: Coveralls Parallel
