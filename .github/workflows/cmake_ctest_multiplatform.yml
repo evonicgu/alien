@@ -66,7 +66,10 @@ jobs:
         shell: bash
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-        
+
+      - name: testLS
+        run: ls -la /usr/bin | grep gcov
+
       - name: Install lcov
         run: sudo apt update && sudo apt install lcov
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -96,7 +99,7 @@ jobs:
 
       - name: Gather coverage
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: lcov --compat-libtool --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
+        run: lcov --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
         if: ${{ matrix.os == 'ubuntu-latest' }}
 
       - name: Coveralls Parallel
