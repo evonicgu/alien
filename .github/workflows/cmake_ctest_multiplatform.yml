@@ -101,6 +101,7 @@ jobs:
 
       - name: Coveralls Parallel
         uses: coverallsapp/github-action@v2
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           flag-name: run-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.c_compiler }}
