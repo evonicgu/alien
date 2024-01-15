@@ -67,8 +67,13 @@ jobs:
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-      - name: Install lcov
-        run: sudo apt update && sudo apt install lcov
+      - name: Create gcov for clang script
+        working-directory: ${{ steps.strings.outputs.build-output-dir }}
+        run: echo '#!/bin/bash' >> gcov_for_clang.sh && echo "exec llvm-cov gcov \"\$@\"" >> gcov_for_clang.sh
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+
+      - name: Install llvm-cov lcov
+        run: sudo apt update && sudo apt install llvm lcov
         if: ${{ matrix.os == 'ubuntu-latest' }}
 
       - name: Configure CMake
@@ -94,10 +99,15 @@ jobs:
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: ctest --build-config ${{ matrix.build_type }}
 
-      - name: Gather coverage
+      - name: Gather coverage GCC
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         run: lcov --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'gcc' }}
+
+      - name: Gather coverage Clang
+        working-directory: ${{ steps.strings.outputs.build-output-dir }}
+        run: lcov --gcov-tool gcov_for_clang.sh --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang' }}
 
       - name: Coveralls Parallel
         uses: coverallsapp/github-action@v2
