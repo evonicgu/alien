@@ -92,7 +92,7 @@ jobs:
 
       - name: Create gcov for clang script
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: echo '#!/bin/bash' >> gcov_for_clang.sh && echo "exec llvm-cov gcov \"\$@\"" >> gcov_for_clang.sh
+        run: echo '#!/bin/bash' >> gcov_for_clang && echo "exec llvm-cov gcov \"\$@\"" >> gcov_for_clang && cp gcov_for_clang /usr/bin
         if: ${{ matrix.os == 'ubuntu-latest' }}
 
       - name: Install llvm-cov lcov
