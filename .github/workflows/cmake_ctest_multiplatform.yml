@@ -106,7 +106,7 @@ jobs:
 
       - name: Gather coverage Clang
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: lcov --gcov-tool gcov_for_clang.sh --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
+        run: lcov --gcov-tool gcov_for_clang --capture --directory . | sed s@^SF:%s/@SF:@ > lcov.info
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang' }}
 
       - name: Coveralls Parallel
