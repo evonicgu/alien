@@ -92,8 +92,8 @@ jobs:
 
       - name: Create gcov for clang script
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: echo '#!/bin/bash' >> gcov_for_clang && echo "exec llvm-cov gcov \"\$@\"" >> gcov_for_clang && cp gcov_for_clang /usr/bin
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: echo '#!/bin/bash' >> gcov_for_clang && echo "exec llvm-cov gcov \"\$@\"" >> gcov_for_clang && sudo cp gcov_for_clang /usr/bin
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang' }}
 
       - name: Install llvm-cov lcov
         run: sudo apt update && sudo apt install llvm lcov
