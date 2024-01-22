@@ -16,6 +16,4 @@ set(gtest_force_shared_crt ON)
 target_link_libraries(alien_tests GTest::gtest GTest::gtest_main)
 target_link_libraries(alien_tests alien_lib)
 
-gtest_discover_tests(alien_tests)
-
-add_test(all_gtest alien_tests)
+gtest_discover_tests(alien_tests TEST_PREFIX alien:)
