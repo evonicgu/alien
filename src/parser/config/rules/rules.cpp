@@ -7,6 +7,10 @@ namespace alien::parser::rules {
     }
 
     bool grammar_symbol::operator<(const grammar_symbol& other) const {
-        return type < other.type || index < other.index;
+        if (type == other.type) {
+            return index < other.index;
+        }
+
+        return type < other.type;
     }
 }
