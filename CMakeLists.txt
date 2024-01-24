@@ -27,8 +27,8 @@ if(MSVC)
 endif()
 
 add_executable(alien bin/alien.cpp)
-target_link_libraries(alien cxxopts)
-target_link_libraries(alien alien_lib)
+target_link_libraries(alien PRIVATE cxxopts)
+target_link_libraries(alien PRIVATE alien_lib)
 
 if (MINGW)
     target_compile_options(alien PUBLIC "-Wa,-mbig-obj")
